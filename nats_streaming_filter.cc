@@ -34,16 +34,9 @@ NatsStreamingFilter::decodeHeaders(Envoy::Http::HeaderMap &headers,
                                    bool end_stream) {
   UNREFERENCED_PARAMETER(headers);
 
-  const Envoy::Router::RouteEntry *routeEntry =
-      SoloFilterUtility::resolveRouteEntry(callbacks_);
-  Upstream::ClusterInfoConstSharedPtr info =
-      FilterUtility::resolveClusterInfo(callbacks_, cm_);
-  if (routeEntry == nullptr || info == nullptr) {
-    return Envoy::Http::FilterHeadersStatus::Continue;
-  }
+  retrieveTopic();
 
-  optionalTopic_ = topicRetriever_->getTopic(*routeEntry, *info);
-  if (!optionalTopic_.valid()) {
+  if (!isActive()) {
     return Envoy::Http::FilterHeadersStatus::Continue;
   }
 
@@ -83,6 +76,18 @@ NatsStreamingFilter::decodeTrailers(Envoy::Http::HeaderMap &) {
 void NatsStreamingFilter::setDecoderFilterCallbacks(
     Envoy::Http::StreamDecoderFilterCallbacks &callbacks) {
   callbacks_ = &callbacks;
+}
+
+void NatsStreamingFilter::retrieveTopic() {
+  const Envoy::Router::RouteEntry *routeEntry =
+      SoloFilterUtility::resolveRouteEntry(callbacks_);
+  Upstream::ClusterInfoConstSharedPtr info =
+      FilterUtility::resolveClusterInfo(callbacks_, cm_);
+  if (routeEntry == nullptr || info == nullptr) {
+    return;
+  }
+
+  optionalTopic_ = topicRetriever_->getTopic(*routeEntry, *info);
 }
 
 void NatsStreamingFilter::relayToNatsStreaming() {

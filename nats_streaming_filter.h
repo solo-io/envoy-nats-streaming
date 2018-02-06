@@ -32,6 +32,8 @@ public:
   void setDecoderFilterCallbacks(StreamDecoderFilterCallbacks &) override;
 
 private:
+  void retrieveTopic();
+
   inline bool isActive() { return optionalTopic_.valid(); }
 
   void relayToNatsStreaming();
