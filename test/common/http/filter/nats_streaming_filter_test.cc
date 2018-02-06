@@ -5,7 +5,7 @@
 #include "nats_streaming_filter.h"
 #include "nats_streaming_filter.pb.h"
 #include "nats_streaming_filter_config.h"
-#include "topic_retriever.h"
+#include "subject_retriever.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -19,27 +19,27 @@ class NatsStreamingFilterTest : public testing::Test {
 public:
   NatsStreamingFilterTest()
       : config_{new NatsStreamingFilterConfig(proto_config_)},
-        topic_retriever_{new NiceMock<MockTopicRetriever>},
-        filter_(config_, topic_retriever_, cm_) {
+        subject_retriever_{new NiceMock<MockSubjectRetriever>},
+        filter_(config_, subject_retriever_, cm_) {
     filter_.setDecoderFilterCallbacks(callbacks_);
   }
 
 protected:
   envoy::api::v2::filter::http::NatsStreaming proto_config_;
   NatsStreamingFilterConfigSharedPtr config_;
-  std::shared_ptr<NiceMock<MockTopicRetriever>> topic_retriever_;
+  std::shared_ptr<NiceMock<MockSubjectRetriever>> subject_retriever_;
   NiceMock<Envoy::Upstream::MockClusterManager> cm_;
   NatsStreamingFilter filter_;
   NiceMock<MockStreamDecoderFilterCallbacks> callbacks_;
 };
 
-TEST_F(NatsStreamingFilterTest, NoTopicHeaderOnlyRequest) {
+TEST_F(NatsStreamingFilterTest, NoSubjectHeaderOnlyRequest) {
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::Continue,
             filter_.decodeHeaders(headers, true));
 }
 
-TEST_F(NatsStreamingFilterTest, NoTopicRequestWithData) {
+TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithData) {
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::Continue,
             filter_.decodeHeaders(headers, false));
@@ -51,7 +51,7 @@ TEST_F(NatsStreamingFilterTest, NoTopicRequestWithData) {
   EXPECT_EQ(FilterDataStatus::Continue, filter_.decodeData(data2, true));
 }
 
-TEST_F(NatsStreamingFilterTest, NoTopicRequestWithTrailers) {
+TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithTrailers) {
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::Continue,
             filter_.decodeHeaders(headers, false));
@@ -68,7 +68,7 @@ TEST_F(NatsStreamingFilterTest, NoTopicRequestWithTrailers) {
 }
 
 TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
-  topic_retriever_->topic_ = Optional<Topic>("Topic1");
+  subject_retriever_->subject_ = Optional<Subject>("Subject1");
 
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::StopIteration,
@@ -76,7 +76,7 @@ TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
 }
 
 TEST_F(NatsStreamingFilterTest, RequestWithData) {
-  topic_retriever_->topic_ = Optional<Topic>("Topic1");
+  subject_retriever_->subject_ = Optional<Subject>("Subject1");
 
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::StopIteration,
@@ -92,7 +92,7 @@ TEST_F(NatsStreamingFilterTest, RequestWithData) {
 }
 
 TEST_F(NatsStreamingFilterTest, RequestWithTrailers) {
-  topic_retriever_->topic_ = Optional<Topic>("Topic1");
+  subject_retriever_->subject_ = Optional<Subject>("Subject1");
 
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::StopIteration,

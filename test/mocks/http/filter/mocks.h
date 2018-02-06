@@ -2,21 +2,21 @@
 
 #include <string>
 
-#include "topic_retriever.h"
+#include "subject_retriever.h"
 #include "gmock/gmock.h"
 
 namespace Envoy {
 namespace Http {
 
-class MockTopicRetriever : public TopicRetriever {
+class MockSubjectRetriever : public SubjectRetriever {
 public:
-  MockTopicRetriever();
-  ~MockTopicRetriever();
+  MockSubjectRetriever();
+  ~MockSubjectRetriever();
 
-  MOCK_METHOD2(getTopic, Optional<Topic>(const RouteEntry &routeEntry,
-                                         const ClusterInfo &info));
+  MOCK_METHOD2(getSubject, Optional<Subject>(const RouteEntry &routeEntry,
+                                             const ClusterInfo &info));
 
-  Optional<Topic> topic_;
+  Optional<Subject> subject_;
 };
 
 } // namespace Http

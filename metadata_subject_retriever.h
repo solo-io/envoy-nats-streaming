@@ -7,7 +7,7 @@
 
 #include "common/protobuf/protobuf.h"
 
-#include "topic_retriever.h"
+#include "subject_retriever.h"
 
 namespace Envoy {
 namespace Http {
@@ -20,18 +20,18 @@ namespace Http {
  *   get(const RouteEntry &routeEntry, const ClusterInfo &info);
  * };
  */
-class MetadataTopicRetriever : public TopicRetriever {
+class MetadataSubjectRetriever : public SubjectRetriever {
 
   using FieldMap = Protobuf::Map<std::string, Protobuf::Value>;
 
 public:
-  MetadataTopicRetriever(const std::string &filter_key,
-                         const std::string &topic_key);
+  MetadataSubjectRetriever(const std::string &filter_key,
+                           const std::string &subject_key);
 
-  Optional<Topic> getTopic(const RouteEntry &routeEntry,
-                           const ClusterInfo &info);
-  Optional<Topic> getTopic(const FieldMap &route_metadata_fields,
-                           const FieldMap &cluster_metadata_fields);
+  Optional<Subject> getSubject(const RouteEntry &routeEntry,
+                               const ClusterInfo &info);
+  Optional<Subject> getSubject(const FieldMap &route_metadata_fields,
+                               const FieldMap &cluster_metadata_fields);
 
 private:
   /**
@@ -51,13 +51,13 @@ private:
   nonEmptyStringValue(const FieldMap &fields, const std::string &key);
 
   const std::string &filter_key_;
-  const std::string &topic_key_;
+  const std::string &subject_key_;
 };
 
 template <typename T>
-Optional<const MetadataTopicRetriever::FieldMap *>
-MetadataTopicRetriever::filterMetadataFields(const T &entity,
-                                             const std::string &filter_name) {
+Optional<const MetadataSubjectRetriever::FieldMap *>
+MetadataSubjectRetriever::filterMetadataFields(const T &entity,
+                                               const std::string &filter_name) {
   return filterMetadataFields(entity.metadata(), filter_name);
 }
 

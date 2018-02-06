@@ -38,8 +38,8 @@ public:
 
           Config::Metadata::mutableMetadataValue(
               *metadata, Config::SoloMetadataFilters::get().NATS_STREAMING,
-              Config::MetadataNatsStreamingKeys::get().TOPIC)
-              .set_string_value("Topic1");
+              Config::MetadataNatsStreamingKeys::get().SUBJECT)
+              .set_string_value("Subject1");
         });
 
     HttpIntegrationTest::initialize();

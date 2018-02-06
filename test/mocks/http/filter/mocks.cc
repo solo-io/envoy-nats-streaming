@@ -6,13 +6,13 @@ using testing::_;
 namespace Envoy {
 namespace Http {
 
-MockTopicRetriever::MockTopicRetriever() {
-  ON_CALL(*this, getTopic(_, _))
+MockSubjectRetriever::MockSubjectRetriever() {
+  ON_CALL(*this, getSubject(_, _))
       .WillByDefault(Invoke([this](const RouteEntry &, const ClusterInfo &)
-                                -> Optional<Topic> { return topic_; }));
+                                -> Optional<Subject> { return subject_; }));
 }
 
-MockTopicRetriever::~MockTopicRetriever() {}
+MockSubjectRetriever::~MockSubjectRetriever() {}
 
 } // namespace Http
 } // namespace Envoy

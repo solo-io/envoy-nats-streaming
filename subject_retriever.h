@@ -13,16 +13,16 @@ namespace Http {
 using Router::RouteEntry;
 using Upstream::ClusterInfo;
 
-using Topic = std::string;
+using Subject = std::string;
 
-class TopicRetriever {
+class SubjectRetriever {
 public:
-  virtual ~TopicRetriever() {}
-  virtual Optional<Topic> getTopic(const RouteEntry &routeEntry,
-                                   const ClusterInfo &info) PURE;
+  virtual ~SubjectRetriever() {}
+  virtual Optional<Subject> getSubject(const RouteEntry &routeEntry,
+                                       const ClusterInfo &info) PURE;
 };
 
-typedef std::shared_ptr<TopicRetriever> TopicRetrieverSharedPtr;
+typedef std::shared_ptr<SubjectRetriever> SubjectRetrieverSharedPtr;
 
 } // namespace Http
 } // namespace Envoy

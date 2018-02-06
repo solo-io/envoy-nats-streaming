@@ -8,7 +8,7 @@
 
 #include "nats_streaming_filter.pb.h"
 #include "nats_streaming_filter_config.h"
-#include "topic_retriever.h"
+#include "subject_retriever.h"
 
 namespace Envoy {
 namespace Http {
@@ -19,7 +19,7 @@ class NatsStreamingFilter : public StreamDecoderFilter,
                             public Logger::Loggable<Logger::Id::filter> {
 public:
   NatsStreamingFilter(NatsStreamingFilterConfigSharedPtr,
-                      TopicRetrieverSharedPtr, ClusterManager &);
+                      SubjectRetrieverSharedPtr, ClusterManager &);
   ~NatsStreamingFilter();
 
   // Http::StreamFilterBase
@@ -32,18 +32,18 @@ public:
   void setDecoderFilterCallbacks(StreamDecoderFilterCallbacks &) override;
 
 private:
-  void retrieveTopic();
+  void retrieveSubject();
 
-  inline bool isActive() { return optional_topic_.valid(); }
+  inline bool isActive() { return optional_subject_.valid(); }
 
   void relayToNatsStreaming();
 
   const NatsStreamingFilterConfigSharedPtr config_;
-  TopicRetrieverSharedPtr topic_retriever_;
+  SubjectRetrieverSharedPtr subject_retriever_;
   ClusterManager &cm_;
   StreamDecoderFilterCallbacks *callbacks_{};
   bool stream_destroyed_{};
-  Optional<Topic> optional_topic_;
+  Optional<Subject> optional_subject_;
 };
 
 } // namespace Http

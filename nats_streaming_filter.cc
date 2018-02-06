@@ -22,8 +22,8 @@ namespace Http {
 
 NatsStreamingFilter::NatsStreamingFilter(
     NatsStreamingFilterConfigSharedPtr config,
-    TopicRetrieverSharedPtr topic_retriever, ClusterManager &cm)
-    : config_(config), topic_retriever_(topic_retriever), cm_(cm) {}
+    SubjectRetrieverSharedPtr subject_retriever, ClusterManager &cm)
+    : config_(config), subject_retriever_(subject_retriever), cm_(cm) {}
 
 NatsStreamingFilter::~NatsStreamingFilter() {}
 
@@ -34,7 +34,7 @@ NatsStreamingFilter::decodeHeaders(Envoy::Http::HeaderMap &headers,
                                    bool end_stream) {
   UNREFERENCED_PARAMETER(headers);
 
-  retrieveTopic();
+  retrieveSubject();
 
   if (!isActive()) {
     return Envoy::Http::FilterHeadersStatus::Continue;
@@ -85,7 +85,7 @@ void NatsStreamingFilter::setDecoderFilterCallbacks(
   callbacks_ = &callbacks;
 }
 
-void NatsStreamingFilter::retrieveTopic() {
+void NatsStreamingFilter::retrieveSubject() {
   const Envoy::Router::RouteEntry *routeEntry =
       SoloFilterUtility::resolveRouteEntry(callbacks_);
   Upstream::ClusterInfoConstSharedPtr info =
@@ -94,7 +94,7 @@ void NatsStreamingFilter::retrieveTopic() {
     return;
   }
 
-  optional_topic_ = topic_retriever_->getTopic(*routeEntry, *info);
+  optional_subject_ = subject_retriever_->getSubject(*routeEntry, *info);
 }
 
 void NatsStreamingFilter::relayToNatsStreaming() {

@@ -9,7 +9,7 @@
 #include "common/config/solo_well_known_names.h"
 #include "common/protobuf/utility.h"
 
-#include "metadata_topic_retriever.h"
+#include "metadata_subject_retriever.h"
 #include "nats_streaming_filter.h"
 #include "nats_streaming_filter.pb.h"
 #include "nats_streaming_filter_config.h"
@@ -78,14 +78,14 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
       std::make_shared<Http::NatsStreamingFilterConfig>(
           Http::NatsStreamingFilterConfig(proto_config));
 
-  Http::TopicRetrieverSharedPtr topicRetriever =
-      std::make_shared<Http::MetadataTopicRetriever>(
+  Http::SubjectRetrieverSharedPtr subjectRetriever =
+      std::make_shared<Http::MetadataSubjectRetriever>(
           Config::SoloMetadataFilters::get().NATS_STREAMING,
-          Config::MetadataNatsStreamingKeys::get().TOPIC);
+          Config::MetadataNatsStreamingKeys::get().SUBJECT);
 
-  return [&context, config, topicRetriever](
+  return [&context, config, subjectRetriever](
              Envoy::Http::FilterChainFactoryCallbacks &callbacks) -> void {
-    auto filter = new Http::NatsStreamingFilter(config, topicRetriever,
+    auto filter = new Http::NatsStreamingFilter(config, subjectRetriever,
                                                 context.clusterManager());
     callbacks.addStreamDecoderFilter(
         Http::StreamDecoderFilterSharedPtr{filter});
