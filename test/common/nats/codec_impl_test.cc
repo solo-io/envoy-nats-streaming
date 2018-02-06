@@ -50,6 +50,66 @@ TEST_F(NatsEncoderDecoderImplTest, SimpleString) {
   EXPECT_EQ(0UL, buffer_.length());
 }
 
+TEST_F(NatsEncoderDecoderImplTest, MultipleSimpleStrings) {
+  Message value1;
+  value1.asString() = "simple string 1";
+  encoder_.encode(value1, buffer_);
+
+  Message value2;
+  value2.asString() = "simple string 2";
+  encoder_.encode(value2, buffer_);
+
+  EXPECT_EQ("simple string 1\r\nsimple string 2\r\n",
+            TestUtility::bufferToString(buffer_));
+
+  decoder_.decode(buffer_);
+  EXPECT_EQ(value1, *decoded_values_[0]);
+  EXPECT_EQ(value2, *decoded_values_[1]);
+  EXPECT_EQ(0UL, buffer_.length());
+}
+
+TEST_F(NatsEncoderDecoderImplTest, MultipleSimpleStringsMultipleDecode) {
+  Message value1;
+  value1.asString() = "simple string 1";
+  encoder_.encode(value1, buffer_);
+  EXPECT_EQ("simple string 1\r\n", TestUtility::bufferToString(buffer_));
+  decoder_.decode(buffer_);
+  EXPECT_EQ(value1, *decoded_values_[0]);
+  EXPECT_EQ(0UL, buffer_.length());
+
+  Message value2;
+  value2.asString() = "simple string 2";
+  encoder_.encode(value2, buffer_);
+  EXPECT_EQ("simple string 2\r\n", TestUtility::bufferToString(buffer_));
+  decoder_.decode(buffer_);
+  EXPECT_EQ(value2, *decoded_values_[1]);
+  EXPECT_EQ(0UL, buffer_.length());
+}
+
+TEST_F(NatsEncoderDecoderImplTest, MultipleSimpleStringsFragmentedDecode) {
+  Message value1;
+  value1.asString() = "simple string 1";
+
+  Message value2;
+  value2.asString() = "simple string 2";
+
+  Message value3;
+  value3.asString() = "simple string 3";
+
+  buffer_.add("simple string 1\r\nsimple s");
+  decoder_.decode(buffer_);
+  EXPECT_EQ(1, decoded_values_.size());
+  EXPECT_EQ(value1, *decoded_values_[0]);
+  EXPECT_EQ(0UL, buffer_.length());
+
+  buffer_.add("tring 2\r\nsimple string 3\r\n");
+  decoder_.decode(buffer_);
+  EXPECT_EQ(3, decoded_values_.size());
+  EXPECT_EQ(value2, *decoded_values_[1]);
+  EXPECT_EQ(value3, *decoded_values_[2]);
+  EXPECT_EQ(0UL, buffer_.length());
+}
+
 TEST_F(NatsEncoderDecoderImplTest, InvalidSimpleStringExpectLF) {
   buffer_.add(":-123\ra");
   EXPECT_THROW(decoder_.decode(buffer_), ProtocolError);
