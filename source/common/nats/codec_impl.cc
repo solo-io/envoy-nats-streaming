@@ -54,6 +54,7 @@ void DecoderImpl::parseSlice(const Buffer::RawSlice &slice) {
     case State::LF: {
       ENVOY_LOG(trace, "parse slice: LF");
       if (buffer[0] != '\n') {
+        // TODO(talnordan): Consider gracefully ignoring this error.
         throw ProtocolError("expected new line");
       }
 
