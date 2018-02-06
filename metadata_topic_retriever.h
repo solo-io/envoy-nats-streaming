@@ -1,21 +1,16 @@
 #pragma once
 
-#include <memory>
 #include <string>
-#include <tuple>
 
 #include "envoy/router/router.h"
 #include "envoy/upstream/upstream.h"
 
 #include "common/protobuf/protobuf.h"
 
+#include "topic_retriever.h"
+
 namespace Envoy {
 namespace Http {
-
-using Router::RouteEntry;
-using Upstream::ClusterInfo;
-
-using Topic = std::string;
 
 /**
  * TODO (talnordan):
@@ -25,7 +20,7 @@ using Topic = std::string;
  *   get(const RouteEntry &routeEntry, const ClusterInfo &info);
  * };
  */
-class MetadataTopicRetriever {
+class MetadataTopicRetriever : public TopicRetriever {
 
   using FieldMap = Protobuf::Map<std::string, Protobuf::Value>;
 
@@ -65,8 +60,6 @@ MetadataTopicRetriever::filterMetadataFields(const T &entity,
                                              const std::string &filter_name) {
   return filterMetadataFields(entity.metadata(), filter_name);
 }
-
-typedef std::shared_ptr<MetadataTopicRetriever> TopicRetrieverSharedPtr;
 
 } // namespace Http
 } // namespace Envoy

@@ -5,8 +5,6 @@
 #include "test/integration/integration.h"
 #include "test/integration/utility.h"
 
-#include "metadata_topic_retriever.h"
-
 namespace Envoy {
 
 const std::string DEFAULT_NATS_STREAMING_FILTER =

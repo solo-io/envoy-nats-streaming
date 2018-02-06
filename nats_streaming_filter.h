@@ -6,9 +6,9 @@
 
 #include "server/config/network/http_connection_manager.h"
 
-#include "metadata_topic_retriever.h"
 #include "nats_streaming_filter.pb.h"
 #include "nats_streaming_filter_config.h"
+#include "topic_retriever.h"
 
 namespace Envoy {
 namespace Http {

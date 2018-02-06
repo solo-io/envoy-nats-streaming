@@ -50,6 +50,7 @@ envoy_cc_library(
         "metadata_topic_retriever.h",
         "nats_streaming_filter.h",
         "solo_filter_utility.h",
+        "topic_retriever.h",
     ],
     repository = "@envoy",
     deps = [
