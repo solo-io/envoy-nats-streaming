@@ -59,20 +59,12 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "codec_interface",
-    hdrs = ["include/envoy/tcp/codec.h"],
-    repository = "@envoy",
-    deps = ["@envoy//source/exe:envoy_common_lib"],
-)
-
-envoy_cc_library(
     name = "nats_streaming_filter_config_factory",
     srcs = ["nats_streaming_filter_config_factory.cc"],
     hdrs = ["nats_streaming_filter_config_factory.h"],
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        ":codec_interface",
         ":nats_streaming_filter_lib",
         "@envoy//source/exe:envoy_common_lib",
     ],
