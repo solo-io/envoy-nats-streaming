@@ -34,16 +34,16 @@ public:
 private:
   void retrieveTopic();
 
-  inline bool isActive() { return optionalTopic_.valid(); }
+  inline bool isActive() { return optional_topic_.valid(); }
 
   void relayToNatsStreaming();
 
   const NatsStreamingFilterConfigSharedPtr config_;
-  TopicRetrieverSharedPtr topicRetriever_;
+  TopicRetrieverSharedPtr topic_retriever_;
   ClusterManager &cm_;
   StreamDecoderFilterCallbacks *callbacks_{};
   bool stream_destroyed_{};
-  Optional<Topic> optionalTopic_;
+  Optional<Topic> optional_topic_;
 };
 
 } // namespace Http

@@ -22,8 +22,8 @@ namespace Http {
 
 NatsStreamingFilter::NatsStreamingFilter(
     NatsStreamingFilterConfigSharedPtr config,
-    TopicRetrieverSharedPtr topicRetriever, ClusterManager &cm)
-    : config_(config), topicRetriever_(topicRetriever), cm_(cm) {}
+    TopicRetrieverSharedPtr topic_retriever, ClusterManager &cm)
+    : config_(config), topic_retriever_(topic_retriever), cm_(cm) {}
 
 NatsStreamingFilter::~NatsStreamingFilter() {}
 
@@ -94,7 +94,7 @@ void NatsStreamingFilter::retrieveTopic() {
     return;
   }
 
-  optionalTopic_ = topicRetriever_->getTopic(*routeEntry, *info);
+  optional_topic_ = topic_retriever_->getTopic(*routeEntry, *info);
 }
 
 void NatsStreamingFilter::relayToNatsStreaming() {
