@@ -15,5 +15,6 @@ envoy_cc_mock(
     repository = "@envoy",
     deps = [
         "//source/common/nats:codec_lib",
+        "//source/common/nats:publisher_lib",
     ],
 )

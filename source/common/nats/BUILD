@@ -21,3 +21,14 @@ envoy_cc_library(
         "@envoy//source/common/common:utility_lib",
     ],
 )
+
+envoy_cc_library(
+    name = "publisher_lib",
+    srcs = ["publisher_impl.cc"],
+    hdrs = ["publisher_impl.h"],
+    repository = "@envoy",
+    deps = [
+        "//include/envoy/nats:publisher_interface",
+        "@envoy//source/exe:envoy_common_lib",
+    ],
+)

@@ -14,3 +14,9 @@ envoy_cc_library(
     repository = "@envoy",
     deps = ["@envoy//include/envoy/buffer:buffer_interface"],
 )
+
+envoy_cc_library(
+    name = "publisher_interface",
+    hdrs = ["publisher.h"],
+    repository = "@envoy",
+)

@@ -22,8 +22,10 @@ namespace Http {
 
 NatsStreamingFilter::NatsStreamingFilter(
     NatsStreamingFilterConfigSharedPtr config,
-    SubjectRetrieverSharedPtr subject_retriever, ClusterManager &cm)
-    : config_(config), subject_retriever_(subject_retriever), cm_(cm) {}
+    SubjectRetrieverSharedPtr subject_retriever, ClusterManager &cm,
+    Nats::Publisher::InstancePtr publisher)
+    : config_(config), subject_retriever_(subject_retriever), cm_(cm),
+      publisher_(publisher) {}
 
 NatsStreamingFilter::~NatsStreamingFilter() {}
 

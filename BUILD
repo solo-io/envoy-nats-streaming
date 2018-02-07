@@ -55,6 +55,7 @@ envoy_cc_library(
     repository = "@envoy",
     deps = [
         ":nats_streaming_filter_config",
+        "//include/envoy/nats:publisher_interface",
         "@envoy//source/exe:envoy_common_lib",
     ],
 )
@@ -67,6 +68,7 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":nats_streaming_filter_lib",
+        "//source/common/nats:publisher_lib",
         "@envoy//source/exe:envoy_common_lib",
     ],
 )

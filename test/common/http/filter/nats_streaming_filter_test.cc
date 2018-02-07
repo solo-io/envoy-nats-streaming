@@ -1,5 +1,6 @@
 #include "test/mocks/http/filter/mocks.h"
 #include "test/mocks/http/mocks.h"
+#include "test/mocks/nats/mocks.h"
 #include "test/mocks/upstream/mocks.h"
 
 #include "nats_streaming_filter.h"
@@ -20,7 +21,7 @@ public:
   NatsStreamingFilterTest()
       : config_{new NatsStreamingFilterConfig(proto_config_)},
         subject_retriever_{new NiceMock<MockSubjectRetriever>},
-        filter_(config_, subject_retriever_, cm_) {
+        filter_(config_, subject_retriever_, cm_, publisher_) {
     filter_.setDecoderFilterCallbacks(callbacks_);
   }
 
@@ -29,6 +30,7 @@ protected:
   NatsStreamingFilterConfigSharedPtr config_;
   std::shared_ptr<NiceMock<MockSubjectRetriever>> subject_retriever_;
   NiceMock<Envoy::Upstream::MockClusterManager> cm_;
+  std::shared_ptr<NiceMock<Nats::Publisher::MockInstance>> publisher_;
   NatsStreamingFilter filter_;
   NiceMock<MockStreamDecoderFilterCallbacks> callbacks_;
 };

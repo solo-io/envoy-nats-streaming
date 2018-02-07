@@ -7,6 +7,7 @@
 #include "common/common/macros.h"
 #include "common/config/json_utility.h"
 #include "common/config/solo_well_known_names.h"
+#include "common/nats/publisher_impl.h"
 #include "common/protobuf/utility.h"
 
 #include "metadata_subject_retriever.h"
@@ -83,10 +84,13 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
           Config::SoloMetadataFilters::get().NATS_STREAMING,
           Config::MetadataNatsStreamingKeys::get().SUBJECT);
 
-  return [&context, config, subjectRetriever](
+  Nats::Publisher::InstancePtr publisher =
+      std::make_shared<Nats::Publisher::InstanceImpl>();
+
+  return [&context, config, subjectRetriever, publisher](
              Envoy::Http::FilterChainFactoryCallbacks &callbacks) -> void {
-    auto filter = new Http::NatsStreamingFilter(config, subjectRetriever,
-                                                context.clusterManager());
+    auto filter = new Http::NatsStreamingFilter(
+        config, subjectRetriever, context.clusterManager(), publisher);
     callbacks.addStreamDecoderFilter(
         Http::StreamDecoderFilterSharedPtr{filter});
   };

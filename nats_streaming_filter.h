@@ -1,5 +1,6 @@
 #pragma once
 
+#include "envoy/nats/publisher.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "common/common/logger.h"
@@ -19,7 +20,8 @@ class NatsStreamingFilter : public StreamDecoderFilter,
                             public Logger::Loggable<Logger::Id::filter> {
 public:
   NatsStreamingFilter(NatsStreamingFilterConfigSharedPtr,
-                      SubjectRetrieverSharedPtr, ClusterManager &);
+                      SubjectRetrieverSharedPtr, ClusterManager &,
+                      Nats::Publisher::InstancePtr);
   ~NatsStreamingFilter();
 
   // Http::StreamFilterBase
@@ -41,6 +43,7 @@ private:
   const NatsStreamingFilterConfigSharedPtr config_;
   SubjectRetrieverSharedPtr subject_retriever_;
   ClusterManager &cm_;
+  Nats::Publisher::InstancePtr publisher_;
   StreamDecoderFilterCallbacks *callbacks_{};
   bool stream_destroyed_{};
   Optional<Subject> optional_subject_;

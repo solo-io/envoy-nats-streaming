@@ -15,6 +15,7 @@ envoy_cc_test(
     deps = [
         "//:nats_streaming_filter_lib",
         "//test/mocks/http/filter:http_filter_mocks",
+        "//test/mocks/nats:nats_mocks",
         "@envoy//test/mocks/http:http_mocks",
         "@envoy//test/mocks/upstream:upstream_mocks",
     ],
