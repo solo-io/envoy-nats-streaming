@@ -42,6 +42,10 @@ NatsStreamingFilter::decodeHeaders(Envoy::Http::HeaderMap &headers,
 
   ENVOY_LOG(debug, "decodeHeaders called end = {}", end_stream);
 
+  if (end_stream) {
+    relayToNatsStreaming();
+  }
+
   return Envoy::Http::FilterHeadersStatus::StopIteration;
 }
 
@@ -66,11 +70,14 @@ NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
 
 Envoy::Http::FilterTrailersStatus
 NatsStreamingFilter::decodeTrailers(Envoy::Http::HeaderMap &) {
-  if (isActive()) {
-    relayToNatsStreaming();
+  if (!isActive()) {
+    return Envoy::Http::FilterTrailersStatus::Continue;
   }
 
-  return Envoy::Http::FilterTrailersStatus::Continue;
+  ENVOY_LOG(debug, "decodeTrailers called");
+
+  relayToNatsStreaming();
+  return Envoy::Http::FilterTrailersStatus::StopIteration;
 }
 
 void NatsStreamingFilter::setDecoderFilterCallbacks(
