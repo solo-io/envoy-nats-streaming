@@ -46,6 +46,17 @@ class Instance {
 public:
   virtual ~Instance() {}
 
+  /**
+   * Makes a request.
+   * @param cluster_name supplies the the cluster name.
+   * @param subject supplies the subject.
+   * @param payload supplies the fully buffered payload as buffered by this
+   * filter or previous ones in the filter chain. May be nullptr if nothing has
+   * been buffered.
+   * @param callbacks supplies the request completion callbacks.
+   * @return PublishRequestPtr a handle to the active request or nullptr if the
+   * request could not be made for some reason.
+   */
   virtual PublishRequestPtr makeRequest(const std::string &cluster_name,
                                         const std::string &subject,
                                         const Buffer::Instance *payload,
