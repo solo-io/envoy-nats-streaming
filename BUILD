@@ -42,14 +42,15 @@ envoy_cc_library(
 envoy_cc_library(
     name = "nats_streaming_filter_lib",
     srcs = [
-        "metadata_topic_retriever.cc",
+        "metadata_subject_retriever.cc",
         "nats_streaming_filter.cc",
         "solo_filter_utility.cc",
     ],
     hdrs = [
-        "metadata_topic_retriever.h",
+        "metadata_subject_retriever.h",
         "nats_streaming_filter.h",
         "solo_filter_utility.h",
+        "subject_retriever.h",
     ],
     repository = "@envoy",
     deps = [

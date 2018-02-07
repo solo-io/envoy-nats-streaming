@@ -37,8 +37,8 @@ typedef ConstSingleton<SoloMetadataFilterValues> SoloMetadataFilters;
  */
 class MetadataNatsStreamingKeyValues {
 public:
-  // Key in the NATS Streaming Filter namespace for topic value.
-  const std::string TOPIC = "topic";
+  // Key in the NATS Streaming Filter namespace for subject value.
+  const std::string SUBJECT = "subject";
 };
 
 typedef ConstSingleton<MetadataNatsStreamingKeyValues>

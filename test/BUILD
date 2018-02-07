@@ -30,8 +30,8 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
-    name = "metadata_topic_retriever_test",
-    srcs = ["metadata_topic_retriever_test.cc"],
+    name = "metadata_subject_retriever_test",
+    srcs = ["metadata_subject_retriever_test.cc"],
     repository = "@envoy",
     deps = [
         "//:nats_streaming_filter_lib",
