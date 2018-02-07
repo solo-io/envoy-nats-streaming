@@ -35,11 +35,18 @@ public:
   MockInstance();
   ~MockInstance();
 
-  PublishRequestPtr makeRequest(PublishCallbacks &callbacks) override {
-    return PublishRequestPtr{makeRequest_(callbacks)};
+  PublishRequestPtr makeRequest(const std::string &cluster_name,
+                                const std::string &subject,
+                                const Buffer::Instance *payload,
+                                PublishCallbacks &callbacks) override {
+    return PublishRequestPtr{
+        makeRequest_(cluster_name, subject, payload, callbacks)};
   }
 
-  MOCK_METHOD1(makeRequest_, PublishRequest *(PublishCallbacks &callbacks));
+  MOCK_METHOD4(makeRequest_,
+               PublishRequest *(const std::string &, const std::string &,
+                                const Buffer::Instance *,
+                                PublishCallbacks &callbacks));
 };
 
 } // namespace Publisher

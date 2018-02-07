@@ -11,7 +11,10 @@ public:
   InstanceImpl();
 
   // Nats::Publisher::Instance
-  PublishRequestPtr makeRequest(PublishCallbacks &callbacks) override;
+  PublishRequestPtr makeRequest(const std::string &cluster_name,
+                                const std::string &subject,
+                                const Buffer::Instance *payload,
+                                PublishCallbacks &callbacks) override;
 };
 
 } // namespace Publisher

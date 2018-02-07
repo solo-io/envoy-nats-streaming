@@ -4,6 +4,8 @@
 
 #include "envoy/common/pure.h"
 
+#include "common/buffer/buffer_impl.h"
+
 namespace Envoy {
 namespace Nats {
 namespace Publisher {
@@ -44,7 +46,10 @@ class Instance {
 public:
   virtual ~Instance() {}
 
-  virtual PublishRequestPtr makeRequest(PublishCallbacks &callbacks) PURE;
+  virtual PublishRequestPtr makeRequest(const std::string &cluster_name,
+                                        const std::string &subject,
+                                        const Buffer::Instance *payload,
+                                        PublishCallbacks &callbacks) PURE;
 };
 
 typedef std::shared_ptr<Instance> InstancePtr;

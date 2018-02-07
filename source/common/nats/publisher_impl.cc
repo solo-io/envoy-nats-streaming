@@ -8,7 +8,13 @@ namespace Publisher {
 
 InstanceImpl::InstanceImpl() {}
 
-PublishRequestPtr InstanceImpl::makeRequest(PublishCallbacks &callbacks) {
+PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
+                                            const std::string &subject,
+                                            const Buffer::Instance *payload,
+                                            PublishCallbacks &callbacks) {
+  UNREFERENCED_PARAMETER(cluster_name);
+  UNREFERENCED_PARAMETER(subject);
+  UNREFERENCED_PARAMETER(payload);
   UNREFERENCED_PARAMETER(callbacks);
 
   // TODO(talnordan)
