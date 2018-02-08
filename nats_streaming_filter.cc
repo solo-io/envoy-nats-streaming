@@ -87,6 +87,15 @@ void NatsStreamingFilter::setDecoderFilterCallbacks(
   callbacks_ = &callbacks;
 }
 
+void NatsStreamingFilter::onResponse() {
+  // TODO(talnordan): This is a dummy implementation that aborts the request.
+  callbacks_->requestInfo().setResponseFlag(
+      RequestInfo::ResponseFlag::FaultInjected);
+  Http::Utility::sendLocalReply(*callbacks_, stream_destroyed_,
+                                static_cast<Http::Code>(500),
+                                "nats streaming filter abort");
+}
+
 void NatsStreamingFilter::retrieveSubject() {
   const Envoy::Router::RouteEntry *routeEntry =
       SoloFilterUtility::resolveRouteEntry(callbacks_);
@@ -100,13 +109,21 @@ void NatsStreamingFilter::retrieveSubject() {
 }
 
 void NatsStreamingFilter::relayToNatsStreaming() {
-  // TODO(talnordan): This is a dummy implementation that aborts the request.
+  ASSERT(optional_subject_.valid());
 
-  callbacks_->requestInfo().setResponseFlag(
-      RequestInfo::ResponseFlag::FaultInjected);
-  Http::Utility::sendLocalReply(*callbacks_, stream_destroyed_,
-                                static_cast<Http::Code>(500),
-                                "nats streaming filter abort");
+  const std::string *cluster_name =
+      SoloFilterUtility::resolveClusterName(callbacks_);
+  if (!cluster_name) {
+    // TODO(talnordan): Consider changing the return type to `bool` and
+    // returning `false`.
+    return;
+  }
+
+  const std::string &subject = optional_subject_.value();
+  const Buffer::Instance *payload = callbacks_->decodingBuffer();
+
+  // TODO(talnordan): Keep the return value of `makeRequest()`.
+  publisher_->makeRequest(*cluster_name, subject, payload, *this);
 }
 
 } // namespace Http

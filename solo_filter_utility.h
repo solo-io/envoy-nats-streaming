@@ -27,6 +27,15 @@ public:
    */
   static const Router::RouteEntry *
   resolveRouteEntry(Http::StreamDecoderFilterCallbacks *decoder_callbacks);
+
+  /**
+   * Resolve the cluster name.
+   * @param decoder_callbacks supplies the decoder callback of filter.
+   * @return the name of the cluster selected for this request. Note: this will
+   * be nullptr if no route was selected.
+   */
+  static const std::string *
+  resolveClusterName(Http::StreamDecoderFilterCallbacks *decoder_callbacks);
 };
 
 } // namespace Http

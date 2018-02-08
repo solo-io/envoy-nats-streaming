@@ -17,6 +17,7 @@ namespace Http {
 using Envoy::Upstream::ClusterManager;
 
 class NatsStreamingFilter : public StreamDecoderFilter,
+                            public Nats::Publisher::PublishCallbacks,
                             public Logger::Loggable<Logger::Id::filter> {
 public:
   NatsStreamingFilter(NatsStreamingFilterConfigSharedPtr,
@@ -32,6 +33,9 @@ public:
   FilterDataStatus decodeData(Buffer::Instance &, bool) override;
   FilterTrailersStatus decodeTrailers(HeaderMap &) override;
   void setDecoderFilterCallbacks(StreamDecoderFilterCallbacks &) override;
+
+  // Nats::Publisher::PublishCallbacks
+  virtual void onResponse() override;
 
 private:
   void retrieveSubject();

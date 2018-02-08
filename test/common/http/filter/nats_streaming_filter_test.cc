@@ -10,7 +10,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using testing::InSequence;
 using testing::NiceMock;
 
 namespace Envoy {
@@ -21,6 +20,7 @@ public:
   NatsStreamingFilterTest()
       : config_{new NatsStreamingFilterConfig(proto_config_)},
         subject_retriever_{new NiceMock<MockSubjectRetriever>},
+        publisher_{new NiceMock<Nats::Publisher::MockInstance>},
         filter_(config_, subject_retriever_, cm_, publisher_) {
     filter_.setDecoderFilterCallbacks(callbacks_);
   }
@@ -75,6 +75,8 @@ TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::StopIteration,
             filter_.decodeHeaders(headers, true));
+
+  // TODO(talnordan): EXPECT_CALL(*publisher_, makeRequest(_, _, _, _));
 }
 
 TEST_F(NatsStreamingFilterTest, RequestWithData) {

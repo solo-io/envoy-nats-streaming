@@ -18,6 +18,7 @@ PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
   UNREFERENCED_PARAMETER(callbacks);
 
   // TODO(talnordan)
+  callbacks.onResponse();
   return nullptr;
 }
 

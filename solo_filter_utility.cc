@@ -13,5 +13,15 @@ const Router::RouteEntry *SoloFilterUtility::resolveRouteEntry(
   return route->routeEntry();
 }
 
+const std::string *SoloFilterUtility::resolveClusterName(
+    Http::StreamDecoderFilterCallbacks *decoder_callbacks) {
+  const Router::RouteEntry *route_entry = resolveRouteEntry(decoder_callbacks);
+  if (!route_entry) {
+    return nullptr;
+  }
+
+  return &route_entry->clusterName();
+}
+
 } // namespace Http
 } // namespace Envoy
