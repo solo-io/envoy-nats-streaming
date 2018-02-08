@@ -11,6 +11,7 @@
 #include "gtest/gtest.h"
 
 using testing::NiceMock;
+using testing::_;
 
 namespace Envoy {
 namespace Http {
@@ -36,12 +37,24 @@ protected:
 };
 
 TEST_F(NatsStreamingFilterTest, NoSubjectHeaderOnlyRequest) {
+  // `subject_retriever_->getSubject()` should be called.
+  EXPECT_CALL(*subject_retriever_, getSubject(_, _));
+
+  // `publisher_->makeRequest()` should not be called.
+  EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(0);
+
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::Continue,
             filter_.decodeHeaders(headers, true));
 }
 
 TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithData) {
+  // `subject_retriever_->getSubject()` should be called.
+  EXPECT_CALL(*subject_retriever_, getSubject(_, _));
+
+  // `publisher_->makeRequest()` should not be called.
+  EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(0);
+
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::Continue,
             filter_.decodeHeaders(headers, false));
@@ -54,6 +67,12 @@ TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithData) {
 }
 
 TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithTrailers) {
+  // `subject_retriever_->getSubject()` should be called.
+  EXPECT_CALL(*subject_retriever_, getSubject(_, _));
+
+  // `publisher_->makeRequest()` should not be called.
+  EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(0);
+
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::Continue,
             filter_.decodeHeaders(headers, false));
@@ -70,16 +89,26 @@ TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithTrailers) {
 }
 
 TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
+  // `subject_retriever_->getSubject()` should be called.
+  EXPECT_CALL(*subject_retriever_, getSubject(_, _));
+
+  // `publisher_->makeRequest()` should be called exactly once.
+  EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(1);
+
   subject_retriever_->subject_ = Optional<Subject>("Subject1");
 
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::StopIteration,
             filter_.decodeHeaders(headers, true));
-
-  // TODO(talnordan): EXPECT_CALL(*publisher_, makeRequest(_, _, _, _));
 }
 
 TEST_F(NatsStreamingFilterTest, RequestWithData) {
+  // `subject_retriever_->getSubject()` should be called.
+  EXPECT_CALL(*subject_retriever_, getSubject(_, _));
+
+  // `publisher_->makeRequest()` should be called exactly once.
+  EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(1);
+
   subject_retriever_->subject_ = Optional<Subject>("Subject1");
 
   TestHeaderMapImpl headers;
@@ -96,6 +125,12 @@ TEST_F(NatsStreamingFilterTest, RequestWithData) {
 }
 
 TEST_F(NatsStreamingFilterTest, RequestWithTrailers) {
+  // `subject_retriever_->getSubject()` should be called.
+  EXPECT_CALL(*subject_retriever_, getSubject(_, _));
+
+  // `publisher_->makeRequest()` should be called exactly once.
+  EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(1);
+
   subject_retriever_->subject_ = Optional<Subject>("Subject1");
 
   TestHeaderMapImpl headers;
