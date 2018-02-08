@@ -21,6 +21,8 @@ public:
                PublishRequestPtr(const std::string &, const std::string &,
                                  const Buffer::Instance *,
                                  PublishCallbacks &callbacks));
+
+  const Buffer::Instance *last_payload_;
 };
 
 } // namespace Publisher

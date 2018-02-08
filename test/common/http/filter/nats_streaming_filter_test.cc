@@ -11,6 +11,7 @@
 #include "gtest/gtest.h"
 
 using testing::NiceMock;
+using testing::Ref;
 using testing::_;
 
 namespace Envoy {
@@ -93,13 +94,17 @@ TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
   EXPECT_CALL(*subject_retriever_, getSubject(_, _));
 
   // `publisher_->makeRequest()` should be called exactly once.
-  EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(1);
+  EXPECT_CALL(*publisher_,
+              makeRequest("fake_cluster", "Subject1", nullptr, Ref(filter_)))
+      .Times(1);
 
   subject_retriever_->subject_ = Optional<Subject>("Subject1");
 
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::StopIteration,
             filter_.decodeHeaders(headers, true));
+
+  ASSERT(!publisher_->last_payload_);
 }
 
 TEST_F(NatsStreamingFilterTest, RequestWithData) {
@@ -107,21 +112,33 @@ TEST_F(NatsStreamingFilterTest, RequestWithData) {
   EXPECT_CALL(*subject_retriever_, getSubject(_, _));
 
   // `publisher_->makeRequest()` should be called exactly once.
-  EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(1);
+  EXPECT_CALL(*publisher_,
+              makeRequest("fake_cluster", "Subject1", _, Ref(filter_)))
+      .Times(1);
 
   subject_retriever_->subject_ = Optional<Subject>("Subject1");
+
+  callbacks_.buffer_.reset(new Buffer::OwnedImpl);
 
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::StopIteration,
             filter_.decodeHeaders(headers, false));
 
   Buffer::OwnedImpl data1("hello");
+  callbacks_.buffer_->add(data1);
   EXPECT_EQ(FilterDataStatus::StopIterationAndBuffer,
             filter_.decodeData(data1, false));
 
   Buffer::OwnedImpl data2(" world");
+  callbacks_.buffer_->add(data2);
   EXPECT_EQ(FilterDataStatus::StopIterationNoBuffer,
             filter_.decodeData(data2, true));
+
+  const Buffer::OwnedImpl expectedPayload("hello world");
+
+  // TODO(talnordan): Compare buffer content too.
+  ASSERT(publisher_->last_payload_);
+  ASSERT_EQ(expectedPayload.length(), publisher_->last_payload_->length());
 }
 
 TEST_F(NatsStreamingFilterTest, RequestWithTrailers) {
@@ -129,25 +146,37 @@ TEST_F(NatsStreamingFilterTest, RequestWithTrailers) {
   EXPECT_CALL(*subject_retriever_, getSubject(_, _));
 
   // `publisher_->makeRequest()` should be called exactly once.
-  EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(1);
+  EXPECT_CALL(*publisher_,
+              makeRequest("fake_cluster", "Subject1", _, Ref(filter_)))
+      .Times(1);
 
   subject_retriever_->subject_ = Optional<Subject>("Subject1");
+
+  callbacks_.buffer_.reset(new Buffer::OwnedImpl);
 
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::StopIteration,
             filter_.decodeHeaders(headers, false));
 
   Buffer::OwnedImpl data1("hello");
+  callbacks_.buffer_->add(data1);
   EXPECT_EQ(FilterDataStatus::StopIterationAndBuffer,
             filter_.decodeData(data1, false));
 
   Buffer::OwnedImpl data2(" world");
+  callbacks_.buffer_->add(data2);
   EXPECT_EQ(FilterDataStatus::StopIterationAndBuffer,
             filter_.decodeData(data2, false));
 
   TestHeaderMapImpl trailers;
   EXPECT_EQ(Envoy::Http::FilterTrailersStatus::StopIteration,
             filter_.decodeTrailers(trailers));
+
+  const Buffer::OwnedImpl expectedPayload("hello world");
+
+  // TODO(talnordan): Compare buffer content too.
+  ASSERT(publisher_->last_payload_);
+  ASSERT_EQ(expectedPayload.length(), publisher_->last_payload_->length());
 }
 
 } // namespace Http

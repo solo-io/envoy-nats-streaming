@@ -24,6 +24,8 @@ MockInstance::MockInstance() {
             UNREFERENCED_PARAMETER(subject);
             UNREFERENCED_PARAMETER(payload);
 
+            last_payload_ = payload;
+
             callbacks.onResponse();
             return nullptr;
           }));
