@@ -44,12 +44,10 @@ envoy_cc_library(
     srcs = [
         "metadata_subject_retriever.cc",
         "nats_streaming_filter.cc",
-        "solo_filter_utility.cc",
     ],
     hdrs = [
         "metadata_subject_retriever.h",
         "nats_streaming_filter.h",
-        "solo_filter_utility.h",
         "subject_retriever.h",
     ],
     repository = "@envoy",
@@ -57,6 +55,7 @@ envoy_cc_library(
         ":nats_streaming_filter_config",
         "//include/envoy/nats:publisher_interface",
         "@envoy//source/exe:envoy_common_lib",
+        "@envoy_common//source/common/http:solo_filter_utility_lib",
     ],
 )
 
