@@ -395,6 +395,36 @@ private:
   ConfigImpl config_;
 };
 
+template <typename T, typename D> class ManagerImpl : public Manager<T> {
+public:
+  ManagerImpl(Upstream::ClusterManager &cm, ClientFactory<T> &client_factory,
+              ThreadLocal::SlotAllocator &tls,
+              const std::chrono::milliseconds &op_timeout)
+      : cm_(cm), client_factory_(client_factory), tls_(tls),
+        op_timeout_(op_timeout) {}
+
+  // Nats::ConnPool::Manager
+  Instance<T> &getInstance(const std::string &cluster_name) override {
+    auto existing_instance = instance_per_cluster_name_.find(cluster_name);
+    if (existing_instance != instance_per_cluster_name_.end()) {
+      return *existing_instance->second;
+    }
+
+    auto *new_instance = new InstanceImpl<T, D>(
+        cluster_name, cm_, client_factory_, tls_, op_timeout_);
+    // TODO(talnordan): emplace?
+    instance_per_cluster_name_[cluster_name] = InstancePtr<T>(new_instance);
+    return *new_instance;
+  }
+
+private:
+  Upstream::ClusterManager &cm_;
+  ClientFactory<T> &client_factory_;
+  ThreadLocal::SlotAllocator &tls_;
+  const std::chrono::milliseconds &op_timeout_;
+  std::map<std::string, InstancePtr<T>> instance_per_cluster_name_;
+};
+
 } // namespace ConnPool
 } // namespace Tcp
 } // namespace Envoy

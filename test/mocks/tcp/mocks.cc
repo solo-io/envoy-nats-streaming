@@ -54,6 +54,10 @@ MockClient::MockClient() {
 
 MockClient::~MockClient() {}
 
+MockClientFactory::MockClientFactory() {}
+
+MockClientFactory::~MockClientFactory() {}
+
 MockPoolRequest::MockPoolRequest() {}
 MockPoolRequest::~MockPoolRequest() {}
 

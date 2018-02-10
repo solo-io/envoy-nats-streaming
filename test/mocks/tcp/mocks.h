@@ -57,6 +57,20 @@ public:
   std::list<Network::ConnectionCallbacks *> callbacks_;
 };
 
+class MockClientFactory : public ClientFactory<T> {
+public:
+  MockClientFactory();
+  ~MockClientFactory();
+
+  // Tcp::ConnPool::ClientFactory
+  ClientPtr<T> create(Upstream::HostConstSharedPtr host, Event::Dispatcher &,
+                      const Config &) override {
+    return ClientPtr<T>{create_(host)};
+  }
+
+  MOCK_METHOD1(create_, Client<T> *(Upstream::HostConstSharedPtr host));
+};
+
 class MockPoolRequest : public PoolRequest {
 public:
   MockPoolRequest();
@@ -91,7 +105,7 @@ public:
   MockManager();
   ~MockManager();
 
-  MOCK_METHOD1(getInstance, Instance<T> *(const std::string &cluster_name));
+  MOCK_METHOD1(getInstance, Instance<T> &(const std::string &cluster_name));
 };
 
 } // namespace ConnPool

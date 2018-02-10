@@ -405,6 +405,8 @@ public:
   }
 
   // Tcp::ConnPool::ClientFactory
+  // TODO(talnordan): Use `MockClientFactory` instead of having this class
+  // implemnting `ClientFactory<T>.
   ClientPtr<T> create(Upstream::HostConstSharedPtr host, Event::Dispatcher &,
                       const Config &) override {
     return ClientPtr<T>{create_(host)};
@@ -522,6 +524,23 @@ TEST_F(TcpConnPoolImplTest, RemoteClose) {
   client->raiseEvent(Network::ConnectionEvent::RemoteClose);
 
   tls_.shutdownThread();
+}
+
+class TcpConnPoolManagerImplTest : public testing::Test {
+public:
+  TcpConnPoolManagerImplTest() {
+    conn_pool_mgr_.reset(new ManagerImpl<T, MockDecoder>(
+        cm_, factory_, tls_, createConnPoolSettings()));
+  }
+
+  NiceMock<Upstream::MockClusterManager> cm_;
+  NiceMock<MockClientFactory> factory_;
+  NiceMock<ThreadLocal::MockInstance> tls_;
+  ManagerPtr<T> conn_pool_mgr_;
+};
+
+TEST_F(TcpConnPoolManagerImplTest, Dummy) {
+  // TODO(talnordan)
 }
 
 } // namespace ConnPool
