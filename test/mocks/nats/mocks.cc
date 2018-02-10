@@ -14,6 +14,9 @@ bool operator==(const Message &lhs, const Message &rhs) {
 
 namespace Publisher {
 
+MockPublishCallbacks::MockPublishCallbacks() {}
+MockPublishCallbacks::~MockPublishCallbacks() {}
+
 MockInstance::MockInstance() {
   ON_CALL(*this, makeRequest(_, _, _, _))
       .WillByDefault(Invoke(

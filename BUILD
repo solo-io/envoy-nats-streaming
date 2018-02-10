@@ -67,7 +67,9 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":nats_streaming_filter_lib",
+        "//source/common/nats:codec_lib",
         "//source/common/nats:publisher_lib",
+        "//source/common/tcp:conn_pool_lib",
         "@envoy//source/exe:envoy_common_lib",
     ],
 )

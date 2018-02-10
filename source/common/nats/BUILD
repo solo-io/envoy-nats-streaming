@@ -28,7 +28,9 @@ envoy_cc_library(
     hdrs = ["publisher_impl.h"],
     repository = "@envoy",
     deps = [
+        "//include/envoy/nats:codec_interface",
         "//include/envoy/nats:publisher_interface",
+        "//include/envoy/tcp:conn_pool_interface",
         "@envoy//source/exe:envoy_common_lib",
     ],
 )

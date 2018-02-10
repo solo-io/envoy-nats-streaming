@@ -7,8 +7,10 @@
 #include "common/common/macros.h"
 #include "common/config/json_utility.h"
 #include "common/config/solo_well_known_names.h"
+#include "common/nats/codec_impl.h"
 #include "common/nats/publisher_impl.h"
 #include "common/protobuf/utility.h"
+#include "common/tcp/conn_pool_impl.h"
 
 #include "metadata_subject_retriever.h"
 #include "nats_streaming_filter.h"
@@ -84,8 +86,12 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
           Config::SoloMetadataFilters::get().NATS_STREAMING,
           Config::MetadataNatsStreamingKeys::get().SUBJECT);
 
+  // TODO(talnordan): Change type to `Tcp::ConnPool::ManagerPtr<Nats::Message>`
+  // and initialize.
+  Tcp::ConnPool::ManagerPtr<std::string> conn_pool_manager;
+
   Nats::Publisher::InstancePtr publisher =
-      std::make_shared<Nats::Publisher::InstanceImpl>();
+      std::make_shared<Nats::Publisher::InstanceImpl>(conn_pool_manager);
 
   return [&context, config, subjectRetriever, publisher](
              Envoy::Http::FilterChainFactoryCallbacks &callbacks) -> void {

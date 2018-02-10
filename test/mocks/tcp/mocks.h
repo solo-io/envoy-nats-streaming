@@ -76,6 +76,24 @@ public:
   MOCK_METHOD0(onFailure, void());
 };
 
+class MockInstance : public Instance<T> {
+public:
+  MockInstance();
+  ~MockInstance();
+
+  MOCK_METHOD3(makeRequest,
+               PoolRequest *(const std::string &hash_key, const T &request,
+                             PoolCallbacks<T> &callbacks));
+};
+
+class MockManager : public Manager<T> {
+public:
+  MockManager();
+  ~MockManager();
+
+  MOCK_METHOD1(getInstance, Instance<T> *(const std::string &cluster_name));
+};
+
 } // namespace ConnPool
 
 } // namespace Tcp

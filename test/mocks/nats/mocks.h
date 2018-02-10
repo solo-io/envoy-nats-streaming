@@ -12,6 +12,14 @@ bool operator==(const Message &lhs, const Message &rhs);
 
 namespace Publisher {
 
+class MockPublishCallbacks : public PublishCallbacks {
+public:
+  MockPublishCallbacks();
+  ~MockPublishCallbacks();
+
+  MOCK_METHOD0(onResponse, void());
+};
+
 class MockInstance : public Instance {
 public:
   MockInstance();

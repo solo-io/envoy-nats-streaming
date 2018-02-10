@@ -60,6 +60,12 @@ MockPoolRequest::~MockPoolRequest() {}
 MockPoolCallbacks::MockPoolCallbacks() {}
 MockPoolCallbacks::~MockPoolCallbacks() {}
 
+MockInstance::MockInstance() {}
+MockInstance::~MockInstance() {}
+
+MockManager::MockManager() {}
+MockManager::~MockManager() {}
+
 } // namespace ConnPool
 
 } // namespace Tcp

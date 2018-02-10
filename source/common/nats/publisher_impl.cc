@@ -6,7 +6,9 @@ namespace Envoy {
 namespace Nats {
 namespace Publisher {
 
-InstanceImpl::InstanceImpl() {}
+InstanceImpl::InstanceImpl(
+    Tcp::ConnPool::ManagerPtr<std::string> conn_pool_manager)
+    : conn_pool_manager_(std::move(conn_pool_manager)) {}
 
 PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
                                             const std::string &subject,
