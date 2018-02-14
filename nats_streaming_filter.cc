@@ -64,7 +64,10 @@ NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
 
   if (end_stream) {
     relayToNatsStreaming();
-    return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
+
+    // TODO(talnordan): We need to make sure that life time of the buffer makes
+    // sense.
+    return Envoy::Http::FilterDataStatus::StopIterationAndBuffer;
   }
 
   return Envoy::Http::FilterDataStatus::StopIterationAndBuffer;
@@ -123,6 +126,7 @@ void NatsStreamingFilter::relayToNatsStreaming() {
   const Buffer::Instance *payload = callbacks_->decodingBuffer();
 
   // TODO(talnordan): Keep the return value of `makeRequest()`.
+  // TODO(talnordan): Who is responsible for freeing `payload`'s memory?
   publisher_->makeRequest(*cluster_name, subject, payload, *this);
 }
 
