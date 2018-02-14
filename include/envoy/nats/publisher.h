@@ -36,6 +36,9 @@ public:
    * Called when the response is ready.
    */
   virtual void onResponse() PURE;
+
+  // TODO(talnordan): Consider adding `onFailure()`, similarly to the HTTP
+  // client.
 };
 
 /**
