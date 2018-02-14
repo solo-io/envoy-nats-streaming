@@ -293,7 +293,7 @@ private:
         auto client_to_delete = parent_.client_map_.find(host_);
         ASSERT(client_to_delete != parent_.client_map_.end());
         parent_.dispatcher_.deferredDelete(
-            std::move(client_to_delete->second->redis_client_));
+            std::move(client_to_delete->second->client_));
         parent_.client_map_.erase(client_to_delete);
       }
     }
@@ -302,7 +302,7 @@ private:
 
     ThreadLocalPool &parent_;
     Upstream::HostConstSharedPtr host_;
-    ClientPtr<T> redis_client_;
+    ClientPtr<T> client_;
   };
 
   typedef std::unique_ptr<ThreadLocalActiveClient> ThreadLocalActiveClientPtr;
@@ -328,7 +328,7 @@ private:
     ~ThreadLocalPool() {
       local_host_set_member_update_cb_handle_->remove();
       while (!client_map_.empty()) {
-        client_map_.begin()->second->redis_client_->close();
+        client_map_.begin()->second->client_->close();
       }
     }
     PoolRequest *makeRequest(const std::string &hash_key, const T &request,
@@ -344,22 +344,22 @@ private:
       if (!client) {
         client.reset(new ThreadLocalActiveClient(*this));
         client->host_ = host;
-        client->redis_client_ =
+        client->client_ =
             parent_.client_factory_.create(host, dispatcher_, parent_.config_);
-        client->redis_client_->addConnectionCallbacks(*client);
+        client->client_->addConnectionCallbacks(*client);
       }
 
-      return client->redis_client_->makeRequest(request, callbacks);
+      return client->client_->makeRequest(request, callbacks);
     }
     void
     onHostsRemoved(const std::vector<Upstream::HostSharedPtr> &hosts_removed) {
       for (const auto &host : hosts_removed) {
         auto it = client_map_.find(host);
         if (it != client_map_.end()) {
-          // We don't currently support any type of draining for redis
+          // We don't currently support any type of draining for
           // connections. If a host is gone, we just close the connection. This
           // will fail any pending requests.
-          it->second->redis_client_->close();
+          it->second->client_->close();
         }
       }
     }
