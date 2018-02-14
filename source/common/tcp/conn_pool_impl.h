@@ -401,28 +401,44 @@ public:
               ThreadLocal::SlotAllocator &tls,
               const std::chrono::milliseconds &op_timeout)
       : cm_(cm), client_factory_(client_factory), tls_(tls),
-        op_timeout_(op_timeout) {}
+        slot_(tls_.allocateSlot()), op_timeout_(op_timeout) {
+    slot_->set([this](Event::Dispatcher &dispatcher)
+                   -> ThreadLocal::ThreadLocalObjectSharedPtr {
+      return std::make_shared<ThreadLocalPoolManager>(*this, dispatcher);
+    });
+  }
 
   // Nats::ConnPool::Manager
   Instance<T> &getInstance(const std::string &cluster_name) override {
-    auto existing_instance = instance_per_cluster_name_.find(cluster_name);
-    if (existing_instance != instance_per_cluster_name_.end()) {
-      return *existing_instance->second;
-    }
-
-    auto *new_instance = new InstanceImpl<T, D>(
-        cluster_name, cm_, client_factory_, tls_, op_timeout_);
-    // TODO(talnordan): emplace?
-    instance_per_cluster_name_[cluster_name] = InstancePtr<T>(new_instance);
-    return *new_instance;
+    return slot_->getTyped<ThreadLocalPoolManager>().getInstance(cluster_name);
   }
 
 private:
+  struct ThreadLocalPoolManager : public ThreadLocal::ThreadLocalObject {
+    ThreadLocalPoolManager(ManagerImpl &parent, Event::Dispatcher &dispatcher)
+        : parent_(parent), dispatcher_(dispatcher) {}
+
+    Instance<T> &getInstance(const std::string &cluster_name) {
+      InstancePtr<T> &instance = instance_map_[cluster_name];
+      if (!instance) {
+        instance.reset(new InstanceImpl<T, D>(
+            cluster_name, parent_.cm_, parent_.client_factory_, parent_.tls_,
+            parent_.op_timeout_));
+      }
+
+      return *instance;
+    }
+
+    ManagerImpl &parent_;
+    Event::Dispatcher &dispatcher_;
+    std::unordered_map<std::string, InstancePtr<T>> instance_map_;
+  };
+
   Upstream::ClusterManager &cm_;
   ClientFactory<T> &client_factory_;
   ThreadLocal::SlotAllocator &tls_;
+  ThreadLocal::SlotPtr slot_;
   const std::chrono::milliseconds &op_timeout_;
-  std::map<std::string, InstancePtr<T>> instance_per_cluster_name_;
 };
 
 } // namespace ConnPool
