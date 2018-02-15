@@ -131,7 +131,7 @@ TEST_F(NatsStreamingFilterTest, RequestWithData) {
 
   Buffer::OwnedImpl data2(" world");
   callbacks_.buffer_->add(data2);
-  EXPECT_EQ(FilterDataStatus::StopIterationNoBuffer,
+  EXPECT_EQ(FilterDataStatus::StopIterationAndBuffer,
             filter_.decodeData(data2, true));
 
   const Buffer::OwnedImpl expectedPayload("hello world");
