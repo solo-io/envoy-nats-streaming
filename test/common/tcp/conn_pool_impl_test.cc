@@ -539,8 +539,25 @@ public:
   ManagerPtr<T> conn_pool_mgr_;
 };
 
-TEST_F(TcpConnPoolManagerImplTest, Dummy) {
-  // TODO(talnordan)
+TEST_F(TcpConnPoolManagerImplTest, SameCluster) {
+  auto &instance1 = conn_pool_mgr_->getInstance("cluster1");
+  auto &instance2 = conn_pool_mgr_->getInstance("cluster1");
+  EXPECT_EQ(&instance1, &instance2);
+}
+
+TEST_F(TcpConnPoolManagerImplTest, DifferentClusters) {
+  auto &instance1 = conn_pool_mgr_->getInstance("cluster1");
+  auto &instance2 = conn_pool_mgr_->getInstance("cluster2");
+  EXPECT_NE(&instance1, &instance2);
+}
+
+TEST_F(TcpConnPoolManagerImplTest, InterleavedClusters) {
+  auto &instance1 = conn_pool_mgr_->getInstance("cluster1");
+  auto &instance2 = conn_pool_mgr_->getInstance("cluster2");
+  auto &instance3 = conn_pool_mgr_->getInstance("cluster1");
+
+  EXPECT_NE(&instance1, &instance2);
+  EXPECT_EQ(&instance1, &instance3);
 }
 
 } // namespace ConnPool
