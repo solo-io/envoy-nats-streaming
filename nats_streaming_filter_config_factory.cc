@@ -86,9 +86,14 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
           Config::SoloMetadataFilters::get().NATS_STREAMING,
           Config::MetadataNatsStreamingKeys::get().SUBJECT);
 
-  // TODO(talnordan): Change type to `Tcp::ConnPool::ManagerPtr<Nats::Message>`
-  // and initialize.
-  Tcp::ConnPool::ManagerPtr<std::string> conn_pool_manager;
+  Tcp::ConnPool::ClientFactory<Nats::Message> &client_factory =
+      Tcp::ConnPool::ClientFactoryImpl<Nats::Message, Nats::EncoderImpl,
+                                       Nats::DecoderImpl>::instance_;
+
+  Tcp::ConnPool::ManagerPtr<Nats::Message> conn_pool_manager = std::make_shared<
+      Tcp::ConnPool::ManagerImpl<Nats::Message, Nats::DecoderImpl>>(
+      context.clusterManager(), client_factory, context.threadLocal(),
+      config->op_timeout());
 
   Nats::Publisher::InstancePtr publisher =
       std::make_shared<Nats::Publisher::InstanceImpl>(conn_pool_manager);

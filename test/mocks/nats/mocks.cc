@@ -38,5 +38,12 @@ MockInstance::~MockInstance() {}
 
 } // namespace Publisher
 
+namespace ConnPool {
+
+MockManager::MockManager() {}
+MockManager::~MockManager() {}
+
+} // namespace ConnPool
+
 } // namespace Nats
 } // namespace Envoy

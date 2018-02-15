@@ -10,7 +10,7 @@ namespace Publisher {
 
 class InstanceImpl : public Instance {
 public:
-  InstanceImpl(Tcp::ConnPool::ManagerPtr<std::string> conn_pool_manager);
+  InstanceImpl(Tcp::ConnPool::ManagerPtr<Message> conn_pool_manager);
 
   // Nats::Publisher::Instance
   PublishRequestPtr makeRequest(const std::string &cluster_name,
@@ -19,8 +19,7 @@ public:
                                 PublishCallbacks &callbacks) override;
 
 private:
-  // TODO(talnordan): Use `Tcp::ConnPool::ManagerPtr<Message>`.
-  Tcp::ConnPool::ManagerPtr<std::string> conn_pool_manager_;
+  Tcp::ConnPool::ManagerPtr<Message> conn_pool_manager_;
 };
 
 } // namespace Publisher

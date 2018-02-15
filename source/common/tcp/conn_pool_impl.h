@@ -1,5 +1,7 @@
 #pragma once
 
+#include <type_traits>
+
 #include "envoy/event/dispatcher.h"
 #include "envoy/network/connection.h"
 #include "envoy/tcp/conn_pool.h"
@@ -244,6 +246,11 @@ private:
 
 template <typename T, typename E, typename D>
 class ClientFactoryImpl : public ClientFactory<T> {
+  static_assert(std::is_base_of<Encoder<T>, E>::value,
+                "Encoder<T> should be a base of E");
+  static_assert(std::is_base_of<Decoder, D>::value,
+                "Decoder should be a base of D");
+
 public:
   // Tcp::ConnPool::ClientFactoryImpl
   ClientPtr<T> create(Upstream::HostConstSharedPtr host,
@@ -258,6 +265,9 @@ public:
 private:
   DecoderFactoryImpl<T, D> decoder_factory_;
 };
+
+template <typename T, typename E, typename D>
+ClientFactoryImpl<T, E, D> ClientFactoryImpl<T, E, D>::instance_;
 
 template <typename T, typename D> class InstanceImpl : public Instance<T> {
 public:

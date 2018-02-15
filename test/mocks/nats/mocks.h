@@ -35,5 +35,18 @@ public:
 
 } // namespace Publisher
 
+namespace ConnPool {
+
+class MockManager : public Tcp::ConnPool::Manager<Message> {
+public:
+  MockManager();
+  ~MockManager();
+
+  MOCK_METHOD1(getInstance, Tcp::ConnPool::Instance<Message> &(
+                                const std::string &cluster_name));
+};
+
+} // namespace ConnPool
+
 } // namespace Nats
 } // namespace Envoy

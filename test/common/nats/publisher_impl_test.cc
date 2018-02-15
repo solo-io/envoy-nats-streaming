@@ -1,7 +1,6 @@
 #include "common/nats/publisher_impl.h"
 
 #include "test/mocks/nats/mocks.h"
-#include "test/mocks/tcp/mocks.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -12,10 +11,10 @@ namespace Publisher {
 
 class NatsPublisherImplTest : public testing::Test {
 public:
-  Tcp::ConnPool::ManagerPtr<std::string> conn_pool_manager_ =
-      std::make_shared<Tcp::ConnPool::MockManager>();
+  Tcp::ConnPool::ManagerPtr<Message> conn_pool_manager_ =
+      std::make_shared<Nats::ConnPool::MockManager>();
   InstanceImpl publisher_{
-      Tcp::ConnPool::ManagerPtr<std::string>{conn_pool_manager_}};
+      Tcp::ConnPool::ManagerPtr<Message>{conn_pool_manager_}};
   MockPublishCallbacks callbacks_;
   PublishRequestPtr handle_;
 };
