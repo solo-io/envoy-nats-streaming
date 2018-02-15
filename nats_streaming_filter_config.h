@@ -13,12 +13,12 @@ class NatsStreamingFilterConfig {
 
 public:
   NatsStreamingFilterConfig(const ProtoConfig &proto_config)
-      : placeholder_(proto_config.placeholder()) {}
+      : op_timeout_(PROTOBUF_GET_MS_REQUIRED(proto_config, op_timeout)) {}
 
-  const std::string &placeholder() const { return placeholder_; }
+  const std::chrono::milliseconds &op_timeout() const { return op_timeout_; }
 
 private:
-  const std::string placeholder_;
+  const std::chrono::milliseconds op_timeout_;
 };
 
 typedef std::shared_ptr<NatsStreamingFilterConfig>

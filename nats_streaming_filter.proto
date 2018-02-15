@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/duration.proto";
+
 package envoy.api.v2.filter.http;
 
 // [#protodoc-title: NatsStreaming]
@@ -7,5 +9,5 @@ package envoy.api.v2.filter.http;
 
 // [#proto-status: experimental]
 message NatsStreaming {
-    string placeholder = 1;
+    google.protobuf.Duration op_timeout = 1;
 }

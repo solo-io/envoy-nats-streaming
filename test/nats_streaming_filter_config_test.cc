@@ -19,7 +19,7 @@ constructNatsStrteamingFilterConfigFromJson(const Json::Object &config) {
 
 } // namespace
 
-TEST(NatsStreamingFilterConfigTest, NoPlaceholder) {
+TEST(NatsStreamingFilterConfigTest, Empty) {
   std::string json = R"EOF(
     {
     }
@@ -33,10 +33,10 @@ TEST(NatsStreamingFilterConfigTest, NoPlaceholder) {
                Envoy::EnvoyException);
 }
 
-TEST(NatsStreamingFilterConfigTest, Placeholder) {
+TEST(NatsStreamingFilterConfigTest, op_timeout_ms) {
   std::string json = R"EOF(
     {
-      "placeholder" : "a"
+      "op_timeout_ms" : 17
     }
     )EOF";
 
@@ -44,7 +44,7 @@ TEST(NatsStreamingFilterConfigTest, Placeholder) {
       Envoy::Json::Factory::loadFromString(json);
   auto config = constructNatsStrteamingFilterConfigFromJson(*json_config);
 
-  EXPECT_EQ(config.placeholder(), "a");
+  EXPECT_EQ(config.op_timeout(), std::chrono::milliseconds(17));
 }
 
 } // namespace Envoy

@@ -69,7 +69,7 @@ NatsStreamingFilterConfigFactory::translateNatsStreamingFilter(
   json_config.validateSchema(NATS_STREAMING_HTTP_FILTER_SCHEMA);
 
   envoy::api::v2::filter::http::NatsStreaming proto_config;
-  JSON_UTIL_SET_STRING(json_config, proto_config, placeholder);
+  JSON_UTIL_SET_DURATION(json_config, proto_config, op_timeout);
   return proto_config;
 }
 
@@ -107,12 +107,14 @@ const std::string
   {
     "$schema": "http://json-schema.org/schema#",
     "type" : "object",
-    "properties" : {
-      "placeholder": {
-        "type" : "string"
+    "properties":{
+      "op_timeout_ms" : {
+        "type" : "integer",
+        "minimum" : 0,
+        "exclusiveMinimum" : true
       }
     },
-    "required": ["placeholder"],
+    "required": ["op_timeout_ms"],
     "additionalProperties" : false
   }
   )EOF");

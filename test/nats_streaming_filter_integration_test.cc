@@ -11,7 +11,9 @@ const std::string DEFAULT_NATS_STREAMING_FILTER =
     R"EOF(
 name: io.solo.nats_streaming
 config:
-    placeholder: a
+  op_timeout:
+    seconds: 0
+    nanos: 20000000
 )EOF";
 
 class NatsStreamingFilterIntegrationTest
