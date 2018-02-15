@@ -431,6 +431,8 @@ private:
     Instance<T> &getInstance(const std::string &cluster_name) {
       InstancePtr<T> &instance = instance_map_[cluster_name];
       if (!instance) {
+        // TODO(talnordan): Under what circumstances should we remove a
+        // connection pool instance from the map?
         instance.reset(new InstanceImpl<T, D>(
             cluster_name, parent_.cm_, parent_.client_factory_, parent_.tls_,
             parent_.op_timeout_));
