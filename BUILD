@@ -12,64 +12,26 @@ envoy_package()
 
 load("@envoy_api//bazel:api_build_system.bzl", "api_proto_library")
 
-envoy_cc_binary(
-    name = "envoy",
-    repository = "@envoy",
-    deps = [
-        ":nats_streaming_filter_config_factory",
-        "@envoy//source/exe:envoy_main_entry_lib",
-    ],
-)
-
 api_proto_library(
     name = "nats_streaming_filter_proto",
     srcs = ["nats_streaming_filter.proto"],
 )
 
 envoy_cc_library(
-    name = "nats_streaming_filter_config",
-    hdrs = [
-        "common/config/solo_well_known_names.h",
-        "nats_streaming_filter_config.h",
-    ],
-    repository = "@envoy",
-    deps = [
-        ":nats_streaming_filter_proto_cc",
-        "@envoy//source/exe:envoy_common_lib",
-    ],
-)
-
-envoy_cc_library(
-    name = "nats_streaming_filter_lib",
-    srcs = [
-        "metadata_subject_retriever.cc",
-        "nats_streaming_filter.cc",
-    ],
-    hdrs = [
-        "metadata_subject_retriever.h",
-        "nats_streaming_filter.h",
-        "subject_retriever.h",
-    ],
-    repository = "@envoy",
-    deps = [
-        ":nats_streaming_filter_config",
-        "//include/envoy/nats:publisher_interface",
-        "@envoy//source/exe:envoy_common_lib",
-        "@envoy_common//source/common/http:solo_filter_utility_lib",
-    ],
-)
-
-envoy_cc_library(
-    name = "nats_streaming_filter_config_factory",
-    srcs = ["nats_streaming_filter_config_factory.cc"],
-    hdrs = ["nats_streaming_filter_config_factory.h"],
+    name = "filter_lib",
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        ":nats_streaming_filter_lib",
-        "//source/common/nats:codec_lib",
-        "//source/common/nats:publisher_lib",
-        "//source/common/tcp:conn_pool_lib",
+        "//source/server/config/http:nats_streaming_filter_config_lib",
         "@envoy//source/exe:envoy_common_lib",
+    ],
+)
+
+envoy_cc_binary(
+    name = "envoy",
+    repository = "@envoy",
+    deps = [
+        ":filter_lib",
+        "@envoy//source/exe:envoy_main_entry_lib",
     ],
 )

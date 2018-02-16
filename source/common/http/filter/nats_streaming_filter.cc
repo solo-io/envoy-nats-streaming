@@ -1,4 +1,4 @@
-#include "nats_streaming_filter.h"
+#include "common/http/filter/nats_streaming_filter.h"
 
 #include <algorithm>
 #include <list>

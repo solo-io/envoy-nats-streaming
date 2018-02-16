@@ -4,12 +4,12 @@
 #include "envoy/upstream/cluster_manager.h"
 
 #include "common/common/logger.h"
+#include "common/http/filter/nats_streaming_filter_config.h"
+#include "common/http/filter/subject_retriever.h"
 
 #include "server/config/network/http_connection_manager.h"
 
 #include "nats_streaming_filter.pb.h"
-#include "nats_streaming_filter_config.h"
-#include "subject_retriever.h"
 
 namespace Envoy {
 namespace Http {

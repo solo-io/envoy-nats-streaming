@@ -1,12 +1,12 @@
 #include <iostream>
 
 #include "common/config/solo_well_known_names.h"
+#include "common/http/filter/metadata_subject_retriever.h"
 #include "common/protobuf/utility.h"
 
 #include "test/test_common/utility.h"
 
 #include "fmt/format.h"
-#include "metadata_subject_retriever.h"
 
 namespace Envoy {
 

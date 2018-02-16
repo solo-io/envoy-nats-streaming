@@ -1,6 +1,9 @@
 #pragma once
 
+#include <chrono>
 #include <string>
+
+#include "common/protobuf/utility.h"
 
 #include "nats_streaming_filter.pb.h"
 

@@ -1,13 +1,15 @@
+#include "common/http/filter/nats_streaming_filter.h"
+#include "common/http/filter/nats_streaming_filter_config.h"
+#include "common/http/filter/subject_retriever.h"
+
+#include "server/config/http/nats_streaming_filter_config_factory.h"
+
 #include "test/mocks/http/filter/mocks.h"
 #include "test/mocks/http/mocks.h"
 #include "test/mocks/nats/mocks.h"
 #include "test/mocks/upstream/mocks.h"
 
-#include "nats_streaming_filter.h"
 #include "nats_streaming_filter.pb.h"
-#include "nats_streaming_filter_config.h"
-#include "nats_streaming_filter_config_factory.h"
-#include "subject_retriever.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

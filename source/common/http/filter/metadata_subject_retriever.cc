@@ -1,9 +1,7 @@
-#include "metadata_subject_retriever.h"
+#include "common/http/filter/metadata_subject_retriever.h"
 
 #include "common/common/macros.h"
 #include "common/config/metadata.h"
-
-#include "nats_streaming_filter.pb.h"
 
 namespace Envoy {
 namespace Http {

@@ -1,4 +1,4 @@
-#include "nats_streaming_filter_config_factory.h"
+#include "server/config/http/nats_streaming_filter_config_factory.h"
 
 #include <string>
 
@@ -7,15 +7,15 @@
 #include "common/common/macros.h"
 #include "common/config/json_utility.h"
 #include "common/config/solo_well_known_names.h"
+#include "common/http/filter/metadata_subject_retriever.h"
+#include "common/http/filter/nats_streaming_filter.h"
+#include "common/http/filter/nats_streaming_filter_config.h"
 #include "common/nats/codec_impl.h"
 #include "common/nats/publisher_impl.h"
 #include "common/protobuf/utility.h"
 #include "common/tcp/conn_pool_impl.h"
 
-#include "metadata_subject_retriever.h"
-#include "nats_streaming_filter.h"
 #include "nats_streaming_filter.pb.h"
-#include "nats_streaming_filter_config.h"
 
 namespace Envoy {
 namespace Server {

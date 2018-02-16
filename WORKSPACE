@@ -8,7 +8,7 @@ http_archive(
     url = "https://github.com/envoyproxy/envoy/archive/" + ENVOY_SHA + ".zip",
 )
 
-ENVOY_COMMON_SHA = "206e73c336cd0730cbf2f8bfb3250f75662abb3a"  # Feb 8, 2018 (Merge pull request #2 from talnordan/util-1)
+ENVOY_COMMON_SHA = "8666e4e2a3c48c51f16c5c1dc1caae166dda84be"  # Feb 15, 2018 ( pragma once and formatting. )
 
 git_repository(
     name = "envoy_common",

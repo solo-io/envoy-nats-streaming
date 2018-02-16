@@ -9,11 +9,21 @@ load(
 envoy_package()
 
 envoy_cc_test(
+    name = "metadata_subject_retriever_test",
+    srcs = ["metadata_subject_retriever_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common/http/filter:nats_streaming_filter_lib",
+        "@envoy//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
     name = "nats_streaming_filter_test",
     srcs = ["nats_streaming_filter_test.cc"],
     repository = "@envoy",
     deps = [
-        "//:nats_streaming_filter_config_factory",
+        "//source/server/config/http:nats_streaming_filter_config_lib",
         "//test/mocks/http/filter:http_filter_mocks",
         "//test/mocks/nats:nats_mocks",
         "@envoy//test/mocks/http:http_mocks",

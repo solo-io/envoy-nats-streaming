@@ -2,7 +2,8 @@
 
 #include <string>
 
-#include "subject_retriever.h"
+#include "common/http/filter/subject_retriever.h"
+
 #include "gmock/gmock.h"
 
 namespace Envoy {

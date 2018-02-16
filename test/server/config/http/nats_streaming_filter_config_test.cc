@@ -1,7 +1,8 @@
-#include "test/test_common/utility.h"
+#include "common/http/filter/nats_streaming_filter_config.h"
 
-#include "nats_streaming_filter_config.h"
-#include "nats_streaming_filter_config_factory.h"
+#include "server/config/http/nats_streaming_filter_config_factory.h"
+
+#include "test/test_common/utility.h"
 
 namespace Envoy {
 
