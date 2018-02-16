@@ -6,7 +6,7 @@
 
 #include "common/common/macros.h"
 #include "common/config/json_utility.h"
-#include "common/config/solo_well_known_names.h"
+#include "common/config/nats_streaming_well_known_names.h"
 #include "common/http/filter/metadata_subject_retriever.h"
 #include "common/http/filter/nats_streaming_filter.h"
 #include "common/http/filter/nats_streaming_filter_config.h"

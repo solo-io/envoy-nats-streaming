@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "common/config/solo_well_known_names.h"
+#include "common/config/nats_streaming_well_known_names.h"
 #include "common/http/filter/metadata_subject_retriever.h"
 #include "common/protobuf/utility.h"
 

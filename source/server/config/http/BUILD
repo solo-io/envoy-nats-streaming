@@ -18,7 +18,7 @@ envoy_cc_library(
     hdrs = ["nats_streaming_filter_config_factory.h"],
     repository = "@envoy",
     deps = [
-        "//source/common/config:solo_well_known_names_lib",
+        "//source/common/config:nats_streaming_well_known_names_lib",
         "//source/common/http/filter:nats_streaming_filter_lib",
         "//source/common/nats:codec_lib",
         "//source/common/nats:publisher_lib",
