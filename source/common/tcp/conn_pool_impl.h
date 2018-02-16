@@ -414,7 +414,8 @@ public:
         slot_(tls_.allocateSlot()), op_timeout_(op_timeout) {
     slot_->set([this](Event::Dispatcher &dispatcher)
                    -> ThreadLocal::ThreadLocalObjectSharedPtr {
-      return std::make_shared<ThreadLocalPoolManager>(*this, dispatcher);
+      UNREFERENCED_PARAMETER(dispatcher);
+      return std::make_shared<ThreadLocalPoolManager>(*this);
     });
   }
 
@@ -425,8 +426,7 @@ public:
 
 private:
   struct ThreadLocalPoolManager : public ThreadLocal::ThreadLocalObject {
-    ThreadLocalPoolManager(ManagerImpl &parent, Event::Dispatcher &dispatcher)
-        : parent_(parent), dispatcher_(dispatcher) {}
+    ThreadLocalPoolManager(ManagerImpl &parent) : parent_(parent) {}
 
     Instance<T> &getInstance(const std::string &cluster_name) {
       InstancePtr<T> &instance = instance_map_[cluster_name];
@@ -442,7 +442,6 @@ private:
     }
 
     ManagerImpl &parent_;
-    Event::Dispatcher &dispatcher_;
     std::unordered_map<std::string, InstancePtr<T>> instance_map_;
   };
 
