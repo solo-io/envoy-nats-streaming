@@ -13,6 +13,10 @@ To build the Envoy static binary:
 
 To run the all tests:
 
+`bazel test //test/...`
+
+To run the all tests in debug mode:
+
 `bazel test //test/... -c dbg`
 
 To run integration tests using a clang build:
