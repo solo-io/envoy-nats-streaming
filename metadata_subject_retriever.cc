@@ -44,7 +44,7 @@ MetadataSubjectRetriever::getSubject(const FieldMap &route_metadata_fields,
  */
 Optional<const MetadataSubjectRetriever::FieldMap *>
 MetadataSubjectRetriever::filterMetadataFields(
-    const envoy::api::v2::Metadata &metadata, const std::string &filter) {
+    const envoy::api::v2::core::Metadata &metadata, const std::string &filter) {
   const auto filter_it = metadata.filter_metadata().find(filter);
   if (filter_it == metadata.filter_metadata().end()) {
     return {};

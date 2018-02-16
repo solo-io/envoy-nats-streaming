@@ -44,7 +44,7 @@ private:
   filterMetadataFields(const T &entity, const std::string &filter_name);
 
   static inline Optional<const FieldMap *>
-  filterMetadataFields(const envoy::api::v2::Metadata &metadata,
+  filterMetadataFields(const envoy::api::v2::core::Metadata &metadata,
                        const std::string &filter_name);
 
   static inline Optional<const std::string *>

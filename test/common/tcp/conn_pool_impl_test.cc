@@ -72,7 +72,7 @@ public:
     Upstream::MockHost::MockCreateConnectionData conn_info;
     conn_info.connection_ = upstream_connection_;
     EXPECT_CALL(*connect_or_op_timer_, enableTimer(_));
-    EXPECT_CALL(*host_, createConnection_(_)).WillOnce(Return(conn_info));
+    EXPECT_CALL(*host_, createConnection_(_, _)).WillOnce(Return(conn_info));
     EXPECT_CALL(*upstream_connection_, addReadFilter(_))
         .WillOnce(SaveArg<0>(&upstream_read_filter_));
     EXPECT_CALL(*upstream_connection_, connect());
@@ -144,7 +144,7 @@ TEST_F(TcpClientImplTest, Basic) {
                     putResult(Upstream::Outlier::Result::SUCCESS));
         callbacks_->onValue(std::move(response2));
       }));
-  upstream_read_filter_->onData(fake_data);
+  upstream_read_filter_->onData(fake_data, false);
 
   EXPECT_CALL(*upstream_connection_,
               close(Network::ConnectionCloseType::NoFlush));
@@ -192,7 +192,7 @@ TEST_F(TcpClientImplTest, Cancel) {
                     putResult(Upstream::Outlier::Result::SUCCESS));
         callbacks_->onValue(std::move(response2));
       }));
-  upstream_read_filter_->onData(fake_data);
+  upstream_read_filter_->onData(fake_data, false);
 
   EXPECT_CALL(*upstream_connection_,
               close(Network::ConnectionCloseType::NoFlush));
@@ -286,7 +286,7 @@ TEST_F(TcpClientImplTest, ProtocolError) {
               close(Network::ConnectionCloseType::NoFlush));
   EXPECT_CALL(callbacks1, onFailure());
   EXPECT_CALL(*connect_or_op_timer_, disableTimer());
-  upstream_read_filter_->onData(fake_data);
+  upstream_read_filter_->onData(fake_data, false);
 
   EXPECT_EQ(1UL, host_->cluster_.stats_.upstream_cx_protocol_error_.value());
 }
@@ -390,7 +390,7 @@ TEST(TcpClientFactoryImplTest, Basic) {
   Upstream::MockHost::MockCreateConnectionData conn_info;
   conn_info.connection_ = new NiceMock<Network::MockClientConnection>();
   std::shared_ptr<Upstream::MockHost> host(new NiceMock<Upstream::MockHost>());
-  EXPECT_CALL(*host, createConnection_(_)).WillOnce(Return(conn_info));
+  EXPECT_CALL(*host, createConnection_(_, _)).WillOnce(Return(conn_info));
   NiceMock<Event::MockDispatcher> dispatcher;
   ConfigImpl config(createConnPoolSettings());
   ClientPtr<T> client = factory.create(host, dispatcher, config);

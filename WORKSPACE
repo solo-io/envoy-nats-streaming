@@ -1,6 +1,6 @@
 workspace(name="nats_streaming_filter")
 
-ENVOY_SHA = "29989a38c017d3be5aa3c735a797fcf58b754fe5"  # Jan 16, 2018 (rds: expose route metadata to requestinfo (#2392))
+ENVOY_SHA = "f79a62b7cc9ca55d20104379ee0576617630cdaa"  # Feb 15, 2018 ( test: fix nit after #2591 (#2601) )
 
 http_archive(
     name = "envoy",

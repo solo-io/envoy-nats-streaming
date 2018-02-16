@@ -41,7 +41,8 @@ public:
                              const Config &config) {
     std::unique_ptr<ClientImpl> client(new ClientImpl(
         host, dispatcher, std::move(encoder), decoder_factory, config));
-    client->connection_ = host->createConnection(dispatcher).connection_;
+    client->connection_ =
+        host->createConnection(dispatcher, nullptr).connection_;
     client->connection_->addConnectionCallbacks(*client);
     client->connection_->addReadFilter(
         Network::ReadFilterSharedPtr{new UpstreamReadFilter(*client)});
@@ -71,7 +72,7 @@ public:
 
     pending_requests_.emplace_back(*this, callbacks);
     encoder_->encode(request, encoder_buffer_);
-    connection_->write(encoder_buffer_);
+    connection_->write(encoder_buffer_, false);
 
     // Only boost the op timeout if:
     // - We are not already connected. Otherwise, we are governed by the connect
@@ -93,7 +94,7 @@ private:
     UpstreamReadFilter(ClientImpl<T> &parent) : parent_(parent) {}
 
     // Network::ReadFilter
-    Network::FilterStatus onData(Buffer::Instance &data) override {
+    Network::FilterStatus onData(Buffer::Instance &data, bool) override {
       parent_.onData(data);
       return Network::FilterStatus::Continue;
     }
