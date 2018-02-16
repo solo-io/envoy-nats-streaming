@@ -13,7 +13,7 @@ To build the Envoy static binary:
 
 To run the all tests:
 
-`bazel test //test/common/http/filter:* //test/common/nats:* //test/common/tcp:* //test/integration:* //test/server/config/http:*`
+`bazel test //test/... -c dbg`
 
 To run integration tests using a clang build:
 
