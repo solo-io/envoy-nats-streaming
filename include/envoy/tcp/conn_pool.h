@@ -142,8 +142,6 @@ template <typename T> class Manager {
 public:
   virtual ~Manager() {}
 
-  // TODO(talnordan): Change return type to `Instance<T> &`. A pointer is used
-  // merely to allow for a dummy implementation that returns `nullptr`.
   virtual Instance<T> &getInstance(const std::string &cluster_name) PURE;
 };
 
