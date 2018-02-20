@@ -7,9 +7,11 @@ namespace Envoy {
 namespace Http {
 
 MockSubjectRetriever::MockSubjectRetriever() {
-  ON_CALL(*this, getSubject(_, _))
-      .WillByDefault(Invoke([this](const RouteEntry &, const ClusterInfo &)
-                                -> Optional<Subject> { return subject_; }));
+  ON_CALL(*this, getSubject(_))
+      .WillByDefault(
+          Invoke([this](const MetadataAccessor &) -> Optional<Subject> {
+            return subject_;
+          }));
 }
 
 MockSubjectRetriever::~MockSubjectRetriever() {}

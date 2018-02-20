@@ -82,9 +82,7 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
           Http::NatsStreamingFilterConfig(proto_config));
 
   Http::SubjectRetrieverSharedPtr subjectRetriever =
-      std::make_shared<Http::MetadataSubjectRetriever>(
-          Config::SoloMetadataFilters::get().NATS_STREAMING,
-          Config::MetadataNatsStreamingKeys::get().SUBJECT);
+      std::make_shared<Http::MetadataSubjectRetriever>();
 
   Tcp::ConnPool::ClientFactory<Nats::Message> &client_factory =
       Tcp::ConnPool::ClientFactoryImpl<Nats::Message, Nats::EncoderImpl,
@@ -101,7 +99,8 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
   return [&context, config, subjectRetriever, publisher](
              Envoy::Http::FilterChainFactoryCallbacks &callbacks) -> void {
     auto filter = new Http::NatsStreamingFilter(
-        config, subjectRetriever, context.clusterManager(), publisher);
+        context, Config::SoloMetadataFilters::get().NATS_STREAMING, config,
+        subjectRetriever, publisher);
     callbacks.addStreamDecoderFilter(
         Http::StreamDecoderFilterSharedPtr{filter});
   };

@@ -27,6 +27,7 @@ envoy_cc_test(
         "//test/mocks/http/filter:http_filter_mocks",
         "//test/mocks/nats:nats_mocks",
         "@envoy//test/mocks/http:http_mocks",
+        "@envoy//test/mocks/server:server_mocks",
         "@envoy//test/mocks/upstream:upstream_mocks",
     ],
 )

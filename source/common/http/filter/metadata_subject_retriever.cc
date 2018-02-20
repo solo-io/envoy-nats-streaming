@@ -2,55 +2,30 @@
 
 #include "common/common/macros.h"
 #include "common/config/metadata.h"
+#include "common/config/nats_streaming_well_known_names.h"
 
 namespace Envoy {
 namespace Http {
 
 using Config::Metadata;
 
-MetadataSubjectRetriever::MetadataSubjectRetriever(
-    const std::string &filter_key, const std::string &subject_key)
-    : filter_key_(filter_key), subject_key_(subject_key) {}
+MetadataSubjectRetriever::MetadataSubjectRetriever() {}
 
 Optional<Subject>
-MetadataSubjectRetriever::getSubject(const RouteEntry &routeEntry,
-                                     const ClusterInfo &info) {
-  auto route_metadata_fields = filterMetadataFields(routeEntry, filter_key_);
+MetadataSubjectRetriever::getSubject(const MetadataAccessor &metadataccessor) {
+  Optional<const ProtobufWkt::Struct *> maybe_route_spec =
+      metadataccessor.getRouteMetadata();
 
-  auto cluster_metadata_fields = filterMetadataFields(info, filter_key_);
-
-  if (!route_metadata_fields.valid() || !cluster_metadata_fields.valid()) {
+  if (!maybe_route_spec.valid()) {
     return {};
   }
 
-  return getSubject(*route_metadata_fields.value(),
-                    *cluster_metadata_fields.value());
-}
+  const ProtobufWkt::Struct &route_spec = *maybe_route_spec.value();
 
-Optional<Subject>
-MetadataSubjectRetriever::getSubject(const FieldMap &route_metadata_fields,
-                                     const FieldMap &cluster_metadata_fields) {
-  UNREFERENCED_PARAMETER(cluster_metadata_fields);
-  auto subject = nonEmptyStringValue(route_metadata_fields, subject_key_);
+  auto subject = nonEmptyStringValue(
+      route_spec, Config::MetadataNatsStreamingKeys::get().SUBJECT);
   return (subject.valid()) ? Optional<Subject>(*subject.value())
                            : Optional<Subject>{};
-}
-
-/**
- * TODO(talnordan): Consider moving the `Struct` extraction logic to `Metadata`:
- * envoy/source/common/config/metadata.cc
- */
-Optional<const MetadataSubjectRetriever::FieldMap *>
-MetadataSubjectRetriever::filterMetadataFields(
-    const envoy::api::v2::core::Metadata &metadata, const std::string &filter) {
-  const auto filter_it = metadata.filter_metadata().find(filter);
-  if (filter_it == metadata.filter_metadata().end()) {
-    return {};
-  }
-
-  const auto &filter_metadata_struct = filter_it->second;
-  const auto &filter_metadata_fields = filter_metadata_struct.fields();
-  return Optional<const FieldMap *>(&filter_metadata_fields);
 }
 
 /**
@@ -58,14 +33,14 @@ MetadataSubjectRetriever::filterMetadataFields(
  * envoy/source/common/config/metadata.cc
  */
 Optional<const std::string *>
-MetadataSubjectRetriever::nonEmptyStringValue(const FieldMap &fields,
+MetadataSubjectRetriever::nonEmptyStringValue(const ProtobufWkt::Struct &spec,
                                               const std::string &key) {
-  const auto fields_it = fields.find(key);
-  if (fields_it == fields.end()) {
+
+  Optional<const Protobuf::Value *> maybe_value = value(spec, key);
+  if (!maybe_value.valid()) {
     return {};
   }
-
-  const auto &value = fields_it->second;
+  const auto &value = *maybe_value.value();
   if (value.kind_case() != ProtobufWkt::Value::kStringValue) {
     return {};
   }
@@ -76,6 +51,19 @@ MetadataSubjectRetriever::nonEmptyStringValue(const FieldMap &fields,
   }
 
   return Optional<const std::string *>(&string_value);
+}
+
+Optional<const Protobuf::Value *>
+MetadataSubjectRetriever::value(const Protobuf::Struct &spec,
+                                const std::string &key) {
+  const auto &fields = spec.fields();
+  const auto fields_it = fields.find(key);
+  if (fields_it == fields.end()) {
+    return {};
+  }
+
+  const auto &value = fields_it->second;
+  return &value;
 }
 
 } // namespace Http

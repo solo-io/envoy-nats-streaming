@@ -20,28 +20,19 @@ namespace Envoy {
 namespace Http {
 
 NatsStreamingFilter::NatsStreamingFilter(
+    Server::Configuration::FactoryContext &ctx, const std::string &name,
     NatsStreamingFilterConfigSharedPtr config,
-    SubjectRetrieverSharedPtr subject_retriever, ClusterManager &cm,
-    Nats::Publisher::InstancePtr publisher)
-    : config_(config), subject_retriever_(subject_retriever), cm_(cm),
-      publisher_(publisher) {}
+    SubjectRetrieverSharedPtr retreiver, Nats::Publisher::InstancePtr publisher)
+    : FunctionalFilterBase(ctx, name), config_(config),
+      subject_retriever_(retreiver), publisher_(publisher) {}
 
 NatsStreamingFilter::~NatsStreamingFilter() {}
 
-void NatsStreamingFilter::onDestroy() { stream_destroyed_ = true; }
-
 Envoy::Http::FilterHeadersStatus
-NatsStreamingFilter::decodeHeaders(Envoy::Http::HeaderMap &headers,
-                                   bool end_stream) {
+NatsStreamingFilter::functionDecodeHeaders(Envoy::Http::HeaderMap &headers,
+                                           bool end_stream) {
   UNREFERENCED_PARAMETER(headers);
-
-  retrieveSubject();
-
-  if (!isActive()) {
-    return Envoy::Http::FilterHeadersStatus::Continue;
-  }
-
-  ENVOY_LOG(debug, "decodeHeaders called end = {}", end_stream);
+  RELEASE_ASSERT(isActive());
 
   if (end_stream) {
     relayToNatsStreaming();
@@ -51,15 +42,10 @@ NatsStreamingFilter::decodeHeaders(Envoy::Http::HeaderMap &headers,
 }
 
 Envoy::Http::FilterDataStatus
-NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
-                                bool end_stream) {
-
-  if (!isActive()) {
-    return Envoy::Http::FilterDataStatus::Continue;
-  }
-
-  ENVOY_LOG(debug, "decodeData called end = {} data = {}", end_stream,
-            data.length());
+NatsStreamingFilter::functionDecodeData(Envoy::Buffer::Instance &data,
+                                        bool end_stream) {
+  UNREFERENCED_PARAMETER(data);
+  RELEASE_ASSERT(isActive());
 
   if (end_stream) {
     relayToNatsStreaming();
@@ -73,48 +59,38 @@ NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
 }
 
 Envoy::Http::FilterTrailersStatus
-NatsStreamingFilter::decodeTrailers(Envoy::Http::HeaderMap &) {
-  if (!isActive()) {
-    return Envoy::Http::FilterTrailersStatus::Continue;
-  }
-
-  ENVOY_LOG(debug, "decodeTrailers called");
+NatsStreamingFilter::functionDecodeTrailers(Envoy::Http::HeaderMap &) {
+  RELEASE_ASSERT(isActive());
 
   relayToNatsStreaming();
   return Envoy::Http::FilterTrailersStatus::StopIteration;
 }
 
-void NatsStreamingFilter::setDecoderFilterCallbacks(
-    Envoy::Http::StreamDecoderFilterCallbacks &callbacks) {
-  callbacks_ = &callbacks;
+bool NatsStreamingFilter::retrieveFunction(
+    const MetadataAccessor &meta_accessor) {
+  retrieveSubject(meta_accessor);
+  return isActive();
 }
 
 void NatsStreamingFilter::onResponse() {
   // TODO(talnordan): This is a dummy implementation that aborts the request.
-  callbacks_->requestInfo().setResponseFlag(
+  decoder_callbacks_->requestInfo().setResponseFlag(
       RequestInfo::ResponseFlag::FaultInjected);
-  Http::Utility::sendLocalReply(*callbacks_, stream_destroyed_,
+  Http::Utility::sendLocalReply(*decoder_callbacks_, stream_destroyed_,
                                 static_cast<Http::Code>(500),
                                 "nats streaming filter abort");
 }
 
-void NatsStreamingFilter::retrieveSubject() {
-  const Envoy::Router::RouteEntry *routeEntry =
-      SoloFilterUtility::resolveRouteEntry(callbacks_);
-  Upstream::ClusterInfoConstSharedPtr info =
-      FilterUtility::resolveClusterInfo(callbacks_, cm_);
-  if (routeEntry == nullptr || info == nullptr) {
-    return;
-  }
-
-  optional_subject_ = subject_retriever_->getSubject(*routeEntry, *info);
+void NatsStreamingFilter::retrieveSubject(
+    const MetadataAccessor &meta_accessor) {
+  optional_subject_ = subject_retriever_->getSubject(meta_accessor);
 }
 
 void NatsStreamingFilter::relayToNatsStreaming() {
   ASSERT(optional_subject_.valid());
 
   const std::string *cluster_name =
-      SoloFilterUtility::resolveClusterName(callbacks_);
+      SoloFilterUtility::resolveClusterName(decoder_callbacks_);
   if (!cluster_name) {
     // TODO(talnordan): Consider changing the return type to `bool` and
     // returning `false`.
@@ -122,7 +98,7 @@ void NatsStreamingFilter::relayToNatsStreaming() {
   }
 
   const std::string &subject = optional_subject_.value();
-  const Buffer::Instance *payload = callbacks_->decodingBuffer();
+  const Buffer::Instance *payload = decoder_callbacks_->decodingBuffer();
 
   // TODO(talnordan): Keep the return value of `makeRequest()`.
   // TODO(talnordan): Who is responsible for freeing `payload`'s memory?

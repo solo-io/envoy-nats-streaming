@@ -36,7 +36,9 @@ envoy_cc_library(
     ],
     repository = "@envoy",
     deps = [
+        "//source/common/config:nats_streaming_well_known_names_lib",
         "@envoy//source/exe:envoy_common_lib",
+        "@envoy_common//source/common/http:functional_stream_decoder_base_lib",
         "@envoy_common//source/common/http:solo_filter_utility_lib",
     ],
 )
@@ -55,6 +57,7 @@ envoy_cc_library(
         "//source/common/http/filter:nats_streaming_filter_config",
         "//source/common/http/filter:subject_retriever_lib",
         "@envoy//source/exe:envoy_common_lib",
+        "@envoy_common//source/common/http:functional_stream_decoder_base_lib",
         "@envoy_common//source/common/http:solo_filter_utility_lib",
     ],
 )

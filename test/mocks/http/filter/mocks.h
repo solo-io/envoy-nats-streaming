@@ -14,8 +14,8 @@ public:
   MockSubjectRetriever();
   ~MockSubjectRetriever();
 
-  MOCK_METHOD2(getSubject, Optional<Subject>(const RouteEntry &routeEntry,
-                                             const ClusterInfo &info));
+  MOCK_METHOD1(getSubject,
+               Optional<Subject>(const MetadataAccessor &metadataccessor));
 
   Optional<Subject> subject_;
 };

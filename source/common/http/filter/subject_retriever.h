@@ -4,22 +4,19 @@
 
 #include "envoy/common/optional.h"
 #include "envoy/common/pure.h"
-#include "envoy/router/router.h"
-#include "envoy/upstream/upstream.h"
+#include "envoy/http/metadata_accessor.h"
 
 namespace Envoy {
 namespace Http {
 
-using Router::RouteEntry;
-using Upstream::ClusterInfo;
-
 using Subject = std::string;
 
+// TODO(talnordan): Make generic and move to `envoy-common`.
 class SubjectRetriever {
 public:
   virtual ~SubjectRetriever() {}
-  virtual Optional<Subject> getSubject(const RouteEntry &routeEntry,
-                                       const ClusterInfo &info) PURE;
+  virtual Optional<Subject>
+  getSubject(const MetadataAccessor &metadataccessor) PURE;
 };
 
 typedef std::shared_ptr<SubjectRetriever> SubjectRetrieverSharedPtr;

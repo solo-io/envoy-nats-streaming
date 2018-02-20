@@ -1,13 +1,10 @@
 #pragma once
 
 #include "envoy/nats/publisher.h"
-#include "envoy/upstream/cluster_manager.h"
 
-#include "common/common/logger.h"
 #include "common/http/filter/nats_streaming_filter_config.h"
 #include "common/http/filter/subject_retriever.h"
-
-#include "server/config/network/http_connection_manager.h"
+#include "common/http/functional_stream_decoder_base.h"
 
 #include "nats_streaming_filter.pb.h"
 
@@ -16,29 +13,27 @@ namespace Http {
 
 using Envoy::Upstream::ClusterManager;
 
-class NatsStreamingFilter : public StreamDecoderFilter,
-                            public Nats::Publisher::PublishCallbacks,
-                            public Logger::Loggable<Logger::Id::filter> {
+class NatsStreamingFilter : public FunctionalFilterBase,
+                            public Nats::Publisher::PublishCallbacks {
 public:
-  NatsStreamingFilter(NatsStreamingFilterConfigSharedPtr,
-                      SubjectRetrieverSharedPtr, ClusterManager &,
-                      Nats::Publisher::InstancePtr);
+  NatsStreamingFilter(Server::Configuration::FactoryContext &ctx,
+                      const std::string &name,
+                      NatsStreamingFilterConfigSharedPtr config,
+                      SubjectRetrieverSharedPtr retreiver,
+                      Nats::Publisher::InstancePtr publisher);
   ~NatsStreamingFilter();
 
-  // Http::StreamFilterBase
-  void onDestroy() override;
-
-  // Http::StreamDecoderFilter
-  FilterHeadersStatus decodeHeaders(HeaderMap &, bool) override;
-  FilterDataStatus decodeData(Buffer::Instance &, bool) override;
-  FilterTrailersStatus decodeTrailers(HeaderMap &) override;
-  void setDecoderFilterCallbacks(StreamDecoderFilterCallbacks &) override;
+  // Http::FunctionalFilterBase
+  FilterHeadersStatus functionDecodeHeaders(HeaderMap &, bool) override;
+  FilterDataStatus functionDecodeData(Buffer::Instance &, bool) override;
+  FilterTrailersStatus functionDecodeTrailers(HeaderMap &) override;
+  bool retrieveFunction(const MetadataAccessor &meta_accessor) override;
 
   // Nats::Publisher::PublishCallbacks
   virtual void onResponse() override;
 
 private:
-  void retrieveSubject();
+  void retrieveSubject(const MetadataAccessor &meta_accessor);
 
   inline bool isActive() { return optional_subject_.valid(); }
 
@@ -46,9 +41,7 @@ private:
 
   const NatsStreamingFilterConfigSharedPtr config_;
   SubjectRetrieverSharedPtr subject_retriever_;
-  ClusterManager &cm_;
   Nats::Publisher::InstancePtr publisher_;
-  StreamDecoderFilterCallbacks *callbacks_{};
   bool stream_destroyed_{};
   Optional<Subject> optional_subject_;
 };
