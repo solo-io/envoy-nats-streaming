@@ -9,7 +9,7 @@
 namespace Envoy {
 namespace Http {
 
-using Subject = std::string;
+using Subject = const std::string *;
 
 // TODO(talnordan): Make generic and move to `envoy-common`.
 class SubjectRetriever {

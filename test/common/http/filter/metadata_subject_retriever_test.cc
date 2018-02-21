@@ -66,155 +66,63 @@ Protobuf::Struct getMetadata(const std::string &json) {
   return metadata;
 }
 
-Optional<Subject>
-getSubjectFromMetadata(const Protobuf::Struct &func_metadata,
-                       const Protobuf::Struct &cluster_metadata,
-                       const Protobuf::Struct &route_metadata) {
+TesterMetadataAccessor
+getMetadataAccessor(const std::string &function_name,
+                    const Protobuf::Struct &func_metadata,
+                    const Protobuf::Struct &cluster_metadata,
+                    const Protobuf::Struct &route_metadata) {
   TesterMetadataAccessor testaccessor;
+  testaccessor.function_name_ = function_name;
   testaccessor.function_spec_ = &func_metadata;
   testaccessor.cluster_metadata_ = &cluster_metadata;
   testaccessor.route_metadata_ = &route_metadata;
 
-  MetadataSubjectRetriever subjectRetriever;
-
-  return subjectRetriever.getSubject(testaccessor);
+  return testaccessor;
 }
 
-Optional<Subject> getSubjectFromJson(const std::string &func_json,
-                                     const std::string &cluster_json,
-                                     const std::string &route_json) {
+TesterMetadataAccessor getMetadataAccessorFromJson(
+    const std::string &function_name, const std::string &func_json,
+    const std::string &cluster_json, const std::string &route_json) {
   auto func_metadata = getMetadata(func_json);
   auto cluster_metadata = getMetadata(cluster_json);
   auto route_metadata = getMetadata(route_json);
 
-  return getSubjectFromMetadata(func_metadata, cluster_metadata,
-                                route_metadata);
-}
-
-std::string getClusterJson() {
-  // TODO(talnordan)
-  return empty_json;
-}
-
-std::string getFuncJson() {
-  // TODO(talnordan)
-  return empty_json;
-}
-
-std::string getRouteJson(const std::string &subject) {
-  return fmt::format(
-      R"EOF(
-    {{
-      "{}" : "{}",
-    }}
-    )EOF",
-      Config::MetadataNatsStreamingKeys::get().SUBJECT, subject);
+  return getMetadataAccessor(function_name, func_metadata, cluster_metadata,
+                             route_metadata);
 }
 
 } // namespace
 
-TEST(MetadataSubjectRetrieverTest, EmptyJsons) {
+TEST(MetadataSubjectRetrieverTest, EmptyJsonAndNoFunctions) {
+  const std::string function_name = "";
   const std::string &func_json = empty_json;
   const std::string &cluster_json = empty_json;
   const std::string &route_json = empty_json;
 
-  auto Subject = getSubjectFromJson(func_json, cluster_json, route_json);
+  auto metadata_accessor =
+      getMetadataAccessorFromJson("", func_json, cluster_json, route_json);
 
-  EXPECT_FALSE(Subject.valid());
-}
+  MetadataSubjectRetriever subjectRetriever;
+  auto subject = subjectRetriever.getSubject(metadata_accessor);
 
-TEST(MetadataSubjectRetrieverTest, EmptyRouteJson) {
-  const std::string func_json = getFuncJson();
-  const std::string cluster_json = getClusterJson();
-  const std::string &route_json = empty_json;
-
-  auto Subject = getSubjectFromJson(func_json, cluster_json, route_json);
-
-  EXPECT_FALSE(Subject.valid());
+  EXPECT_FALSE(subject.valid());
 }
 
 TEST(MetadataSubjectRetrieverTest, ConfiguredSubject) {
-  Subject configuredSubject{"Subject1"};
+  const std::string configuredSubject = "Subject1";
 
-  const std::string func_json = getFuncJson();
-  const std::string cluster_json = getClusterJson();
-  const std::string route_json = getRouteJson(configuredSubject);
+  const std::string func_json = empty_json;
+  const std::string cluster_json = empty_json;
+  const std::string route_json = empty_json;
 
-  auto actualSubject = getSubjectFromJson(func_json, cluster_json, route_json);
+  auto metadata_accessor = getMetadataAccessorFromJson(
+      configuredSubject, func_json, cluster_json, route_json);
+
+  MetadataSubjectRetriever subjectRetriever;
+  auto actualSubject = subjectRetriever.getSubject(metadata_accessor);
 
   EXPECT_TRUE(actualSubject.valid());
-  EXPECT_EQ(actualSubject.value(), configuredSubject);
-}
-
-TEST(MetadataSubjectRetrieverTest, MisconfiguredSubjectOppositeJsons) {
-  Subject configuredSubject{"Subject1"};
-
-  // The cluster metadata JSON is used as the route metadata, and vice versa.
-  const std::string func_json = getFuncJson();
-  const std::string cluster_json = getRouteJson(configuredSubject);
-  const std::string route_json = getClusterJson();
-
-  auto actualSubject = getSubjectFromJson(func_json, cluster_json, route_json);
-
-  EXPECT_FALSE(actualSubject.valid());
-}
-
-TEST(MetadataSubjectRetrieverTest, MisconfiguredSubjectNonStringField) {
-  const std::string func_json = getFuncJson();
-  const std::string cluster_json = getClusterJson();
-
-  // The subject is an integer.
-  const std::string route_json = fmt::format(
-      R"EOF(
-    {{
-      "{}" : 17,
-    }}
-    )EOF",
-      Config::MetadataNatsStreamingKeys::get().SUBJECT);
-
-  auto actualSubject = getSubjectFromJson(func_json, cluster_json, route_json);
-
-  EXPECT_FALSE(actualSubject.valid());
-}
-
-TEST(MetadataSubjectRetrieverTest, MisconfigureSubjectEmptyField) {
-  Subject configuredSubject{"Subject1"};
-
-  const std::string func_json = getFuncJson();
-  const std::string cluster_json = getClusterJson();
-
-  // The subject is empty.
-  const std::string route_json = fmt::format(
-      R"EOF(
-    {{
-      "{}" : "",
-    }}
-    )EOF",
-      Config::MetadataNatsStreamingKeys::get().SUBJECT);
-
-  auto actualSubject = getSubjectFromJson(func_json, cluster_json, route_json);
-
-  EXPECT_FALSE(actualSubject.valid());
-}
-
-TEST(MetadataSubjectRetrieverTest, MisconfiguredSubjectIncorrectFieldName) {
-  Subject configuredSubject{"Subject1"};
-
-  const std::string &func_json = getFuncJson();
-  const std::string cluster_json = getClusterJson();
-
-  // The subject key is incorrect.
-  const std::string route_json = fmt::format(
-      R"EOF(
-    {{
-      "{}" : "{}",
-    }}
-    )EOF",
-      "$ubgekt", configuredSubject);
-
-  auto actualSubject = getSubjectFromJson(func_json, cluster_json, route_json);
-
-  EXPECT_FALSE(actualSubject.valid());
+  EXPECT_EQ(*actualSubject.value(), configuredSubject);
 }
 
 } // namespace Envoy

@@ -87,7 +87,8 @@ void NatsStreamingFilter::retrieveSubject(
 }
 
 void NatsStreamingFilter::relayToNatsStreaming() {
-  ASSERT(optional_subject_.valid());
+  RELEASE_ASSERT(optional_subject_.valid());
+  RELEASE_ASSERT(!optional_subject_.value()->empty());
 
   const std::string *cluster_name =
       SoloFilterUtility::resolveClusterName(decoder_callbacks_);
@@ -97,7 +98,7 @@ void NatsStreamingFilter::relayToNatsStreaming() {
     return;
   }
 
-  const std::string &subject = optional_subject_.value();
+  const std::string &subject = *optional_subject_.value();
   const Buffer::Instance *payload = decoder_callbacks_->decodingBuffer();
 
   // TODO(talnordan): Keep the return value of `makeRequest()`.

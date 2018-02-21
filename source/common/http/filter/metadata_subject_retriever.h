@@ -25,15 +25,6 @@ public:
   MetadataSubjectRetriever();
 
   Optional<Subject> getSubject(const MetadataAccessor &metadataccessor);
-
-private:
-  // TODO(talnordan): Move to `envoy-common`.
-  static inline Optional<const std::string *>
-  nonEmptyStringValue(const ProtobufWkt::Struct &spec, const std::string &key);
-
-  // TODO(talnordan): Move to `envoy-common`.
-  static inline Optional<const Protobuf::Value *>
-  value(const Protobuf::Struct &spec, const std::string &key);
 };
 
 } // namespace Http

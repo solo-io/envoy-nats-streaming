@@ -94,7 +94,8 @@ TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
               makeRequest("fake_cluster", "Subject1", nullptr, Ref(*filter_)))
       .Times(1);
 
-  subject_retriever_->subject_ = Optional<Subject>("Subject1");
+  const std::string subject = "Subject1";
+  subject_retriever_->subject_ = Optional<Subject>(&subject);
 
   ASSERT_EQ(true, filter_->retrieveFunction(*filter_));
 
@@ -114,7 +115,8 @@ TEST_F(NatsStreamingFilterTest, RequestWithData) {
               makeRequest("fake_cluster", "Subject1", _, Ref(*filter_)))
       .Times(1);
 
-  subject_retriever_->subject_ = Optional<Subject>("Subject1");
+  const std::string subject = "Subject1";
+  subject_retriever_->subject_ = Optional<Subject>(&subject);
 
   callbacks_.buffer_.reset(new Buffer::OwnedImpl);
 
@@ -150,7 +152,8 @@ TEST_F(NatsStreamingFilterTest, RequestWithTrailers) {
               makeRequest("fake_cluster", "Subject1", _, Ref(*filter_)))
       .Times(1);
 
-  subject_retriever_->subject_ = Optional<Subject>("Subject1");
+  const std::string subject = "Subject1";
+  subject_retriever_->subject_ = Optional<Subject>(&subject);
 
   callbacks_.buffer_.reset(new Buffer::OwnedImpl);
 
