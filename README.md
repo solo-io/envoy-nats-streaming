@@ -22,3 +22,7 @@ To run the all tests in debug mode:
 To run integration tests using a clang build:
 
 `CXX=clang++-5.0 CC=clang-5.0  bazel test -c dbg --config=clang-tsan //test/integration:nats_streaming_filter_integration_test --runs_per_test=10`
+
+To run the e2e test:
+
+`bazel test //e2e/...`
