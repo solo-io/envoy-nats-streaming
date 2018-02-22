@@ -120,16 +120,6 @@ private:
     host->stats().cx_total_.inc();
     host->stats().cx_active_.inc();
   }
-  void onConnectOrOpTimeout() {
-    putOutlierEvent(Upstream::Outlier::Result::TIMEOUT);
-    if (connected_) {
-      host_->cluster().stats().upstream_rq_timeout_.inc();
-    } else {
-      host_->cluster().stats().upstream_cx_connect_timeout_.inc();
-    }
-
-    connection_->close(Network::ConnectionCloseType::NoFlush);
-  }
   void onData(Buffer::Instance &data) {
     try {
       decoder_->decode(data);
