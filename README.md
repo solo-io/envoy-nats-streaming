@@ -23,6 +23,9 @@ To run integration tests using a clang build:
 
 `CXX=clang++-5.0 CC=clang-5.0  bazel test -c dbg --config=clang-tsan //test/integration:nats_streaming_filter_integration_test --runs_per_test=10`
 
+## E2E
+The e2e tests depend on the `nats-streaming-server`, `stan-sub`, `stan-pub` that need to be in your path.
+
 To run the e2e test:
 
 `bazel test //e2e/...`
