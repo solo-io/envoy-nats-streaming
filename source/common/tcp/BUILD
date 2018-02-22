@@ -22,7 +22,6 @@ envoy_cc_library(
 
 envoy_cc_library(
     name = "conn_pool_lib",
-    srcs = ["conn_pool_impl.cc"],
     hdrs = ["conn_pool_impl.h"],
     repository = "@envoy",
     deps = [

@@ -20,13 +20,7 @@ namespace ConnPool {
 
 class ConfigImpl : public Config {
 public:
-  ConfigImpl(const std::chrono::milliseconds &op_timeout);
-
   bool disableOutlierEvents() const override { return false; }
-  std::chrono::milliseconds opTimeout() const override { return op_timeout_; }
-
-private:
-  const std::chrono::milliseconds op_timeout_;
 };
 
 template <typename T>
@@ -39,8 +33,8 @@ public:
                              EncoderPtr<T> &&encoder,
                              DecoderFactory<T> &decoder_factory,
                              const Config &config) {
-    std::unique_ptr<ClientImpl> client(new ClientImpl(
-        host, dispatcher, std::move(encoder), decoder_factory, config));
+    std::unique_ptr<ClientImpl> client(
+        new ClientImpl(host, std::move(encoder), decoder_factory, config));
     client->connection_ =
         host->createConnection(dispatcher, nullptr).connection_;
     client->connection_->addConnectionCallbacks(*client);
@@ -73,18 +67,6 @@ public:
     pending_requests_.emplace_back(*this, callbacks);
     encoder_->encode(request, encoder_buffer_);
     connection_->write(encoder_buffer_, false);
-
-    // Only boost the op timeout if:
-    // - We are not already connected. Otherwise, we are governed by the connect
-    // timeout and the timer
-    //   will be reset when/if connection occurs. This allows a relatively long
-    //   connection spin up time for example if TLS is being used.
-    // - This is the first request on the pipeline. Otherwise the timeout would
-    // effectively start on
-    //   the last operation.
-    if (connected_ && pending_requests_.size() == 1) {
-      connect_or_op_timer_->enableTimer(config_.opTimeout());
-    }
 
     return &pending_requests_.back();
   }
@@ -129,18 +111,14 @@ private:
     bool canceled_{};
   };
 
-  ClientImpl(Upstream::HostConstSharedPtr host, Event::Dispatcher &dispatcher,
-             EncoderPtr<T> &&encoder, DecoderFactory<T> &decoder_factory,
-             const Config &config)
+  ClientImpl(Upstream::HostConstSharedPtr host, EncoderPtr<T> &&encoder,
+             DecoderFactory<T> &decoder_factory, const Config &config)
       : host_(host), encoder_(std::move(encoder)),
-        decoder_(decoder_factory.create(*this)), config_(config),
-        connect_or_op_timer_(dispatcher.createTimer(
-            [this]() -> void { onConnectOrOpTimeout(); })) {
+        decoder_(decoder_factory.create(*this)), config_(config) {
     host->cluster().stats().upstream_cx_total_.inc();
     host->cluster().stats().upstream_cx_active_.inc();
     host->stats().cx_total_.inc();
     host->stats().cx_active_.inc();
-    connect_or_op_timer_->enableTimer(host->cluster().connectTimeout());
   }
   void onConnectOrOpTimeout() {
     putOutlierEvent(Upstream::Outlier::Result::TIMEOUT);
@@ -178,15 +156,6 @@ private:
     }
     pending_requests_.pop_front();
 
-    // If there are no remaining ops in the pipeline we need to disable the
-    // timer. Otherwise we boost the timer since we are receiving responses and
-    // there are more to flush out.
-    if (pending_requests_.empty()) {
-      connect_or_op_timer_->disableTimer();
-    } else {
-      connect_or_op_timer_->enableTimer(config_.opTimeout());
-    }
-
     putOutlierEvent(Upstream::Outlier::Result::SUCCESS);
   }
 
@@ -219,11 +188,9 @@ private:
         pending_requests_.pop_front();
       }
 
-      connect_or_op_timer_->disableTimer();
     } else if (event == Network::ConnectionEvent::Connected) {
       connected_ = true;
       ASSERT(!pending_requests_.empty());
-      connect_or_op_timer_->enableTimer(config_.opTimeout());
     }
 
     if (event == Network::ConnectionEvent::RemoteClose && !connected_) {
@@ -241,7 +208,6 @@ private:
   DecoderPtr decoder_;
   const Config &config_;
   std::list<PendingRequest> pending_requests_;
-  Event::TimerPtr connect_or_op_timer_;
   bool connected_{};
 };
 
@@ -274,10 +240,8 @@ template <typename T, typename D> class InstanceImpl : public Instance<T> {
 public:
   InstanceImpl(const std::string &cluster_name, Upstream::ClusterManager &cm,
                ClientFactory<T> &client_factory,
-               ThreadLocal::SlotAllocator &tls,
-               const std::chrono::milliseconds &op_timeout)
-      : cm_(cm), client_factory_(client_factory), tls_(tls.allocateSlot()),
-        config_(op_timeout) {
+               ThreadLocal::SlotAllocator &tls)
+      : cm_(cm), client_factory_(client_factory), tls_(tls.allocateSlot()) {
     tls_->set([this, cluster_name](Event::Dispatcher &dispatcher)
                   -> ThreadLocal::ThreadLocalObjectSharedPtr {
       return std::make_shared<ThreadLocalPool>(*this, dispatcher, cluster_name);
@@ -409,10 +373,9 @@ private:
 template <typename T, typename D> class ManagerImpl : public Manager<T> {
 public:
   ManagerImpl(Upstream::ClusterManager &cm, ClientFactory<T> &client_factory,
-              ThreadLocal::SlotAllocator &tls,
-              const std::chrono::milliseconds &op_timeout)
+              ThreadLocal::SlotAllocator &tls)
       : cm_(cm), client_factory_(client_factory), tls_(tls),
-        slot_(tls_.allocateSlot()), op_timeout_(op_timeout) {
+        slot_(tls_.allocateSlot()) {
     slot_->set([this](Event::Dispatcher &dispatcher)
                    -> ThreadLocal::ThreadLocalObjectSharedPtr {
       UNREFERENCED_PARAMETER(dispatcher);
@@ -435,8 +398,7 @@ private:
         // TODO(talnordan): Under what circumstances should we remove a
         // connection pool instance from the map?
         instance.reset(new InstanceImpl<T, D>(
-            cluster_name, parent_.cm_, parent_.client_factory_, parent_.tls_,
-            parent_.op_timeout_));
+            cluster_name, parent_.cm_, parent_.client_factory_, parent_.tls_));
       }
 
       return *instance;
@@ -450,7 +412,6 @@ private:
   ClientFactory<T> &client_factory_;
   ThreadLocal::SlotAllocator &tls_;
   ThreadLocal::SlotPtr slot_;
-  const std::chrono::milliseconds &op_timeout_;
 };
 
 } // namespace ConnPool

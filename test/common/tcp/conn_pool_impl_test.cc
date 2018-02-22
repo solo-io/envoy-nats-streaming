@@ -32,10 +32,6 @@ namespace ConnPool {
 using T = std::string;
 using TPtr = MessagePtr<T>;
 
-std::chrono::milliseconds createConnPoolSettings() {
-  return std::chrono::milliseconds(20);
-}
-
 class TcpClientImplTest : public testing::Test, public DecoderFactory<T> {
 public:
   // Tcp::DecoderFactory
@@ -58,7 +54,7 @@ public:
   }
 
   void setup() {
-    config_.reset(new ConfigImpl(createConnPoolSettings()));
+    config_.reset(new ConfigImpl());
     finishSetup();
   }
 
@@ -71,7 +67,6 @@ public:
     upstream_connection_ = new NiceMock<Network::MockClientConnection>();
     Upstream::MockHost::MockCreateConnectionData conn_info;
     conn_info.connection_ = upstream_connection_;
-    EXPECT_CALL(*connect_or_op_timer_, enableTimer(_));
     EXPECT_CALL(*host_, createConnection_(_, _)).WillOnce(Return(conn_info));
     EXPECT_CALL(*upstream_connection_, addReadFilter(_))
         .WillOnce(SaveArg<0>(&upstream_read_filter_));
@@ -85,14 +80,12 @@ public:
   }
 
   void onConnected() {
-    EXPECT_CALL(*connect_or_op_timer_, enableTimer(_));
     upstream_connection_->raiseEvent(Network::ConnectionEvent::Connected);
   }
 
   const std::string cluster_name_{"foo"};
   std::shared_ptr<Upstream::MockHost> host_{new NiceMock<Upstream::MockHost>()};
   Event::MockDispatcher dispatcher_;
-  Event::MockTimer *connect_or_op_timer_{new Event::MockTimer(&dispatcher_)};
   MockEncoder *encoder_{new MockEncoder()};
   MockDecoder *decoder_{new MockDecoder()};
   DecoderCallbacks<T> *callbacks_{};
@@ -132,14 +125,12 @@ TEST_F(TcpClientImplTest, Basic) {
         InSequence s;
         TPtr response1(new T());
         EXPECT_CALL(callbacks1, onResponse_(Ref(response1)));
-        EXPECT_CALL(*connect_or_op_timer_, enableTimer(_));
         EXPECT_CALL(host_->outlier_detector_,
                     putResult(Upstream::Outlier::Result::SUCCESS));
         callbacks_->onValue(std::move(response1));
 
         TPtr response2(new T());
         EXPECT_CALL(callbacks2, onResponse_(Ref(response2)));
-        EXPECT_CALL(*connect_or_op_timer_, disableTimer());
         EXPECT_CALL(host_->outlier_detector_,
                     putResult(Upstream::Outlier::Result::SUCCESS));
         callbacks_->onValue(std::move(response2));
@@ -148,7 +139,6 @@ TEST_F(TcpClientImplTest, Basic) {
 
   EXPECT_CALL(*upstream_connection_,
               close(Network::ConnectionCloseType::NoFlush));
-  EXPECT_CALL(*connect_or_op_timer_, disableTimer());
   client_->close();
 }
 
@@ -180,14 +170,12 @@ TEST_F(TcpClientImplTest, Cancel) {
 
         TPtr response1(new T());
         EXPECT_CALL(callbacks1, onResponse_(_)).Times(0);
-        EXPECT_CALL(*connect_or_op_timer_, enableTimer(_));
         EXPECT_CALL(host_->outlier_detector_,
                     putResult(Upstream::Outlier::Result::SUCCESS));
         callbacks_->onValue(std::move(response1));
 
         TPtr response2(new T());
         EXPECT_CALL(callbacks2, onResponse_(Ref(response2)));
-        EXPECT_CALL(*connect_or_op_timer_, disableTimer());
         EXPECT_CALL(host_->outlier_detector_,
                     putResult(Upstream::Outlier::Result::SUCCESS));
         callbacks_->onValue(std::move(response2));
@@ -196,7 +184,6 @@ TEST_F(TcpClientImplTest, Cancel) {
 
   EXPECT_CALL(*upstream_connection_,
               close(Network::ConnectionCloseType::NoFlush));
-  EXPECT_CALL(*connect_or_op_timer_, disableTimer());
   client_->close();
 
   EXPECT_EQ(1UL, host_->cluster_.stats_.upstream_rq_cancelled_.value());
@@ -221,7 +208,6 @@ TEST_F(TcpClientImplTest, FailAll) {
   EXPECT_CALL(host_->outlier_detector_,
               putResult(Upstream::Outlier::Result::SERVER_FAILURE));
   EXPECT_CALL(callbacks1, onFailure());
-  EXPECT_CALL(*connect_or_op_timer_, disableTimer());
   EXPECT_CALL(connection_callbacks,
               onEvent(Network::ConnectionEvent::RemoteClose));
   upstream_connection_->raiseEvent(Network::ConnectionEvent::RemoteClose);
@@ -250,7 +236,6 @@ TEST_F(TcpClientImplTest, FailAllWithCancel) {
   handle1->cancel();
 
   EXPECT_CALL(callbacks1, onFailure()).Times(0);
-  EXPECT_CALL(*connect_or_op_timer_, disableTimer());
   EXPECT_CALL(connection_callbacks,
               onEvent(Network::ConnectionEvent::LocalClose));
   upstream_connection_->raiseEvent(Network::ConnectionEvent::LocalClose);
@@ -285,7 +270,6 @@ TEST_F(TcpClientImplTest, ProtocolError) {
   EXPECT_CALL(*upstream_connection_,
               close(Network::ConnectionCloseType::NoFlush));
   EXPECT_CALL(callbacks1, onFailure());
-  EXPECT_CALL(*connect_or_op_timer_, disableTimer());
   upstream_read_filter_->onData(fake_data, false);
 
   EXPECT_EQ(1UL, host_->cluster_.stats_.upstream_cx_protocol_error_.value());
@@ -305,7 +289,6 @@ TEST_F(TcpClientImplTest, ConnectFail) {
   EXPECT_CALL(host_->outlier_detector_,
               putResult(Upstream::Outlier::Result::SERVER_FAILURE));
   EXPECT_CALL(callbacks1, onFailure());
-  EXPECT_CALL(*connect_or_op_timer_, disableTimer());
   upstream_connection_->raiseEvent(Network::ConnectionEvent::RemoteClose);
 
   EXPECT_EQ(1UL, host_->cluster_.stats_.upstream_cx_connect_fail_.value());
@@ -314,9 +297,6 @@ TEST_F(TcpClientImplTest, ConnectFail) {
 
 class ConfigOutlierDisabled : public Config {
   bool disableOutlierEvents() const override { return true; }
-  std::chrono::milliseconds opTimeout() const override {
-    return std::chrono::milliseconds(25);
-  }
 };
 
 TEST_F(TcpClientImplTest, OutlierDisabled) {
@@ -332,57 +312,10 @@ TEST_F(TcpClientImplTest, OutlierDisabled) {
 
   EXPECT_CALL(host_->outlier_detector_, putResult(_)).Times(0);
   EXPECT_CALL(callbacks1, onFailure());
-  EXPECT_CALL(*connect_or_op_timer_, disableTimer());
   upstream_connection_->raiseEvent(Network::ConnectionEvent::RemoteClose);
 
   EXPECT_EQ(1UL, host_->cluster_.stats_.upstream_cx_connect_fail_.value());
   EXPECT_EQ(1UL, host_->stats_.cx_connect_fail_.value());
-}
-
-TEST_F(TcpClientImplTest, ConnectTimeout) {
-  InSequence s;
-
-  setup();
-
-  T request1;
-  MockPoolCallbacks callbacks1;
-  EXPECT_CALL(*encoder_, encode(Ref(request1), _));
-  PoolRequest *handle1 = client_->makeRequest(request1, callbacks1);
-  EXPECT_NE(nullptr, handle1);
-
-  EXPECT_CALL(host_->outlier_detector_,
-              putResult(Upstream::Outlier::Result::TIMEOUT));
-  EXPECT_CALL(*upstream_connection_,
-              close(Network::ConnectionCloseType::NoFlush));
-  EXPECT_CALL(callbacks1, onFailure());
-  EXPECT_CALL(*connect_or_op_timer_, disableTimer());
-  connect_or_op_timer_->callback_();
-
-  EXPECT_EQ(1UL, host_->cluster_.stats_.upstream_cx_connect_timeout_.value());
-}
-
-TEST_F(TcpClientImplTest, OpTimeout) {
-  InSequence s;
-
-  setup();
-
-  T request1;
-  MockPoolCallbacks callbacks1;
-  EXPECT_CALL(*encoder_, encode(Ref(request1), _));
-  PoolRequest *handle1 = client_->makeRequest(request1, callbacks1);
-  EXPECT_NE(nullptr, handle1);
-
-  onConnected();
-
-  EXPECT_CALL(host_->outlier_detector_,
-              putResult(Upstream::Outlier::Result::TIMEOUT));
-  EXPECT_CALL(*upstream_connection_,
-              close(Network::ConnectionCloseType::NoFlush));
-  EXPECT_CALL(callbacks1, onFailure());
-  EXPECT_CALL(*connect_or_op_timer_, disableTimer());
-  connect_or_op_timer_->callback_();
-
-  EXPECT_EQ(1UL, host_->cluster_.stats_.upstream_rq_timeout_.value());
 }
 
 TEST(TcpClientFactoryImplTest, Basic) {
@@ -392,7 +325,7 @@ TEST(TcpClientFactoryImplTest, Basic) {
   std::shared_ptr<Upstream::MockHost> host(new NiceMock<Upstream::MockHost>());
   EXPECT_CALL(*host, createConnection_(_, _)).WillOnce(Return(conn_info));
   NiceMock<Event::MockDispatcher> dispatcher;
-  ConfigImpl config(createConnPoolSettings());
+  ConfigImpl config;
   ClientPtr<T> client = factory.create(host, dispatcher, config);
   client->close();
 }
@@ -400,8 +333,8 @@ TEST(TcpClientFactoryImplTest, Basic) {
 class TcpConnPoolImplTest : public testing::Test, public ClientFactory<T> {
 public:
   TcpConnPoolImplTest() {
-    conn_pool_.reset(new InstanceImpl<T, MockDecoder>(
-        cluster_name_, cm_, *this, tls_, createConnPoolSettings()));
+    conn_pool_.reset(
+        new InstanceImpl<T, MockDecoder>(cluster_name_, cm_, *this, tls_));
   }
 
   // Tcp::ConnPool::ClientFactory
@@ -529,8 +462,7 @@ TEST_F(TcpConnPoolImplTest, RemoteClose) {
 class TcpConnPoolManagerImplTest : public testing::Test {
 public:
   TcpConnPoolManagerImplTest() {
-    conn_pool_mgr_.reset(new ManagerImpl<T, MockDecoder>(
-        cm_, factory_, tls_, createConnPoolSettings()));
+    conn_pool_mgr_.reset(new ManagerImpl<T, MockDecoder>(cm_, factory_, tls_));
   }
 
   NiceMock<Upstream::MockClusterManager> cm_;

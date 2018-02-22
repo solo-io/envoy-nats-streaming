@@ -90,8 +90,7 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
 
   Tcp::ConnPool::ManagerPtr<Nats::Message> conn_pool_manager = std::make_shared<
       Tcp::ConnPool::ManagerImpl<Nats::Message, Nats::DecoderImpl>>(
-      context.clusterManager(), client_factory, context.threadLocal(),
-      config->op_timeout());
+      context.clusterManager(), client_factory, context.threadLocal());
 
   Nats::Publisher::InstancePtr publisher =
       std::make_shared<Nats::Publisher::InstanceImpl>(conn_pool_manager);
