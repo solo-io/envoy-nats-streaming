@@ -79,7 +79,6 @@ public:
   void onResponse(TPtr &&value) override { onResponse_(value); }
 
   MOCK_METHOD1(onResponse_, void(TPtr &value));
-  MOCK_METHOD0(onFailure, void());
   MOCK_METHOD0(onClose, void());
 };
 

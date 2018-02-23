@@ -25,12 +25,6 @@ public:
    */
   virtual void onResponse(MessagePtr<T> &&value) PURE;
 
-  // TODO(talnordan): `onFailure()` seem to be unreferenced.
-  /**
-   * Called when a network/protocol error occurs and there is no response.
-   */
-  virtual void onFailure() PURE;
-
   /**
    * Called when close event occurs on a connection.
    */
