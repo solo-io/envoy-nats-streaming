@@ -1,5 +1,7 @@
 #pragma once
 
+#include "envoy/tcp/conn_pool.h"
+
 #include "common/nats/codec_impl.h"
 #include "common/nats/publisher_impl.h"
 
@@ -42,8 +44,10 @@ public:
   MockManager();
   ~MockManager();
 
-  MOCK_METHOD1(getInstance, Tcp::ConnPool::Instance<Message> &(
-                                const std::string &cluster_name));
+  MOCK_METHOD2(getInstance,
+               Tcp::ConnPool::Instance<Message> &(
+                   const std::string &cluster_name,
+                   Tcp::ConnPool::PoolCallbacks<Message> &callbacks));
 };
 
 } // namespace ConnPool

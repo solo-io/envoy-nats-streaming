@@ -28,13 +28,12 @@ class ClientImpl : public Client<T>,
                    public DecoderCallbacks<T>,
                    public Network::ConnectionCallbacks {
 public:
-  static ClientPtr<T> create(Upstream::HostConstSharedPtr host,
-                             Event::Dispatcher &dispatcher,
-                             EncoderPtr<T> &&encoder,
-                             DecoderFactory<T> &decoder_factory,
-                             const Config &config) {
-    std::unique_ptr<ClientImpl> client(
-        new ClientImpl(host, std::move(encoder), decoder_factory, config));
+  static ClientPtr<T>
+  create(Upstream::HostConstSharedPtr host, Event::Dispatcher &dispatcher,
+         EncoderPtr<T> &&encoder, DecoderFactory<T> &decoder_factory,
+         PoolCallbacks<T> &callbacks, const Config &config) {
+    std::unique_ptr<ClientImpl> client(new ClientImpl(
+        host, std::move(encoder), decoder_factory, callbacks, config));
     client->connection_ =
         host->createConnection(dispatcher, nullptr).connection_;
     client->connection_->addConnectionCallbacks(*client);
@@ -46,7 +45,6 @@ public:
   }
 
   ~ClientImpl() {
-    ASSERT(pending_requests_.empty());
     ASSERT(connection_->state() == Network::Connection::State::Closed);
     host_->cluster().stats().upstream_cx_active_.dec();
     host_->stats().cx_active_.dec();
@@ -60,15 +58,19 @@ public:
   void close() override {
     connection_->close(Network::ConnectionCloseType::NoFlush);
   }
-  PoolRequest *makeRequest(const T &request,
-                           PoolCallbacks<T> &callbacks) override {
+  void makeRequest(const T &request) override {
     ASSERT(connection_->state() == Network::Connection::State::Open);
 
-    pending_requests_.emplace_back(*this, callbacks);
+    incRequestStats();
     encoder_->encode(request, encoder_buffer_);
     connection_->write(encoder_buffer_, false);
-
-    return &pending_requests_.back();
+  }
+  void cancel() override {
+    // If we get a cancellation, we just mark all pending request as canceled,
+    // and then we drop all responses as they come through. There is no reason
+    // to blow away the connection when the remote is already responding as fast
+    // as possible.
+    canceled_ = true;
   }
 
 private:
@@ -84,37 +86,23 @@ private:
     ClientImpl &parent_;
   };
 
-  struct PendingRequest : public PoolRequest {
-    PendingRequest(ClientImpl &parent, PoolCallbacks<T> &callbacks)
-        : parent_(parent), callbacks_(callbacks) {
-      parent.host_->cluster().stats().upstream_rq_total_.inc();
-      parent.host_->cluster().stats().upstream_rq_active_.inc();
-      parent.host_->stats().rq_total_.inc();
-      parent.host_->stats().rq_active_.inc();
-    }
-    ~PendingRequest() {
-      parent_.host_->cluster().stats().upstream_rq_active_.dec();
-      parent_.host_->stats().rq_active_.dec();
-    }
-
-    // Tcp::ConnPool::PoolRequest
-    void cancel() override {
-      // If we get a cancellation, we just mark the pending request as
-      // cancelled, and then we drop the response as it comes through. There is
-      // no reason to blow away the connection when the remote is already
-      // responding as fast as possible.
-      canceled_ = true;
-    }
-
-    ClientImpl &parent_;
-    PoolCallbacks<T> &callbacks_;
-    bool canceled_{};
-  };
+  // TODO(talnordan):
+  // The current implementation considers the number of TCP messages sent to be
+  // the number of requests. Perhaps it would be more accurate to count the
+  // number of HTTP requests? An example of a case in which it can make a
+  // difference is whether `PING` messages and `PONG` messages at the NATS layer
+  // should be counted as requests.
+  void incRequestStats() {
+    host_->cluster().stats().upstream_rq_total_.inc();
+    host_->stats().rq_total_.inc();
+  }
 
   ClientImpl(Upstream::HostConstSharedPtr host, EncoderPtr<T> &&encoder,
-             DecoderFactory<T> &decoder_factory, const Config &config)
+             DecoderFactory<T> &decoder_factory, PoolCallbacks<T> &callbacks,
+             const Config &config)
       : host_(host), encoder_(std::move(encoder)),
-        decoder_(decoder_factory.create(*this)), config_(config) {
+        decoder_(decoder_factory.create(*this)), callbacks_(callbacks),
+        config_(config) {
     host->cluster().stats().upstream_cx_total_.inc();
     host->cluster().stats().upstream_cx_active_.inc();
     host->stats().cx_total_.inc();
@@ -137,14 +125,14 @@ private:
 
   // Tcp::DecoderCallbacks
   void onValue(MessagePtr<T> &&value) override {
-    ASSERT(!pending_requests_.empty());
-    PendingRequest &request = pending_requests_.front();
-    if (!request.canceled_) {
-      request.callbacks_.onResponse(std::move(value));
-    } else {
-      host_->cluster().stats().upstream_rq_cancelled_.inc();
+    if (!canceled_) {
+      callbacks_.onResponse(std::move(value));
     }
-    pending_requests_.pop_front();
+
+    // TODO(talnordan): How should we count these?
+    // else {
+    //   host_->cluster().stats().upstream_rq_cancelled_.inc();
+    // }
 
     putOutlierEvent(Upstream::Outlier::Result::SUCCESS);
   }
@@ -153,34 +141,35 @@ private:
   void onEvent(Network::ConnectionEvent event) override {
     if (event == Network::ConnectionEvent::RemoteClose ||
         event == Network::ConnectionEvent::LocalClose) {
-      if (!pending_requests_.empty()) {
-        host_->cluster().stats().upstream_cx_destroy_with_active_rq_.inc();
-        if (event == Network::ConnectionEvent::RemoteClose) {
-          putOutlierEvent(Upstream::Outlier::Result::SERVER_FAILURE);
-          host_->cluster()
-              .stats()
-              .upstream_cx_destroy_remote_with_active_rq_.inc();
-        }
-        if (event == Network::ConnectionEvent::LocalClose) {
-          host_->cluster()
-              .stats()
-              .upstream_cx_destroy_local_with_active_rq_.inc();
-        }
+      // TODO(talnordan): How should we count these?
+      // if (!pending_requests_.empty()) {
+      //   host_->cluster().stats().upstream_cx_destroy_with_active_rq_.inc();
+      if (event == Network::ConnectionEvent::RemoteClose) {
+        putOutlierEvent(Upstream::Outlier::Result::SERVER_FAILURE);
+        // host_->cluster()
+        //     .stats()
+        //     .upstream_cx_destroy_remote_with_active_rq_.inc();
       }
+      //   if (event == Network::ConnectionEvent::LocalClose) {
+      //     host_->cluster()
+      //         .stats()
+      //         .upstream_cx_destroy_local_with_active_rq_.inc();
+      //   }
+      // }
 
-      while (!pending_requests_.empty()) {
-        PendingRequest &request = pending_requests_.front();
-        if (!request.canceled_) {
-          request.callbacks_.onFailure();
-        } else {
-          host_->cluster().stats().upstream_rq_cancelled_.inc();
-        }
-        pending_requests_.pop_front();
+      // TODO(talnordan): How should we count these?
+      // if (canceled_) {
+      //   while (!pending_requests_.empty()) {
+      //     host_->cluster().stats().upstream_rq_cancelled_.inc();
+      //   }
+      // }
+
+      if (!canceled_) {
+        callbacks_.onClose();
       }
 
     } else if (event == Network::ConnectionEvent::Connected) {
       connected_ = true;
-      ASSERT(!pending_requests_.empty());
     }
 
     if (event == Network::ConnectionEvent::RemoteClose && !connected_) {
@@ -196,9 +185,10 @@ private:
   EncoderPtr<T> encoder_;
   Buffer::OwnedImpl encoder_buffer_;
   DecoderPtr decoder_;
+  PoolCallbacks<T> &callbacks_;
   const Config &config_;
-  std::list<PendingRequest> pending_requests_;
   bool connected_{};
+  bool canceled_{};
 };
 
 template <typename T, typename E, typename D>
@@ -212,9 +202,10 @@ public:
   // Tcp::ConnPool::ClientFactoryImpl
   ClientPtr<T> create(Upstream::HostConstSharedPtr host,
                       Event::Dispatcher &dispatcher,
+                      PoolCallbacks<T> &callbacks,
                       const Config &config) override {
     return ClientImpl<T>::create(host, dispatcher, EncoderPtr<T>{new E()},
-                                 decoder_factory_, config);
+                                 decoder_factory_, callbacks, config);
   }
 
   static ClientFactoryImpl<T, E, D> instance_;
@@ -229,20 +220,19 @@ ClientFactoryImpl<T, E, D> ClientFactoryImpl<T, E, D>::instance_;
 template <typename T, typename D> class InstanceImpl : public Instance<T> {
 public:
   InstanceImpl(const std::string &cluster_name, Upstream::ClusterManager &cm,
-               ClientFactory<T> &client_factory,
+               ClientFactory<T> &client_factory, PoolCallbacks<T> &callbacks,
                ThreadLocal::SlotAllocator &tls)
       : cm_(cm), client_factory_(client_factory), tls_(tls.allocateSlot()) {
-    tls_->set([this, cluster_name](Event::Dispatcher &dispatcher)
+    tls_->set([this, cluster_name, &callbacks](Event::Dispatcher &dispatcher)
                   -> ThreadLocal::ThreadLocalObjectSharedPtr {
-      return std::make_shared<ThreadLocalPool>(*this, dispatcher, cluster_name);
+      return std::make_shared<ThreadLocalPool>(*this, dispatcher, callbacks,
+                                               cluster_name);
     });
   }
 
   // Tcp::ConnPool::Instance
-  PoolRequest *makeRequest(const std::string &hash_key, const T &request,
-                           PoolCallbacks<T> &callbacks) override {
-    return tls_->getTyped<ThreadLocalPool>().makeRequest(hash_key, request,
-                                                         callbacks);
+  void makeRequest(const std::string &hash_key, const T &request) override {
+    tls_->getTyped<ThreadLocalPool>().makeRequest(hash_key, request);
   }
 
 private:
@@ -274,8 +264,9 @@ private:
 
   struct ThreadLocalPool : public ThreadLocal::ThreadLocalObject {
     ThreadLocalPool(InstanceImpl &parent, Event::Dispatcher &dispatcher,
+                    PoolCallbacks<T> &callbacks,
                     const std::string &cluster_name)
-        : parent_(parent), dispatcher_(dispatcher),
+        : parent_(parent), dispatcher_(dispatcher), callbacks_(callbacks),
           cluster_(parent_.cm_.get(cluster_name)) {
 
       // TODO(mattklein123): Redis is not currently safe for use with CDS. In
@@ -296,25 +287,24 @@ private:
         client_map_.begin()->second->client_->close();
       }
     }
-    PoolRequest *makeRequest(const std::string &hash_key, const T &request,
-                             PoolCallbacks<T> &callbacks) {
+    void makeRequest(const std::string &hash_key, const T &request) {
       LbContextImpl lb_context(hash_key);
       Upstream::HostConstSharedPtr host =
           cluster_->loadBalancer().chooseHost(&lb_context);
       if (!host) {
-        return nullptr;
+        return;
       }
 
       ThreadLocalActiveClientPtr &client = client_map_[host];
       if (!client) {
         client.reset(new ThreadLocalActiveClient(*this));
         client->host_ = host;
-        client->client_ =
-            parent_.client_factory_.create(host, dispatcher_, parent_.config_);
+        client->client_ = parent_.client_factory_.create(
+            host, dispatcher_, callbacks_, parent_.config_);
         client->client_->addConnectionCallbacks(*client);
       }
 
-      return client->client_->makeRequest(request, callbacks);
+      client->client_->makeRequest(request);
     }
     void
     onHostsRemoved(const std::vector<Upstream::HostSharedPtr> &hosts_removed) {
@@ -331,6 +321,7 @@ private:
 
     InstanceImpl &parent_;
     Event::Dispatcher &dispatcher_;
+    PoolCallbacks<T> &callbacks_;
     Upstream::ThreadLocalCluster *cluster_;
     std::unordered_map<Upstream::HostConstSharedPtr, ThreadLocalActiveClientPtr>
         client_map_;
@@ -374,21 +365,25 @@ public:
   }
 
   // Nats::ConnPool::Manager
-  Instance<T> &getInstance(const std::string &cluster_name) override {
-    return slot_->getTyped<ThreadLocalPoolManager>().getInstance(cluster_name);
+  Instance<T> &getInstance(const std::string &cluster_name,
+                           PoolCallbacks<T> &callbacks) override {
+    return slot_->getTyped<ThreadLocalPoolManager>().getInstance(cluster_name,
+                                                                 callbacks);
   }
 
 private:
   struct ThreadLocalPoolManager : public ThreadLocal::ThreadLocalObject {
     ThreadLocalPoolManager(ManagerImpl &parent) : parent_(parent) {}
 
-    Instance<T> &getInstance(const std::string &cluster_name) {
+    Instance<T> &getInstance(const std::string &cluster_name,
+                             PoolCallbacks<T> &callbacks) {
       InstancePtr<T> &instance = instance_map_[cluster_name];
       if (!instance) {
         // TODO(talnordan): Under what circumstances should we remove a
         // connection pool instance from the map?
-        instance.reset(new InstanceImpl<T, D>(
-            cluster_name, parent_.cm_, parent_.client_factory_, parent_.tls_));
+        instance.reset(new InstanceImpl<T, D>(cluster_name, parent_.cm_,
+                                              parent_.client_factory_,
+                                              callbacks, parent_.tls_));
       }
 
       return *instance;

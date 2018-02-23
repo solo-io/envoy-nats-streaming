@@ -51,8 +51,8 @@ public:
   MOCK_METHOD1(addConnectionCallbacks,
                void(Network::ConnectionCallbacks &callbacks));
   MOCK_METHOD0(close, void());
-  MOCK_METHOD2(makeRequest,
-               PoolRequest *(const T &request, PoolCallbacks<T> &callbacks));
+  MOCK_METHOD1(makeRequest, void(const T &request));
+  MOCK_METHOD0(cancel, void());
 
   std::list<Network::ConnectionCallbacks *> callbacks_;
 };
@@ -64,19 +64,11 @@ public:
 
   // Tcp::ConnPool::ClientFactory
   ClientPtr<T> create(Upstream::HostConstSharedPtr host, Event::Dispatcher &,
-                      const Config &) override {
+                      PoolCallbacks<T> &, const Config &) override {
     return ClientPtr<T>{create_(host)};
   }
 
   MOCK_METHOD1(create_, Client<T> *(Upstream::HostConstSharedPtr host));
-};
-
-class MockPoolRequest : public PoolRequest {
-public:
-  MockPoolRequest();
-  ~MockPoolRequest();
-
-  MOCK_METHOD0(cancel, void());
 };
 
 class MockPoolCallbacks : public PoolCallbacks<T> {
@@ -88,6 +80,7 @@ public:
 
   MOCK_METHOD1(onResponse_, void(TPtr &value));
   MOCK_METHOD0(onFailure, void());
+  MOCK_METHOD0(onClose, void());
 };
 
 class MockInstance : public Instance<T> {
@@ -95,9 +88,8 @@ public:
   MockInstance();
   ~MockInstance();
 
-  MOCK_METHOD3(makeRequest,
-               PoolRequest *(const std::string &hash_key, const T &request,
-                             PoolCallbacks<T> &callbacks));
+  MOCK_METHOD2(makeRequest,
+               void(const std::string &hash_key, const T &request));
 };
 
 class MockManager : public Manager<T> {
@@ -105,7 +97,8 @@ public:
   MockManager();
   ~MockManager();
 
-  MOCK_METHOD1(getInstance, Instance<T> &(const std::string &cluster_name));
+  MOCK_METHOD2(getInstance, Instance<T> &(const std::string &cluster_name,
+                                          PoolCallbacks<T> &callbacks));
 };
 
 } // namespace ConnPool

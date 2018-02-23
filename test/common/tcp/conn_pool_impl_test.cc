@@ -74,7 +74,7 @@ public:
     EXPECT_CALL(*upstream_connection_, noDelay(true));
 
     client_ = ClientImpl<T>::create(host_, dispatcher_, EncoderPtr<T>{encoder_},
-                                    *this, *config_);
+                                    *this, pool_callbacks_, *config_);
     EXPECT_EQ(1UL, host_->cluster_.stats_.upstream_cx_total_.value());
     EXPECT_EQ(1UL, host_->stats_.cx_total_.value());
   }
@@ -89,6 +89,7 @@ public:
   MockEncoder *encoder_{new MockEncoder()};
   MockDecoder *decoder_{new MockDecoder()};
   DecoderCallbacks<T> *callbacks_{};
+  MockPoolCallbacks pool_callbacks_;
   NiceMock<Network::MockClientConnection> *upstream_connection_{};
   Network::ReadFilterSharedPtr upstream_read_filter_;
   std::unique_ptr<Config> config_;
@@ -101,36 +102,34 @@ TEST_F(TcpClientImplTest, Basic) {
   setup();
 
   T request1;
-  MockPoolCallbacks callbacks1;
   EXPECT_CALL(*encoder_, encode(Ref(request1), _));
-  PoolRequest *handle1 = client_->makeRequest(request1, callbacks1);
-  EXPECT_NE(nullptr, handle1);
+  client_->makeRequest(request1);
 
   onConnected();
 
   T request2;
-  MockPoolCallbacks callbacks2;
   EXPECT_CALL(*encoder_, encode(Ref(request2), _));
-  PoolRequest *handle2 = client_->makeRequest(request2, callbacks2);
-  EXPECT_NE(nullptr, handle2);
+  client_->makeRequest(request2);
 
   EXPECT_EQ(2UL, host_->cluster_.stats_.upstream_rq_total_.value());
-  EXPECT_EQ(2UL, host_->cluster_.stats_.upstream_rq_active_.value());
   EXPECT_EQ(2UL, host_->stats_.rq_total_.value());
-  EXPECT_EQ(2UL, host_->stats_.rq_active_.value());
+
+  // TODO(talnordan): What should be counted as an active request?
+  EXPECT_EQ(0UL, host_->cluster_.stats_.upstream_rq_active_.value());
+  EXPECT_EQ(0UL, host_->stats_.rq_active_.value());
 
   Buffer::OwnedImpl fake_data;
   EXPECT_CALL(*decoder_, decode(Ref(fake_data)))
       .WillOnce(Invoke([&](Buffer::Instance &) -> void {
         InSequence s;
         TPtr response1(new T());
-        EXPECT_CALL(callbacks1, onResponse_(Ref(response1)));
+        EXPECT_CALL(pool_callbacks_, onResponse_(Ref(response1)));
         EXPECT_CALL(host_->outlier_detector_,
                     putResult(Upstream::Outlier::Result::SUCCESS));
         callbacks_->onValue(std::move(response1));
 
         TPtr response2(new T());
-        EXPECT_CALL(callbacks2, onResponse_(Ref(response2)));
+        EXPECT_CALL(pool_callbacks_, onResponse_(Ref(response2)));
         EXPECT_CALL(host_->outlier_detector_,
                     putResult(Upstream::Outlier::Result::SUCCESS));
         callbacks_->onValue(std::move(response2));
@@ -139,6 +138,7 @@ TEST_F(TcpClientImplTest, Basic) {
 
   EXPECT_CALL(*upstream_connection_,
               close(Network::ConnectionCloseType::NoFlush));
+  EXPECT_CALL(pool_callbacks_, onClose());
   client_->close();
 }
 
@@ -148,20 +148,16 @@ TEST_F(TcpClientImplTest, Cancel) {
   setup();
 
   T request1;
-  MockPoolCallbacks callbacks1;
   EXPECT_CALL(*encoder_, encode(Ref(request1), _));
-  PoolRequest *handle1 = client_->makeRequest(request1, callbacks1);
-  EXPECT_NE(nullptr, handle1);
+  client_->makeRequest(request1);
 
   onConnected();
 
   T request2;
-  MockPoolCallbacks callbacks2;
   EXPECT_CALL(*encoder_, encode(Ref(request2), _));
-  PoolRequest *handle2 = client_->makeRequest(request2, callbacks2);
-  EXPECT_NE(nullptr, handle2);
+  client_->makeRequest(request2);
 
-  handle1->cancel();
+  client_->cancel();
 
   Buffer::OwnedImpl fake_data;
   EXPECT_CALL(*decoder_, decode(Ref(fake_data)))
@@ -169,13 +165,13 @@ TEST_F(TcpClientImplTest, Cancel) {
         InSequence s;
 
         TPtr response1(new T());
-        EXPECT_CALL(callbacks1, onResponse_(_)).Times(0);
+        EXPECT_CALL(pool_callbacks_, onResponse_(_)).Times(0);
         EXPECT_CALL(host_->outlier_detector_,
                     putResult(Upstream::Outlier::Result::SUCCESS));
         callbacks_->onValue(std::move(response1));
 
         TPtr response2(new T());
-        EXPECT_CALL(callbacks2, onResponse_(Ref(response2)));
+        EXPECT_CALL(pool_callbacks_, onResponse_(_)).Times(0);
         EXPECT_CALL(host_->outlier_detector_,
                     putResult(Upstream::Outlier::Result::SUCCESS));
         callbacks_->onValue(std::move(response2));
@@ -186,7 +182,8 @@ TEST_F(TcpClientImplTest, Cancel) {
               close(Network::ConnectionCloseType::NoFlush));
   client_->close();
 
-  EXPECT_EQ(1UL, host_->cluster_.stats_.upstream_rq_cancelled_.value());
+  // TODO(talnordan): What should be counted as a canceled request?
+  EXPECT_EQ(0UL, host_->cluster_.stats_.upstream_rq_cancelled_.value());
 }
 
 TEST_F(TcpClientImplTest, FailAll) {
@@ -198,23 +195,22 @@ TEST_F(TcpClientImplTest, FailAll) {
   client_->addConnectionCallbacks(connection_callbacks);
 
   T request1;
-  MockPoolCallbacks callbacks1;
   EXPECT_CALL(*encoder_, encode(Ref(request1), _));
-  PoolRequest *handle1 = client_->makeRequest(request1, callbacks1);
-  EXPECT_NE(nullptr, handle1);
+  client_->makeRequest(request1);
 
   onConnected();
 
   EXPECT_CALL(host_->outlier_detector_,
               putResult(Upstream::Outlier::Result::SERVER_FAILURE));
-  EXPECT_CALL(callbacks1, onFailure());
+  EXPECT_CALL(pool_callbacks_, onClose());
   EXPECT_CALL(connection_callbacks,
               onEvent(Network::ConnectionEvent::RemoteClose));
   upstream_connection_->raiseEvent(Network::ConnectionEvent::RemoteClose);
 
-  EXPECT_EQ(1UL,
+  // TODO(talnordan): What should be counted as an active request?
+  EXPECT_EQ(0UL,
             host_->cluster_.stats_.upstream_cx_destroy_with_active_rq_.value());
-  EXPECT_EQ(1UL, host_->cluster_.stats_
+  EXPECT_EQ(0UL, host_->cluster_.stats_
                      .upstream_cx_destroy_remote_with_active_rq_.value());
 }
 
@@ -227,25 +223,25 @@ TEST_F(TcpClientImplTest, FailAllWithCancel) {
   client_->addConnectionCallbacks(connection_callbacks);
 
   T request1;
-  MockPoolCallbacks callbacks1;
   EXPECT_CALL(*encoder_, encode(Ref(request1), _));
-  PoolRequest *handle1 = client_->makeRequest(request1, callbacks1);
-  EXPECT_NE(nullptr, handle1);
+  client_->makeRequest(request1);
 
   onConnected();
-  handle1->cancel();
+  client_->cancel();
 
-  EXPECT_CALL(callbacks1, onFailure()).Times(0);
+  EXPECT_CALL(pool_callbacks_, onClose()).Times(0);
   EXPECT_CALL(connection_callbacks,
               onEvent(Network::ConnectionEvent::LocalClose));
   upstream_connection_->raiseEvent(Network::ConnectionEvent::LocalClose);
 
-  EXPECT_EQ(1UL,
+  // TODO(talnordan): What should be counted as an active request or a canceled
+  // one?
+  EXPECT_EQ(0UL,
             host_->cluster_.stats_.upstream_cx_destroy_with_active_rq_.value());
   EXPECT_EQ(
-      1UL,
+      0UL,
       host_->cluster_.stats_.upstream_cx_destroy_local_with_active_rq_.value());
-  EXPECT_EQ(1UL, host_->cluster_.stats_.upstream_rq_cancelled_.value());
+  EXPECT_EQ(0UL, host_->cluster_.stats_.upstream_rq_cancelled_.value());
 }
 
 TEST_F(TcpClientImplTest, ProtocolError) {
@@ -254,10 +250,8 @@ TEST_F(TcpClientImplTest, ProtocolError) {
   setup();
 
   T request1;
-  MockPoolCallbacks callbacks1;
   EXPECT_CALL(*encoder_, encode(Ref(request1), _));
-  PoolRequest *handle1 = client_->makeRequest(request1, callbacks1);
-  EXPECT_NE(nullptr, handle1);
+  client_->makeRequest(request1);
 
   onConnected();
 
@@ -269,7 +263,9 @@ TEST_F(TcpClientImplTest, ProtocolError) {
               putResult(Upstream::Outlier::Result::REQUEST_FAILED));
   EXPECT_CALL(*upstream_connection_,
               close(Network::ConnectionCloseType::NoFlush));
-  EXPECT_CALL(callbacks1, onFailure());
+
+  EXPECT_CALL(pool_callbacks_, onClose());
+
   upstream_read_filter_->onData(fake_data, false);
 
   EXPECT_EQ(1UL, host_->cluster_.stats_.upstream_cx_protocol_error_.value());
@@ -281,14 +277,14 @@ TEST_F(TcpClientImplTest, ConnectFail) {
   setup();
 
   T request1;
-  MockPoolCallbacks callbacks1;
   EXPECT_CALL(*encoder_, encode(Ref(request1), _));
-  PoolRequest *handle1 = client_->makeRequest(request1, callbacks1);
-  EXPECT_NE(nullptr, handle1);
+  client_->makeRequest(request1);
 
   EXPECT_CALL(host_->outlier_detector_,
               putResult(Upstream::Outlier::Result::SERVER_FAILURE));
-  EXPECT_CALL(callbacks1, onFailure());
+
+  EXPECT_CALL(pool_callbacks_, onClose());
+
   upstream_connection_->raiseEvent(Network::ConnectionEvent::RemoteClose);
 
   EXPECT_EQ(1UL, host_->cluster_.stats_.upstream_cx_connect_fail_.value());
@@ -305,13 +301,13 @@ TEST_F(TcpClientImplTest, OutlierDisabled) {
   setup(std::make_unique<ConfigOutlierDisabled>());
 
   T request1;
-  MockPoolCallbacks callbacks1;
   EXPECT_CALL(*encoder_, encode(Ref(request1), _));
-  PoolRequest *handle1 = client_->makeRequest(request1, callbacks1);
-  EXPECT_NE(nullptr, handle1);
+  client_->makeRequest(request1);
 
   EXPECT_CALL(host_->outlier_detector_, putResult(_)).Times(0);
-  EXPECT_CALL(callbacks1, onFailure());
+
+  EXPECT_CALL(pool_callbacks_, onClose());
+
   upstream_connection_->raiseEvent(Network::ConnectionEvent::RemoteClose);
 
   EXPECT_EQ(1UL, host_->cluster_.stats_.upstream_cx_connect_fail_.value());
@@ -325,23 +321,25 @@ TEST(TcpClientFactoryImplTest, Basic) {
   std::shared_ptr<Upstream::MockHost> host(new NiceMock<Upstream::MockHost>());
   EXPECT_CALL(*host, createConnection_(_, _)).WillOnce(Return(conn_info));
   NiceMock<Event::MockDispatcher> dispatcher;
+  MockPoolCallbacks callbacks;
   ConfigImpl config;
-  ClientPtr<T> client = factory.create(host, dispatcher, config);
+  ClientPtr<T> client = factory.create(host, dispatcher, callbacks, config);
+  EXPECT_CALL(callbacks, onClose());
   client->close();
 }
 
 class TcpConnPoolImplTest : public testing::Test, public ClientFactory<T> {
 public:
   TcpConnPoolImplTest() {
-    conn_pool_.reset(
-        new InstanceImpl<T, MockDecoder>(cluster_name_, cm_, *this, tls_));
+    conn_pool_.reset(new InstanceImpl<T, MockDecoder>(cluster_name_, cm_, *this,
+                                                      callbacks_, tls_));
   }
 
   // Tcp::ConnPool::ClientFactory
   // TODO(talnordan): Use `MockClientFactory` instead of having this class
   // implemnting `ClientFactory<T>.
   ClientPtr<T> create(Upstream::HostConstSharedPtr host, Event::Dispatcher &,
-                      const Config &) override {
+                      PoolCallbacks<T> &, const Config &) override {
     return ClientPtr<T>{create_(host)};
   }
 
@@ -349,6 +347,7 @@ public:
 
   const std::string cluster_name_{"foo"};
   NiceMock<Upstream::MockClusterManager> cm_;
+  MockPoolCallbacks callbacks_;
   NiceMock<ThreadLocal::MockInstance> tls_;
   InstancePtr<T> conn_pool_;
 };
@@ -357,8 +356,6 @@ TEST_F(TcpConnPoolImplTest, Basic) {
   InSequence s;
 
   T value;
-  MockPoolRequest active_request;
-  MockPoolCallbacks callbacks;
   MockClient *client = new NiceMock<MockClient>();
 
   EXPECT_CALL(cm_.thread_local_cluster_.lb_, chooseHost(_))
@@ -369,18 +366,17 @@ TEST_F(TcpConnPoolImplTest, Basic) {
         return cm_.thread_local_cluster_.lb_.host_;
       }));
   EXPECT_CALL(*this, create_(_)).WillOnce(Return(client));
-  EXPECT_CALL(*client, makeRequest(Ref(value), Ref(callbacks)))
-      .WillOnce(Return(&active_request));
-  PoolRequest *request = conn_pool_->makeRequest("foo", value, callbacks);
-  EXPECT_EQ(&active_request, request);
+  EXPECT_CALL(*client, makeRequest(Ref(value))).Times(1);
+  conn_pool_->makeRequest("foo", value);
 
+  // TODO(talnordan): Should `onClose()` be invoked?
+  // EXPECT_CALL(callbacks_, onClose());
   EXPECT_CALL(*client, close());
   tls_.shutdownThread();
 };
 
 TEST_F(TcpConnPoolImplTest, HostRemove) {
   InSequence s;
-  MockPoolCallbacks callbacks;
 
   T value;
   std::shared_ptr<Upstream::Host> host1(new Upstream::MockHost());
@@ -392,21 +388,15 @@ TEST_F(TcpConnPoolImplTest, HostRemove) {
       .WillOnce(Return(host1));
   EXPECT_CALL(*this, create_(Eq(host1))).WillOnce(Return(client1));
 
-  MockPoolRequest active_request1;
-  EXPECT_CALL(*client1, makeRequest(Ref(value), Ref(callbacks)))
-      .WillOnce(Return(&active_request1));
-  PoolRequest *request1 = conn_pool_->makeRequest("foo", value, callbacks);
-  EXPECT_EQ(&active_request1, request1);
+  EXPECT_CALL(*client1, makeRequest(Ref(value))).Times(1);
+  conn_pool_->makeRequest("foo", value);
 
   EXPECT_CALL(cm_.thread_local_cluster_.lb_, chooseHost(_))
       .WillOnce(Return(host2));
   EXPECT_CALL(*this, create_(Eq(host2))).WillOnce(Return(client2));
 
-  MockPoolRequest active_request2;
-  EXPECT_CALL(*client2, makeRequest(Ref(value), Ref(callbacks)))
-      .WillOnce(Return(&active_request2));
-  PoolRequest *request2 = conn_pool_->makeRequest("bar", value, callbacks);
-  EXPECT_EQ(&active_request2, request2);
+  EXPECT_CALL(*client2, makeRequest(Ref(value))).Times(1);
+  conn_pool_->makeRequest("bar", value);
 
   EXPECT_CALL(*client2, close());
   cm_.thread_local_cluster_.cluster_.prioritySet()
@@ -430,11 +420,9 @@ TEST_F(TcpConnPoolImplTest, NoHost) {
   InSequence s;
 
   T value;
-  MockPoolCallbacks callbacks;
   EXPECT_CALL(cm_.thread_local_cluster_.lb_, chooseHost(_))
       .WillOnce(Return(nullptr));
-  PoolRequest *request = conn_pool_->makeRequest("foo", value, callbacks);
-  EXPECT_EQ(nullptr, request);
+  conn_pool_->makeRequest("foo", value);
 
   tls_.shutdownThread();
 }
@@ -443,15 +431,12 @@ TEST_F(TcpConnPoolImplTest, RemoteClose) {
   InSequence s;
 
   T value;
-  MockPoolRequest active_request;
-  MockPoolCallbacks callbacks;
   MockClient *client = new NiceMock<MockClient>();
 
   EXPECT_CALL(cm_.thread_local_cluster_.lb_, chooseHost(_));
   EXPECT_CALL(*this, create_(_)).WillOnce(Return(client));
-  EXPECT_CALL(*client, makeRequest(Ref(value), Ref(callbacks)))
-      .WillOnce(Return(&active_request));
-  conn_pool_->makeRequest("foo", value, callbacks);
+  EXPECT_CALL(*client, makeRequest(Ref(value))).Times(1);
+  conn_pool_->makeRequest("foo", value);
 
   EXPECT_CALL(tls_.dispatcher_, deferredDelete_(_));
   client->raiseEvent(Network::ConnectionEvent::RemoteClose);
@@ -469,24 +454,29 @@ public:
   NiceMock<MockClientFactory> factory_;
   NiceMock<ThreadLocal::MockInstance> tls_;
   ManagerPtr<T> conn_pool_mgr_;
+  MockPoolCallbacks callbacks_;
 };
 
 TEST_F(TcpConnPoolManagerImplTest, SameCluster) {
-  auto &instance1 = conn_pool_mgr_->getInstance("cluster1");
-  auto &instance2 = conn_pool_mgr_->getInstance("cluster1");
+  auto &instance1 = conn_pool_mgr_->getInstance("cluster1", callbacks_);
+  auto &instance2 = conn_pool_mgr_->getInstance("cluster1", callbacks_);
   EXPECT_EQ(&instance1, &instance2);
 }
 
 TEST_F(TcpConnPoolManagerImplTest, DifferentClusters) {
-  auto &instance1 = conn_pool_mgr_->getInstance("cluster1");
-  auto &instance2 = conn_pool_mgr_->getInstance("cluster2");
+  auto &instance1 = conn_pool_mgr_->getInstance("cluster1", callbacks_);
+  auto &instance2 = conn_pool_mgr_->getInstance("cluster2", callbacks_);
   EXPECT_NE(&instance1, &instance2);
 }
 
 TEST_F(TcpConnPoolManagerImplTest, InterleavedClusters) {
-  auto &instance1 = conn_pool_mgr_->getInstance("cluster1");
-  auto &instance2 = conn_pool_mgr_->getInstance("cluster2");
-  auto &instance3 = conn_pool_mgr_->getInstance("cluster1");
+  // TODO(talnordan): Make the `PoolCallbacks` instance a member of
+  // `ManagerImpl`. This would let us avoid having to deal with consecutive
+  // invocations of `getInstance()` using the same `cluster_name` but different
+  // callbacks.
+  auto &instance1 = conn_pool_mgr_->getInstance("cluster1", callbacks_);
+  auto &instance2 = conn_pool_mgr_->getInstance("cluster2", callbacks_);
+  auto &instance3 = conn_pool_mgr_->getInstance("cluster1", callbacks_);
 
   EXPECT_NE(&instance1, &instance2);
   EXPECT_EQ(&instance1, &instance3);

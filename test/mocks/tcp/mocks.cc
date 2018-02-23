@@ -58,9 +58,6 @@ MockClientFactory::MockClientFactory() {}
 
 MockClientFactory::~MockClientFactory() {}
 
-MockPoolRequest::MockPoolRequest() {}
-MockPoolRequest::~MockPoolRequest() {}
-
 MockPoolCallbacks::MockPoolCallbacks() {}
 MockPoolCallbacks::~MockPoolCallbacks() {}
 

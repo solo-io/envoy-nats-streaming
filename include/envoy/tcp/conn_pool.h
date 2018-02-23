@@ -13,19 +13,6 @@ namespace Tcp {
 namespace ConnPool {
 
 /**
- * A handle to an outbound request.
- */
-class PoolRequest {
-public:
-  virtual ~PoolRequest() {}
-
-  /**
-   * Cancel the request. No further request callbacks will be called.
-   */
-  virtual void cancel() PURE;
-};
-
-/**
  * Outbound request callbacks.
  */
 template <typename T> class PoolCallbacks {
@@ -38,10 +25,16 @@ public:
    */
   virtual void onResponse(MessagePtr<T> &&value) PURE;
 
+  // TODO(talnordan): `onFailure()` seem to be unreferenced.
   /**
    * Called when a network/protocol error occurs and there is no response.
    */
   virtual void onFailure() PURE;
+
+  /**
+   * Called when close event occurs on a connection.
+   */
+  virtual void onClose() PURE;
 };
 
 /**
@@ -64,13 +57,14 @@ public:
 
   /**
    * Make a pipelined request to the remote server.
-   * @param request supplies the RESP request to make.
-   * @param callbacks supplies the request callbacks.
-   * @return PoolRequest* a handle to the active request or nullptr if the
-   * request could not be made for some reason.
+   * @param request supplies the request to make.
    */
-  virtual PoolRequest *makeRequest(const T &request,
-                                   PoolCallbacks<T> &callbacks) PURE;
+  virtual void makeRequest(const T &request) PURE;
+
+  /**
+   * Cancel all requests. No further request callbacks will be called.
+   */
+  virtual void cancel() PURE;
 };
 
 template <typename T> using ClientPtr = std::unique_ptr<Client<T>>;
@@ -101,11 +95,13 @@ public:
    * Create a client given an upstream host.
    * @param host supplies the upstream host.
    * @param dispatcher supplies the owning thread's dispatcher.
+   * @param callbacks supplies the pool callbacks.
    * @param config supplies the connection pool configuration.
    * @return ClientPtr a new connection pool client.
    */
   virtual ClientPtr<T> create(Upstream::HostConstSharedPtr host,
                               Event::Dispatcher &dispatcher,
+                              PoolCallbacks<T> &callbacks,
                               const Config &config) PURE;
 };
 
@@ -122,12 +118,8 @@ public:
    * @param hash_key supplies the key to use for consistent hashing.
    * @param request supplies the request to make.
    * @param callbacks supplies the request completion callbacks.
-   * @return PoolRequest* a handle to the active request or nullptr if the
-   * request could not be made for some reason.
    */
-  virtual PoolRequest *makeRequest(const std::string &hash_key,
-                                   const T &request,
-                                   PoolCallbacks<T> &callbacks) PURE;
+  virtual void makeRequest(const std::string &hash_key, const T &request) PURE;
 };
 
 template <typename T> using InstancePtr = std::unique_ptr<Instance<T>>;
@@ -136,7 +128,8 @@ template <typename T> class Manager {
 public:
   virtual ~Manager() {}
 
-  virtual Instance<T> &getInstance(const std::string &cluster_name) PURE;
+  virtual Instance<T> &getInstance(const std::string &cluster_name,
+                                   PoolCallbacks<T> &callbacks) PURE;
 };
 
 template <typename T> using ManagerPtr = std::shared_ptr<Manager<T>>;

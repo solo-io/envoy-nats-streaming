@@ -14,6 +14,7 @@ envoy_cc_mock(
     hdrs = ["mocks.h"],
     repository = "@envoy",
     deps = [
+        "//include/envoy/tcp:conn_pool_interface",
         "//source/common/nats:codec_lib",
         "//source/common/nats:publisher_lib",
     ],
