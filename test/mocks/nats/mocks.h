@@ -20,6 +20,7 @@ public:
   ~MockPublishCallbacks();
 
   MOCK_METHOD0(onResponse, void());
+  MOCK_METHOD0(onFailure, void());
 };
 
 class MockInstance : public Instance {

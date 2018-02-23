@@ -73,11 +73,15 @@ bool NatsStreamingFilter::retrieveFunction(
 }
 
 void NatsStreamingFilter::onResponse() {
-  // TODO(talnordan): This is a dummy implementation that aborts the request.
+  Http::Utility::sendLocalReply(*decoder_callbacks_, stream_destroyed_,
+                                Http::Code::OK, "");
+}
+
+void NatsStreamingFilter::onFailure() {
   decoder_callbacks_->requestInfo().setResponseFlag(
       RequestInfo::ResponseFlag::FaultInjected);
   Http::Utility::sendLocalReply(*decoder_callbacks_, stream_destroyed_,
-                                static_cast<Http::Code>(500),
+                                Http::Code::InternalServerError,
                                 "nats streaming filter abort");
 }
 

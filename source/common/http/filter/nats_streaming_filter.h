@@ -31,6 +31,7 @@ public:
 
   // Nats::Publisher::PublishCallbacks
   virtual void onResponse() override;
+  virtual void onFailure() override;
 
 private:
   void retrieveSubject(const MetadataAccessor &meta_accessor);

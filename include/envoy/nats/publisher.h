@@ -37,8 +37,10 @@ public:
    */
   virtual void onResponse() PURE;
 
-  // TODO(talnordan): Consider adding `onFailure()`, similarly to the HTTP
-  // client.
+  /**
+   * Called when a network/protocol error occurs and there is no response.
+   */
+  virtual void onFailure() PURE;
 };
 
 /**
