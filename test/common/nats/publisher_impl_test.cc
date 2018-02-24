@@ -11,10 +11,8 @@ namespace Publisher {
 
 class NatsPublisherImplTest : public testing::Test {
 public:
-  Tcp::ConnPool::ManagerPtr<Message> conn_pool_manager_ =
-      std::make_shared<Nats::ConnPool::MockManager>();
-  InstanceImpl publisher_{
-      Tcp::ConnPool::ManagerPtr<Message>{conn_pool_manager_}};
+  Nats::ConnPool::MockInstance *conn_pool_{new Nats::ConnPool::MockInstance()};
+  InstanceImpl publisher_{Tcp::ConnPool::InstancePtr<Message>{conn_pool_}};
   MockPublishCallbacks callbacks_;
   PublishRequestPtr handle_;
 };

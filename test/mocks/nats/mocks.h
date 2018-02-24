@@ -40,6 +40,18 @@ public:
 
 namespace ConnPool {
 
+class MockInstance : public Tcp::ConnPool::Instance<Message> {
+public:
+  MockInstance();
+  ~MockInstance();
+
+  MOCK_METHOD1(setPoolCallbacks,
+               void(Tcp::ConnPool::PoolCallbacks<Message> &callbacks));
+
+  MOCK_METHOD2(makeRequest,
+               void(const std::string &hash_key, const Message &request));
+};
+
 class MockManager : public Tcp::ConnPool::Manager<Message> {
 public:
   MockManager();

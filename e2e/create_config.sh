@@ -32,11 +32,11 @@ static_resources:
               - match:
                   prefix: /post
                 route:
-                  cluster: my-nats-streaming
+                  cluster: cluster_0
                 metadata:
                   filter_metadata:
                       io.solo.function_router:
-                        my-nats-streaming:
+                        cluster_0:
                           function: subject1
           http_filters:
           - name: io.solo.nats_streaming
@@ -49,7 +49,7 @@ static_resources:
     - socket_address:
         address: localhost
         port_value: 4222
-    name: my-nats-streaming
+    name: cluster_0
     type: STRICT_DNS
     metadata:
       filter_metadata:

@@ -40,6 +40,9 @@ MockInstance::~MockInstance() {}
 
 namespace ConnPool {
 
+MockInstance::MockInstance() {}
+MockInstance::~MockInstance() {}
+
 MockManager::MockManager() {}
 MockManager::~MockManager() {}
 

@@ -220,17 +220,20 @@ ClientFactoryImpl<T, E, D> ClientFactoryImpl<T, E, D>::instance_;
 template <typename T, typename D> class InstanceImpl : public Instance<T> {
 public:
   InstanceImpl(const std::string &cluster_name, Upstream::ClusterManager &cm,
-               ClientFactory<T> &client_factory, PoolCallbacks<T> &callbacks,
+               ClientFactory<T> &client_factory,
                ThreadLocal::SlotAllocator &tls)
       : cm_(cm), client_factory_(client_factory), tls_(tls.allocateSlot()) {
-    tls_->set([this, cluster_name, &callbacks](Event::Dispatcher &dispatcher)
+    tls_->set([this, cluster_name](Event::Dispatcher &dispatcher)
                   -> ThreadLocal::ThreadLocalObjectSharedPtr {
-      return std::make_shared<ThreadLocalPool>(*this, dispatcher, callbacks,
-                                               cluster_name);
+      return std::make_shared<ThreadLocalPool>(*this, dispatcher, cluster_name);
     });
   }
 
   // Tcp::ConnPool::Instance
+  void setPoolCallbacks(PoolCallbacks<T> &callbacks) override {
+    RELEASE_ASSERT(callbacks_ == nullptr);
+    callbacks_ = &callbacks;
+  }
   void makeRequest(const std::string &hash_key, const T &request) override {
     tls_->getTyped<ThreadLocalPool>().makeRequest(hash_key, request);
   }
@@ -264,9 +267,8 @@ private:
 
   struct ThreadLocalPool : public ThreadLocal::ThreadLocalObject {
     ThreadLocalPool(InstanceImpl &parent, Event::Dispatcher &dispatcher,
-                    PoolCallbacks<T> &callbacks,
                     const std::string &cluster_name)
-        : parent_(parent), dispatcher_(dispatcher), callbacks_(callbacks),
+        : parent_(parent), dispatcher_(dispatcher),
           cluster_(parent_.cm_.get(cluster_name)) {
 
       // TODO(mattklein123): Redis is not currently safe for use with CDS. In
@@ -299,8 +301,9 @@ private:
       if (!client) {
         client.reset(new ThreadLocalActiveClient(*this));
         client->host_ = host;
+        RELEASE_ASSERT(parent_.callbacks_ != nullptr);
         client->client_ = parent_.client_factory_.create(
-            host, dispatcher_, callbacks_, parent_.config_);
+            host, dispatcher_, *parent_.callbacks_, parent_.config_);
         client->client_->addConnectionCallbacks(*client);
       }
 
@@ -321,7 +324,6 @@ private:
 
     InstanceImpl &parent_;
     Event::Dispatcher &dispatcher_;
-    PoolCallbacks<T> &callbacks_;
     Upstream::ThreadLocalCluster *cluster_;
     std::unordered_map<Upstream::HostConstSharedPtr, ThreadLocalActiveClientPtr>
         client_map_;
@@ -349,6 +351,7 @@ private:
   ClientFactory<T> &client_factory_;
   ThreadLocal::SlotPtr tls_;
   ConfigImpl config_;
+  PoolCallbacks<T> *callbacks_{};
 };
 
 template <typename T, typename D> class ManagerImpl : public Manager<T> {
@@ -381,9 +384,9 @@ private:
       if (!instance) {
         // TODO(talnordan): Under what circumstances should we remove a
         // connection pool instance from the map?
-        instance.reset(new InstanceImpl<T, D>(cluster_name, parent_.cm_,
-                                              parent_.client_factory_,
-                                              callbacks, parent_.tls_));
+        instance.reset(new InstanceImpl<T, D>(
+            cluster_name, parent_.cm_, parent_.client_factory_, parent_.tls_));
+        instance->setPoolCallbacks(callbacks);
       }
 
       return *instance;

@@ -108,10 +108,14 @@ public:
   virtual ~Instance() {}
 
   /**
+   * Sets the pool callbacks.
+   */
+  virtual void setPoolCallbacks(PoolCallbacks<T> &callbacks) PURE;
+
+  /**
    * Makes a request.
    * @param hash_key supplies the key to use for consistent hashing.
    * @param request supplies the request to make.
-   * @param callbacks supplies the request completion callbacks.
    */
   virtual void makeRequest(const std::string &hash_key, const T &request) PURE;
 };

@@ -331,8 +331,9 @@ TEST(TcpClientFactoryImplTest, Basic) {
 class TcpConnPoolImplTest : public testing::Test, public ClientFactory<T> {
 public:
   TcpConnPoolImplTest() {
-    conn_pool_.reset(new InstanceImpl<T, MockDecoder>(cluster_name_, cm_, *this,
-                                                      callbacks_, tls_));
+    conn_pool_.reset(
+        new InstanceImpl<T, MockDecoder>(cluster_name_, cm_, *this, tls_));
+    conn_pool_->setPoolCallbacks(callbacks_);
   }
 
   // Tcp::ConnPool::ClientFactory

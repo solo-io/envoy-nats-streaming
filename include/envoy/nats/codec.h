@@ -11,6 +11,9 @@ namespace Nats {
 class Message {
 public:
   Message() {}
+
+  explicit Message(const std::string &string) : string_(string) {}
+
   ~Message() {}
 
   /**

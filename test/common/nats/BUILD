@@ -22,6 +22,18 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "message_builder_test",
+    srcs = ["message_builder_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common/nats:message_builder_lib",
+        "//test/mocks/nats:nats_mocks",
+        "@envoy//source/common/common:assert_lib",
+        "@envoy//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
     name = "publisher_impl_test",
     srcs = ["publisher_impl_test.cc"],
     repository = "@envoy",
