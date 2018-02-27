@@ -22,7 +22,7 @@ PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
 
   // Send a NATS CONNECT message.
   const std::string hash_key;
-  const Message request = message_builder_.createNatsConnectRequest();
+  const Message request = message_builder_.createConnectMessage();
   conn_pool_->makeRequest(hash_key, request);
 
   // TODO(talnordan)

@@ -7,7 +7,7 @@ namespace Nats {
 
 class MessageBuilder {
 public:
-  Envoy::Nats::Message createNatsConnectRequest() const;
+  Envoy::Nats::Message createConnectMessage() const;
 };
 
 } // namespace Nats

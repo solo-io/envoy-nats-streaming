@@ -16,10 +16,10 @@ protected:
   MessageBuilder message_builder_{};
 };
 
-TEST_F(NatsMessageBuilderTest, NatsConnectRequest) {
+TEST_F(NatsMessageBuilderTest, ConnectMessage) {
   Message expected_message{
       R"(CONNECT {"verbose":false,"pedantic":false,"tls_required":false,"name":"","lang":"cpp","version":"1.2.2","protocol":1})"};
-  auto actual_message = message_builder_.createNatsConnectRequest();
+  auto actual_message = message_builder_.createConnectMessage();
   ASSERT_EQ(expected_message, actual_message);
 }
 
