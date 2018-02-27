@@ -17,6 +17,11 @@ api_proto_library(
     srcs = ["nats_streaming_filter.proto"],
 )
 
+api_proto_library(
+    name = "protocol_proto",
+    srcs = ["protocol.proto"],
+)
+
 envoy_cc_library(
     name = "filter_lib",
     repository = "@envoy",
