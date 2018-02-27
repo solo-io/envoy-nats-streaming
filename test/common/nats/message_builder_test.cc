@@ -23,5 +23,17 @@ TEST_F(NatsMessageBuilderTest, ConnectMessage) {
   ASSERT_EQ(expected_message, actual_message);
 }
 
+TEST_F(NatsMessageBuilderTest, PubMessage) {
+  Message expected_message{"PUB subject1 0\r\n"};
+  auto actual_message = message_builder_.createPubMessage("subject1");
+  ASSERT_EQ(expected_message, actual_message);
+}
+
+TEST_F(NatsMessageBuilderTest, SubMessage) {
+  Message expected_message{"SUB subject1 sid1"};
+  auto actual_message = message_builder_.createSubMessage("subject1", "sid1");
+  ASSERT_EQ(expected_message, actual_message);
+}
+
 } // namespace Nats
 } // namespace Envoy
