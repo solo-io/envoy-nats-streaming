@@ -13,7 +13,7 @@ PAYLOAD=solopayload
 
 # Test code:
 echo "Starting NATS Streaming Server"
-$NATS_SERVER &
+$NATS_SERVER -SDV -DV &
 
 $ENVOY -c ./envoy.yaml --log-level debug &
 sleep 5
