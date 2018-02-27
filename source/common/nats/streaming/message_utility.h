@@ -6,7 +6,7 @@ namespace Envoy {
 namespace Nats {
 namespace Streaming {
 
-class MessageBuilder {
+class MessageUtility {
 public:
   std::string
   createConnectRequestMessage(const std::string &client_id,

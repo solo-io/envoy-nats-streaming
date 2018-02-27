@@ -9,9 +9,9 @@ load(
 envoy_package()
 
 envoy_cc_library(
-    name = "message_builder_lib",
-    srcs = ["message_builder.cc"],
-    hdrs = ["message_builder.h"],
+    name = "message_utility_lib",
+    srcs = ["message_utility.cc"],
+    hdrs = ["message_utility.h"],
     repository = "@envoy",
     deps = [
         "//:protocol_proto_cc",

@@ -9,11 +9,11 @@ load(
 envoy_package()
 
 envoy_cc_test(
-    name = "message_builder_test",
-    srcs = ["message_builder_test.cc"],
+    name = "message_utility_test",
+    srcs = ["message_utility_test.cc"],
     repository = "@envoy",
     deps = [
-        "//source/common/nats/streaming:message_builder_lib",
+        "//source/common/nats/streaming:message_utility_lib",
         "@envoy//source/common/common:assert_lib",
         "@envoy//test/test_common:utility_lib",
     ],

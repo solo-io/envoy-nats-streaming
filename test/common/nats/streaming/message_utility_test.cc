@@ -1,5 +1,5 @@
 #include "common/common/assert.h"
-#include "common/nats/streaming/message_builder.h"
+#include "common/nats/streaming/message_utility.h"
 
 #include "test/test_common/utility.h"
 
@@ -9,16 +9,16 @@ namespace Envoy {
 namespace Nats {
 namespace Streaming {
 
-class NatsStreamingMessageBuilderTest : public testing::Test {
+class NatsStreamingMessageUtilityTest : public testing::Test {
 public:
-  NatsStreamingMessageBuilderTest() {}
+  NatsStreamingMessageUtilityTest() {}
 
 protected:
-  MessageBuilder message_builder_{};
+  MessageUtility message_utility_{};
 };
 
-TEST_F(NatsStreamingMessageBuilderTest, ConnectRequestMessage) {
-  const auto message = message_builder_.createConnectRequestMessage(
+TEST_F(NatsStreamingMessageUtilityTest, ConnectRequestMessage) {
+  const auto message = message_utility_.createConnectRequestMessage(
       "client_id", "heartbeat_inbox");
 
   pb::ConnectRequest connect_request;
