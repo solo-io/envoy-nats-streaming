@@ -32,7 +32,7 @@ PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
 }
 
 void InstanceImpl::onResponse(Nats::MessagePtr &&value) {
-  std::cout << value->asString() << std::endl;
+  ENVOY_LOG(trace, "on response: value is\n[{}]", value->asString());
   switch (state_) {
   case State::Initial:
     onInitialResponse(std::move(value));
@@ -81,25 +81,34 @@ void InstanceImpl::onWaitingForPayloadResponse(Nats::MessagePtr &&value) {
 
 void InstanceImpl::subHeartbeatInbox() {
   const std::string hash_key;
+
+  // TODO(talnordan): Avoid using hard-coded string literals.
   const Message subMessage =
       nats_message_builder_.createSubMessage("heartbeat-inbox", "1");
+
   conn_pool_->makeRequest(hash_key, subMessage);
 }
 
 void InstanceImpl::subReplyInbox() {
   const std::string hash_key;
+
+  // TODO(talnordan): Avoid using hard-coded string literals.
   const Message subMessage =
       nats_message_builder_.createSubMessage("reply-to.*", "2");
+
   conn_pool_->makeRequest(hash_key, subMessage);
 }
 
 void InstanceImpl::pubConnectRequest() {
   const std::string hash_key;
+
+  // TODO(talnordan): Avoid using hard-coded string literals.
   const std::string connect_request_message =
       nats_streaming_message_utility_.createConnectRequestMessage(
           "client1", "heartbeat-inbox");
   const Message pubMessage = nats_message_builder_.createPubMessage(
       "_STAN.discover.test-cluster", "reply-to.1", connect_request_message);
+
   conn_pool_->makeRequest(hash_key, pubMessage);
 }
 

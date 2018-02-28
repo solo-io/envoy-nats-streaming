@@ -5,6 +5,7 @@
 #include "envoy/nats/publisher.h"
 #include "envoy/tcp/conn_pool.h"
 
+#include "common/common/logger.h"
 #include "common/nats/message_builder.h"
 #include "common/nats/streaming/message_utility.h"
 
@@ -13,7 +14,8 @@ namespace Nats {
 namespace Publisher {
 
 class InstanceImpl : public Instance,
-                     public Tcp::ConnPool::PoolCallbacks<Message> {
+                     public Tcp::ConnPool::PoolCallbacks<Message>,
+                     public Envoy::Logger::Loggable<Envoy::Logger::Id::filter> {
 public:
   InstanceImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool);
 
