@@ -28,6 +28,19 @@ TEST_F(NatsStreamingMessageUtilityTest, ConnectRequestMessage) {
   ASSERT_EQ("heartbeat_inbox", connect_request.heartbeatinbox());
 }
 
+TEST_F(NatsStreamingMessageUtilityTest, ConnectResponseMessage) {
+  const auto message = message_utility_.createConnectResponseMessage(
+      "pub_prefix", "sub_requests", "unsub_requests", "close_requests");
+
+  pb::ConnectResponse connect_response;
+  connect_response.ParseFromString(message);
+
+  ASSERT_EQ("pub_prefix", connect_response.pubprefix());
+  ASSERT_EQ("sub_requests", connect_response.subrequests());
+  ASSERT_EQ("unsub_requests", connect_response.unsubrequests());
+  ASSERT_EQ("close_requests", connect_response.closerequests());
+}
+
 } // namespace Streaming
 } // namespace Nats
 } // namespace Envoy
