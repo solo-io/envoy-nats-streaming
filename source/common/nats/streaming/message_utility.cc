@@ -28,6 +28,13 @@ std::string MessageUtility::createConnectResponseMessage(
   return serializeToString(connect_response);
 }
 
+std::string MessageUtility::getPubPrefix(
+    const std::string &connect_response_message) const {
+  pb::ConnectResponse connect_response;
+  connect_response.ParseFromString(connect_response_message);
+  return connect_response.pubprefix();
+}
+
 } // namespace Streaming
 } // namespace Nats
 } // namespace Envoy

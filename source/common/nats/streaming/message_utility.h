@@ -18,6 +18,8 @@ public:
                                const std::string &unsub_requests,
                                const std::string &close_requests) const;
 
+  std::string getPubPrefix(const std::string &connect_response_message) const;
+
 private:
   template <typename T> std::string serializeToString(T &&message) const {
     std::string message_str;

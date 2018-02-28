@@ -41,6 +41,15 @@ TEST_F(NatsStreamingMessageUtilityTest, ConnectResponseMessage) {
   ASSERT_EQ("close_requests", connect_response.closerequests());
 }
 
+TEST_F(NatsStreamingMessageUtilityTest, GetPubPrefix) {
+  const auto message = message_utility_.createConnectResponseMessage(
+      "pub_prefix", "sub_requests", "unsub_requests", "close_requests");
+
+  const auto pub_prefix = message_utility_.getPubPrefix(message);
+
+  ASSERT_EQ("pub_prefix", pub_prefix);
+}
+
 } // namespace Streaming
 } // namespace Nats
 } // namespace Envoy
