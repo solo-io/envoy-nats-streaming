@@ -28,6 +28,19 @@ std::string MessageUtility::createConnectResponseMessage(
   return serializeToString(connect_response);
 }
 
+std::string MessageUtility::createPubMsgMessage(const std::string &client_id,
+                                                const std::string &guid,
+                                                const std::string &subject,
+                                                const std::string &data) const {
+  pb::PubMsg pub_msg;
+  pub_msg.set_clientid(client_id);
+  pub_msg.set_guid(guid);
+  pub_msg.set_subject(subject);
+  pub_msg.set_data(data);
+
+  return serializeToString(pub_msg);
+}
+
 std::string MessageUtility::getPubPrefix(
     const std::string &connect_response_message) const {
   pb::ConnectResponse connect_response;

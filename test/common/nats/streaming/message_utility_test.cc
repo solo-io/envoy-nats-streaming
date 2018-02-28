@@ -41,6 +41,23 @@ TEST_F(NatsStreamingMessageUtilityTest, ConnectResponseMessage) {
   ASSERT_EQ("close_requests", connect_response.closerequests());
 }
 
+TEST_F(NatsStreamingMessageUtilityTest, PubMsgMessage) {
+  const std::string client_id{"client1"};
+  const std::string uuid{"13581321-dead-beef-b77c-24f6818b6043"};
+  const std::string subject{"subject1"};
+  const std::string data{"\"d\ra\0t\t \na\v"};
+  const auto message =
+      message_utility_.createPubMsgMessage(client_id, uuid, subject, data);
+
+  pb::PubMsg pub_msg;
+  pub_msg.ParseFromString(message);
+
+  ASSERT_EQ(client_id, pub_msg.clientid());
+  ASSERT_EQ(uuid, pub_msg.guid());
+  ASSERT_EQ(subject, pub_msg.subject());
+  ASSERT_EQ(data, pub_msg.data());
+}
+
 TEST_F(NatsStreamingMessageUtilityTest, GetPubPrefix) {
   const auto message = message_utility_.createConnectResponseMessage(
       "pub_prefix", "sub_requests", "unsub_requests", "close_requests");

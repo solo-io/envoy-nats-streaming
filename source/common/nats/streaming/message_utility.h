@@ -18,6 +18,11 @@ public:
                                const std::string &unsub_requests,
                                const std::string &close_requests) const;
 
+  std::string createPubMsgMessage(const std::string &client_id,
+                                  const std::string &guid,
+                                  const std::string &subject,
+                                  const std::string &data) const;
+
   std::string getPubPrefix(const std::string &connect_response_message) const;
 
 private:
