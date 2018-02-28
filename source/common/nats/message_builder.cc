@@ -18,6 +18,17 @@ MessageBuilder::createPubMessage(const std::string &subject) const {
 }
 
 Envoy::Nats::Message
+MessageBuilder::createPubMessage(const std::string &subject,
+                                 const std::string &reply_to,
+                                 const std::string &payload) const {
+  std::stringstream ss;
+  ss << "PUB " << subject << " " << reply_to << " " << payload.length()
+     << "\r\n"
+     << payload;
+  return Message(ss.str());
+}
+
+Envoy::Nats::Message
 MessageBuilder::createSubMessage(const std::string &subject,
                                  const std::string &sid) const {
   std::stringstream ss;

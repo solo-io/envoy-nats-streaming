@@ -2,6 +2,7 @@
 
 #include "common/common/assert.h"
 #include "common/common/macros.h"
+#include "common/common/utility.h"
 
 namespace Envoy {
 namespace Nats {
@@ -23,7 +24,7 @@ PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
 
   // Send a NATS CONNECT message.
   const std::string hash_key;
-  const Message request = message_builder_.createConnectMessage();
+  const Message request = nats_message_builder_.createConnectMessage();
   conn_pool_->makeRequest(hash_key, request);
 
   // TODO(talnordan)
@@ -31,15 +32,18 @@ PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
 }
 
 void InstanceImpl::onResponse(Nats::MessagePtr &&value) {
+  std::cout << value->asString() << std::endl;
   switch (state_) {
   case State::Initial:
     onInitialResponse(std::move(value));
     break;
-  case State::Published:
-    onPublishedResponse(std::move(value));
+  case State::SentConnectRequest:
+    onSentConnectRequestResponse(std::move(value));
     break;
   case State::WaitingForPayload:
     onWaitingForPayloadResponse(std::move(value));
+    break;
+  case State::Done:
     break;
   }
 }
@@ -51,30 +55,52 @@ void InstanceImpl::onClose() {
 void InstanceImpl::onInitialResponse(Nats::MessagePtr &&value) {
   UNREFERENCED_PARAMETER(value);
 
-  const std::string hash_key;
+  subHeartbeatInbox();
+  subReplyInbox();
+  pubConnectRequest();
 
-  // Send a NATS SUB message.
-  const std::string sid = "sid1";
-  const Message subMessage =
-      message_builder_.createSubMessage(subject_.value(), sid);
-  conn_pool_->makeRequest(hash_key, subMessage);
-
-  // Send a NATS PUB message.
-  const Message pubMessage =
-      message_builder_.createPubMessage(subject_.value());
-  conn_pool_->makeRequest(hash_key, pubMessage);
-
-  state_ = State::Published;
+  state_ = State::SentConnectRequest;
 }
 
-void InstanceImpl::onPublishedResponse(Nats::MessagePtr &&value) {
-  RELEASE_ASSERT(value->asString() == "MSG subject1 sid1 0");
+void InstanceImpl::onSentConnectRequestResponse(Nats::MessagePtr &&value) {
+  UNREFERENCED_PARAMETER(value);
   state_ = State::WaitingForPayload;
 }
 
 void InstanceImpl::onWaitingForPayloadResponse(Nats::MessagePtr &&value) {
-  RELEASE_ASSERT(value->asString().empty());
+  const std::string &payload = value->asString();
+  const std::string pub_prefix =
+      nats_streaming_message_utility_.getPubPrefix(payload);
+
+  // TODO(talnordan)
+  RELEASE_ASSERT(
+      StringUtil::startsWith(pub_prefix.c_str(), "_STAN.pub.", true));
+  state_ = State::Done;
   callbacks_.value()->onResponse();
+}
+
+void InstanceImpl::subHeartbeatInbox() {
+  const std::string hash_key;
+  const Message subMessage =
+      nats_message_builder_.createSubMessage("heartbeat-inbox", "1");
+  conn_pool_->makeRequest(hash_key, subMessage);
+}
+
+void InstanceImpl::subReplyInbox() {
+  const std::string hash_key;
+  const Message subMessage =
+      nats_message_builder_.createSubMessage("reply-to.*", "2");
+  conn_pool_->makeRequest(hash_key, subMessage);
+}
+
+void InstanceImpl::pubConnectRequest() {
+  const std::string hash_key;
+  const std::string connect_request_message =
+      nats_streaming_message_utility_.createConnectRequestMessage(
+          "client1", "heartbeat-inbox");
+  const Message pubMessage = nats_message_builder_.createPubMessage(
+      "_STAN.discover.test-cluster", "reply-to.1", connect_request_message);
+  conn_pool_->makeRequest(hash_key, pubMessage);
 }
 
 } // namespace Publisher

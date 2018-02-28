@@ -6,6 +6,7 @@
 #include "envoy/tcp/conn_pool.h"
 
 #include "common/nats/message_builder.h"
+#include "common/nats/streaming/message_utility.h"
 
 namespace Envoy {
 namespace Nats {
@@ -29,18 +30,26 @@ public:
 private:
   enum class State {
     Initial,
-    Published,
+    SentConnectRequest,
     WaitingForPayload,
+    Done,
   };
 
   inline void onInitialResponse(Nats::MessagePtr &&value);
 
-  inline void onPublishedResponse(Nats::MessagePtr &&value);
+  inline void onSentConnectRequestResponse(Nats::MessagePtr &&value);
 
   inline void onWaitingForPayloadResponse(Nats::MessagePtr &&value);
 
+  inline void subHeartbeatInbox();
+
+  inline void subReplyInbox();
+
+  inline void pubConnectRequest();
+
   Tcp::ConnPool::InstancePtr<Message> conn_pool_;
-  MessageBuilder message_builder_;
+  Nats::MessageBuilder nats_message_builder_;
+  Nats::Streaming::MessageUtility nats_streaming_message_utility_;
   State state_{};
   Optional<std::string> subject_{};
 
