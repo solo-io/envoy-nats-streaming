@@ -22,7 +22,7 @@ public:
   // Nats::Publisher::Instance
   PublishRequestPtr makeRequest(const std::string &cluster_name,
                                 const std::string &subject,
-                                Buffer::Instance *payload,
+                                Buffer::Instance &payload,
                                 PublishCallbacks &callbacks) override;
 
   // Tcp::ConnPool::PoolCallbacks
@@ -57,7 +57,7 @@ private:
 
   inline void pubPubMsg();
 
-  inline std::string drainBufferToString(Buffer::Instance *buffer) const;
+  inline std::string drainBufferToString(Buffer::Instance &buffer) const;
 
   inline std::string bufferToString(const Buffer::Instance &buffer) const;
 

@@ -107,7 +107,7 @@ TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
 
   // `publisher_->makeRequest()` should be called exactly once.
   EXPECT_CALL(*publisher_,
-              makeRequest("fake_cluster", "Subject1", nullptr, Ref(*filter_)))
+              makeRequest("fake_cluster", "Subject1", _, Ref(*filter_)))
       .Times(1);
 
   const std::string subject = "Subject1";
@@ -122,7 +122,7 @@ TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
   EXPECT_EQ(FilterHeadersStatus::StopIteration,
             filter_->decodeHeaders(headers, true));
 
-  ASSERT(!publisher_->last_payload_);
+  EXPECT_EQ(0, publisher_->last_payload_.length());
 }
 
 TEST_F(NatsStreamingFilterTest, RequestWithData) {
@@ -161,8 +161,7 @@ TEST_F(NatsStreamingFilterTest, RequestWithData) {
   const Buffer::OwnedImpl expectedPayload("hello world");
 
   // TODO(talnordan): Compare buffer content too.
-  ASSERT(publisher_->last_payload_);
-  ASSERT_EQ(expectedPayload.length(), publisher_->last_payload_->length());
+  EXPECT_EQ(expectedPayload.length(), publisher_->last_payload_.length());
 }
 
 TEST_F(NatsStreamingFilterTest, RequestWithTrailers) {
@@ -205,8 +204,7 @@ TEST_F(NatsStreamingFilterTest, RequestWithTrailers) {
   const Buffer::OwnedImpl expectedPayload("hello world");
 
   // TODO(talnordan): Compare buffer content too.
-  ASSERT(publisher_->last_payload_);
-  ASSERT_EQ(expectedPayload.length(), publisher_->last_payload_->length());
+  EXPECT_EQ(expectedPayload.length(), publisher_->last_payload_.length());
 }
 
 } // namespace Http

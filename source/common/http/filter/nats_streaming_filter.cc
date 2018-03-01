@@ -115,13 +115,7 @@ void NatsStreamingFilter::relayToNatsStreaming() {
   const std::string &subject = *optional_subject_.value().subject;
 
   // TODO(talnordan): Keep the return value of `makeRequest()`.
-  // TODO(yuval-k) publisher can now own this buffer by moving it.
-  Buffer::OwnedImpl *non_empty_body{};
-  if (body_.length() > 0) {
-    non_empty_body = &body_;
-  }
-
-  publisher_->makeRequest(*cluster_name, subject, non_empty_body, *this);
+  publisher_->makeRequest(*cluster_name, subject, body_, *this);
 }
 
 } // namespace Http

@@ -13,7 +13,7 @@ InstanceImpl::InstanceImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_)
 
 PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
                                             const std::string &subject,
-                                            Buffer::Instance *payload,
+                                            Buffer::Instance &payload,
                                             PublishCallbacks &callbacks) {
   UNREFERENCED_PARAMETER(cluster_name);
 
@@ -155,13 +155,9 @@ void InstanceImpl::pubPubMsg() {
 
 // TODO(talnordan): Consider introducing `BufferUtility` and extracting this
 // member function into it.
-std::string InstanceImpl::drainBufferToString(Buffer::Instance *buffer) const {
-  if (!buffer) {
-    return "";
-  }
-
-  std::string output = bufferToString(*buffer);
-  buffer->drain(buffer->length());
+std::string InstanceImpl::drainBufferToString(Buffer::Instance &buffer) const {
+  std::string output = bufferToString(buffer);
+  buffer.drain(buffer.length());
   return output;
 }
 

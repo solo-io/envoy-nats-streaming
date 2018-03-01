@@ -19,15 +19,15 @@ MockPublishCallbacks::~MockPublishCallbacks() {}
 
 MockInstance::MockInstance() {
   ON_CALL(*this, makeRequest(_, _, _, _))
-      .WillByDefault(Invoke(
-          [this](const std::string &cluster_name, const std::string &subject,
-                 const Buffer::Instance *payload,
-                 PublishCallbacks &callbacks) -> PublishRequestPtr {
+      .WillByDefault(
+          Invoke([this](const std::string &cluster_name,
+                        const std::string &subject, Buffer::Instance &payload,
+                        PublishCallbacks &callbacks) -> PublishRequestPtr {
             UNREFERENCED_PARAMETER(cluster_name);
             UNREFERENCED_PARAMETER(subject);
-            UNREFERENCED_PARAMETER(payload);
 
-            last_payload_ = payload;
+            last_payload_.drain(last_payload_.length());
+            last_payload_.move(payload);
 
             callbacks.onResponse();
             return nullptr;
