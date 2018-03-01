@@ -14,7 +14,7 @@ http_archive(
 ENVOY_COMMON_SHA = "ee625c53848d990dd7e5b87c5fbcd2776054e9f8"  # Feb 26, 2018 ( split metadata accessor)
 
 git_repository(
-    name = "envoy_common",
+    name = "solo_envoy_common",
     remote = "git@github.com:solo-io/envoy-common",
     commit = ENVOY_COMMON_SHA,
 )
