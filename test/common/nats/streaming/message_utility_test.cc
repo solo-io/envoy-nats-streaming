@@ -89,7 +89,7 @@ TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessage) {
   const auto result = message_utility_.parsePubAckMessage(message);
 
   EXPECT_EQ(uuid, result.guid());
-  EXPECT(result.error().empty());
+  EXPECT_TRUE(result.error().empty());
 }
 
 TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessageWithError) {
