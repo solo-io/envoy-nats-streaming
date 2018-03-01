@@ -1,7 +1,5 @@
 #include "common/nats/streaming/message_utility.h"
 
-#include "protocol.pb.h"
-
 namespace Envoy {
 namespace Nats {
 namespace Streaming {
@@ -39,6 +37,23 @@ std::string MessageUtility::createPubMsgMessage(const std::string &client_id,
   pub_msg.set_data(data);
 
   return serializeToString(pub_msg);
+}
+
+std::string
+MessageUtility::createPubAckMessage(const std::string &guid,
+                                    const std::string &error) const {
+  pb::PubAck pub_ack;
+  pub_ack.set_guid(guid);
+  pub_ack.set_error(error);
+
+  return serializeToString(pub_ack);
+}
+
+pb::PubAck
+MessageUtility::parsePubAckMessage(const std::string &pub_ack_message) const {
+  pb::PubAck pub_ack;
+  pub_ack.ParseFromString(pub_ack_message);
+  return pub_ack;
 }
 
 std::string MessageUtility::getPubPrefix(

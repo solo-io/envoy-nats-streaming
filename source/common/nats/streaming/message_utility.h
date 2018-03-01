@@ -1,6 +1,9 @@
 #pragma once
 
 #include <string>
+#include <utility>
+
+#include "protocol.pb.h"
 
 namespace Envoy {
 namespace Nats {
@@ -22,6 +25,11 @@ public:
                                   const std::string &guid,
                                   const std::string &subject,
                                   const std::string &data) const;
+
+  std::string createPubAckMessage(const std::string &guid,
+                                  const std::string &error) const;
+
+  pb::PubAck parsePubAckMessage(const std::string &pub_ack_message) const;
 
   std::string getPubPrefix(const std::string &connect_response_message) const;
 
