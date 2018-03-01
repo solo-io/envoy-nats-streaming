@@ -20,17 +20,15 @@ namespace Envoy {
 namespace Http {
 
 NatsStreamingFilter::NatsStreamingFilter(
-    Server::Configuration::FactoryContext &ctx, const std::string &name,
     NatsStreamingFilterConfigSharedPtr config,
     SubjectRetrieverSharedPtr retreiver, Nats::Publisher::InstancePtr publisher)
-    : FunctionalFilterBase(ctx, name), config_(config),
-      subject_retriever_(retreiver), publisher_(publisher) {}
+    : config_(config), subject_retriever_(retreiver), publisher_(publisher) {}
 
 NatsStreamingFilter::~NatsStreamingFilter() {}
 
 Envoy::Http::FilterHeadersStatus
-NatsStreamingFilter::functionDecodeHeaders(Envoy::Http::HeaderMap &headers,
-                                           bool end_stream) {
+NatsStreamingFilter::decodeHeaders(Envoy::Http::HeaderMap &headers,
+                                   bool end_stream) {
   UNREFERENCED_PARAMETER(headers);
   RELEASE_ASSERT(isActive());
 
@@ -42,24 +40,36 @@ NatsStreamingFilter::functionDecodeHeaders(Envoy::Http::HeaderMap &headers,
 }
 
 Envoy::Http::FilterDataStatus
-NatsStreamingFilter::functionDecodeData(Envoy::Buffer::Instance &data,
-                                        bool end_stream) {
+NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
+                                bool end_stream) {
   UNREFERENCED_PARAMETER(data);
   RELEASE_ASSERT(isActive());
+  body_.move(data);
+
+  if ((decoder_buffer_limit_.valid()) &&
+      ((body_.length() + data.length()) > decoder_buffer_limit_.value())) {
+
+    Http::Utility::sendLocalReply(*decoder_callbacks_, stream_destroyed_,
+                                  Http::Code::PayloadTooLarge,
+                                  "nats streaming paylaod too large");
+    return FilterDataStatus::StopIterationNoBuffer;
+  }
+
+  body_.move(data);
 
   if (end_stream) {
     relayToNatsStreaming();
 
     // TODO(talnordan): We need to make sure that life time of the buffer makes
     // sense.
-    return Envoy::Http::FilterDataStatus::StopIterationAndBuffer;
+    return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
   }
 
-  return Envoy::Http::FilterDataStatus::StopIterationAndBuffer;
+  return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
 }
 
 Envoy::Http::FilterTrailersStatus
-NatsStreamingFilter::functionDecodeTrailers(Envoy::Http::HeaderMap &) {
+NatsStreamingFilter::decodeTrailers(Envoy::Http::HeaderMap &) {
   RELEASE_ASSERT(isActive());
 
   relayToNatsStreaming();
@@ -92,7 +102,7 @@ void NatsStreamingFilter::retrieveSubject(
 
 void NatsStreamingFilter::relayToNatsStreaming() {
   RELEASE_ASSERT(optional_subject_.valid());
-  RELEASE_ASSERT(!optional_subject_.value()->empty());
+  RELEASE_ASSERT(!optional_subject_.value().subject->empty());
 
   const std::string *cluster_name =
       SoloFilterUtility::resolveClusterName(decoder_callbacks_);
@@ -101,13 +111,17 @@ void NatsStreamingFilter::relayToNatsStreaming() {
     // returning `false`.
     return;
   }
-
-  const std::string &subject = *optional_subject_.value();
-  const Buffer::Instance *payload = decoder_callbacks_->decodingBuffer();
+  // TODO:(yuval-k): use the cluster id and discovery prefix
+  const std::string &subject = *optional_subject_.value().subject;
 
   // TODO(talnordan): Keep the return value of `makeRequest()`.
-  // TODO(talnordan): Who is responsible for freeing `payload`'s memory?
-  publisher_->makeRequest(*cluster_name, subject, payload, *this);
+  // TODO(yuval-k) publisher can now own this buffer by moving it.
+  Buffer::OwnedImpl *non_empty_body{};
+  if (body_.length() > 0) {
+    non_empty_body = &body_;
+  }
+
+  publisher_->makeRequest(*cluster_name, subject, non_empty_body, *this);
 }
 
 } // namespace Http

@@ -33,30 +33,30 @@ public:
   }
 
   virtual Optional<const ProtobufWkt::Struct *> getFunctionSpec() const {
-    if (function_spec_ != nullptr) {
-      return function_spec_;
+    if (function_spec_.valid()) {
+      return &function_spec_.value();
     }
     return {};
   }
 
   virtual Optional<const ProtobufWkt::Struct *> getClusterMetadata() const {
-    if (cluster_metadata_ != nullptr) {
-      return cluster_metadata_;
+    if (cluster_metadata_.valid()) {
+      return &cluster_metadata_.value();
     }
     return {};
   }
 
   virtual Optional<const ProtobufWkt::Struct *> getRouteMetadata() const {
-    if (route_metadata_ != nullptr) {
-      return route_metadata_;
+    if (route_metadata_.valid()) {
+      return &route_metadata_.value();
     }
     return {};
   }
 
   std::string function_name_;
-  const ProtobufWkt::Struct *function_spec_;
-  const ProtobufWkt::Struct *cluster_metadata_;
-  const ProtobufWkt::Struct *route_metadata_;
+  Optional<ProtobufWkt::Struct> function_spec_;
+  Optional<ProtobufWkt::Struct> cluster_metadata_;
+  Optional<ProtobufWkt::Struct> route_metadata_;
 };
 
 Protobuf::Struct getMetadata(const std::string &json) {
@@ -73,9 +73,9 @@ getMetadataAccessor(const std::string &function_name,
                     const Protobuf::Struct &route_metadata) {
   TesterMetadataAccessor testaccessor;
   testaccessor.function_name_ = function_name;
-  testaccessor.function_spec_ = &func_metadata;
-  testaccessor.cluster_metadata_ = &cluster_metadata;
-  testaccessor.route_metadata_ = &route_metadata;
+  testaccessor.function_spec_ = func_metadata;
+  testaccessor.cluster_metadata_ = cluster_metadata;
+  testaccessor.route_metadata_ = route_metadata;
 
   return testaccessor;
 }
@@ -112,17 +112,30 @@ TEST(MetadataSubjectRetrieverTest, ConfiguredSubject) {
   const std::string configuredSubject = "Subject1";
 
   const std::string func_json = empty_json;
-  const std::string cluster_json = empty_json;
+  const std::string cluster_json_template = R"EOF(
+{{
+  "{}": "ci",
+  "{}": "dp",
+}}
+)EOF";
+
+  const std::string cluster_json =
+      fmt::format(cluster_json_template,
+                  Config::MetadataNatsStreamingKeys::get().CLUSTER_ID,
+                  Config::MetadataNatsStreamingKeys::get().DISCOVER_PREFIX);
   const std::string route_json = empty_json;
 
   auto metadata_accessor = getMetadataAccessorFromJson(
       configuredSubject, func_json, cluster_json, route_json);
 
   MetadataSubjectRetriever subjectRetriever;
-  auto actualSubject = subjectRetriever.getSubject(metadata_accessor);
+  auto maybe_actual_subject = subjectRetriever.getSubject(metadata_accessor);
 
-  EXPECT_TRUE(actualSubject.valid());
-  EXPECT_EQ(*actualSubject.value(), configuredSubject);
+  ASSERT_TRUE(maybe_actual_subject.valid());
+  auto actual_subject = maybe_actual_subject.value();
+  EXPECT_EQ(*actual_subject.subject, configuredSubject);
+  EXPECT_EQ(*actual_subject.cluster_id, "ci");
+  EXPECT_EQ(*actual_subject.discovery_prefix, "dp");
 }
 
 } // namespace Envoy

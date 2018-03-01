@@ -15,18 +15,18 @@
 #include "common/protobuf/utility.h"
 #include "common/tcp/conn_pool_impl.h"
 
-#include "nats_streaming_filter.pb.h"
+#include "nats_streaming_filter.pb.validate.h"
 
 namespace Envoy {
 namespace Server {
 namespace Configuration {
 
-HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilterFactory(
-    const Json::Object &config, const std::string &stat_prefix,
-    FactoryContext &context) {
-  UNREFERENCED_PARAMETER(stat_prefix);
+typedef Http::FunctionalFilterMixin<Http::NatsStreamingFilter>
+    MixedNatsStreamingFilter;
 
-  return createFilter(translateNatsStreamingFilter(config), context);
+HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilterFactory(
+    const Json::Object &, const std::string &, FactoryContext &) {
+  NOT_IMPLEMENTED;
 }
 
 HttpFilterFactoryCb
@@ -49,7 +49,8 @@ NatsStreamingFilterConfigFactory::createFilterFactoryFromProto(
    * */
 
   return createFilter(
-      dynamic_cast<const envoy::api::v2::filter::http::NatsStreaming &>(config),
+      MessageUtil::downcastAndValidate<
+          const envoy::api::v2::filter::http::NatsStreaming &>(config),
       context);
 }
 
@@ -63,23 +64,14 @@ std::string NatsStreamingFilterConfigFactory::name() {
   return Config::SoloHttpFilterNames::get().NATS_STREAMING;
 }
 
-const envoy::api::v2::filter::http::NatsStreaming
-NatsStreamingFilterConfigFactory::translateNatsStreamingFilter(
-    const Json::Object &json_config) {
-  json_config.validateSchema(NATS_STREAMING_HTTP_FILTER_SCHEMA);
-
-  envoy::api::v2::filter::http::NatsStreaming proto_config;
-  JSON_UTIL_SET_DURATION(json_config, proto_config, op_timeout);
-  return proto_config;
-}
-
 HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
     const envoy::api::v2::filter::http::NatsStreaming &proto_config,
     FactoryContext &context) {
 
   Http::NatsStreamingFilterConfigSharedPtr config =
       std::make_shared<Http::NatsStreamingFilterConfig>(
-          Http::NatsStreamingFilterConfig(proto_config));
+          Http::NatsStreamingFilterConfig(proto_config,
+                                          context.clusterManager()));
 
   Http::SubjectRetrieverSharedPtr subjectRetriever =
       std::make_shared<Http::MetadataSubjectRetriever>();
@@ -104,7 +96,7 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
 
   return [&context, config, subjectRetriever, publisher](
              Envoy::Http::FilterChainFactoryCallbacks &callbacks) -> void {
-    auto filter = new Http::NatsStreamingFilter(
+    auto filter = new MixedNatsStreamingFilter(
         context, Config::SoloMetadataFilters::get().NATS_STREAMING, config,
         subjectRetriever, publisher);
     callbacks.addStreamDecoderFilter(

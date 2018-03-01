@@ -25,6 +25,10 @@ public:
   MetadataSubjectRetriever();
 
   Optional<Subject> getSubject(const MetadataAccessor &metadataccessor);
+
+private:
+  static Optional<const std::string *>
+  nonEmptyStringValue(const ProtobufWkt::Struct &spec, const std::string &key);
 };
 
 } // namespace Http

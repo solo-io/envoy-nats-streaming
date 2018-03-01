@@ -14,6 +14,8 @@ config:
   op_timeout:
     seconds: 0
     nanos: 20000000
+  max_connections: 1
+  cluster: cluster_0
 )EOF";
 
 class NatsStreamingFilterIntegrationTest

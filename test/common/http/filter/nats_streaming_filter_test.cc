@@ -21,30 +21,46 @@ using testing::_;
 namespace Envoy {
 namespace Http {
 
+// TODO: move to common
+class NothingMetadataAccessor : public MetadataAccessor {
+public:
+  virtual Optional<const std::string *> getFunctionName() const { return {}; }
+  virtual Optional<const ProtobufWkt::Struct *> getFunctionSpec() const {
+    return {};
+  }
+  virtual Optional<const ProtobufWkt::Struct *> getClusterMetadata() const {
+    return {};
+  }
+  virtual Optional<const ProtobufWkt::Struct *> getRouteMetadata() const {
+    return {};
+  }
+
+  virtual ~NothingMetadataAccessor() {}
+};
+
 class NatsStreamingFilterTest : public testing::Test {
 public:
   NatsStreamingFilterTest() {}
 
 protected:
   void SetUp() override {
-    std::string json = R"EOF(
-    {
-      "op_timeout_ms" : 17
-    }
-    )EOF";
 
-    Envoy::Json::ObjectSharedPtr json_config =
-        Envoy::Json::Factory::loadFromString(json);
-    auto proto_config =
-        Server::Configuration::NatsStreamingFilterConfigFactory::
-            translateNatsStreamingFilter(*json_config);
-    config_.reset(new NatsStreamingFilterConfig(proto_config));
+    envoy::api::v2::filter::http::NatsStreaming proto_config;
+    proto_config.mutable_op_timeout()->set_nanos(17 * 1000000);
+    proto_config.set_max_connections(1);
+    proto_config.set_cluster("cluster");
+
+    config_.reset(new NatsStreamingFilterConfig(
+        proto_config, factory_context_.clusterManager()));
     subject_retriever_.reset(new NiceMock<MockSubjectRetriever>);
     publisher_.reset(new NiceMock<Nats::Publisher::MockInstance>);
-    filter_.reset(new NatsStreamingFilter(factory_context_, "doesn't matter",
-                                          config_, subject_retriever_,
-                                          publisher_));
+    filter_.reset(
+        new NatsStreamingFilter(config_, subject_retriever_, publisher_));
     filter_->setDecoderFilterCallbacks(callbacks_);
+  }
+
+  bool retreivefunction() {
+    return filter_->retrieveFunction(NothingMetadataAccessor());
   }
 
   NiceMock<Envoy::Server::Configuration::MockFactoryContext> factory_context_;
@@ -62,7 +78,7 @@ TEST_F(NatsStreamingFilterTest, NoSubjectHeaderOnlyRequest) {
   // `publisher_->makeRequest()` should not be called.
   EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(0);
 
-  ASSERT_EQ(false, filter_->retrieveFunction(*filter_));
+  ASSERT_EQ(false, retreivefunction());
 }
 
 TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithData) {
@@ -72,7 +88,7 @@ TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithData) {
   // `publisher_->makeRequest()` should not be called.
   EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(0);
 
-  ASSERT_EQ(false, filter_->retrieveFunction(*filter_));
+  ASSERT_EQ(false, retreivefunction());
 }
 
 TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithTrailers) {
@@ -82,7 +98,7 @@ TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithTrailers) {
   // `publisher_->makeRequest()` should not be called.
   EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(0);
 
-  ASSERT_EQ(false, filter_->retrieveFunction(*filter_));
+  ASSERT_EQ(false, retreivefunction());
 }
 
 TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
@@ -95,13 +111,16 @@ TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
       .Times(1);
 
   const std::string subject = "Subject1";
-  subject_retriever_->subject_ = Optional<Subject>(&subject);
+  const std::string cluster_id = "cluster_id";
+  const std::string discovery_prefix = "discovery_prefix1";
+  subject_retriever_->subject_ =
+      Optional<Subject>(Subject{&subject, &cluster_id, &discovery_prefix});
 
-  ASSERT_EQ(true, filter_->retrieveFunction(*filter_));
+  ASSERT_EQ(true, retreivefunction());
 
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::StopIteration,
-            filter_->functionDecodeHeaders(headers, true));
+            filter_->decodeHeaders(headers, true));
 
   ASSERT(!publisher_->last_payload_);
 }
@@ -116,25 +135,28 @@ TEST_F(NatsStreamingFilterTest, RequestWithData) {
       .Times(1);
 
   const std::string subject = "Subject1";
-  subject_retriever_->subject_ = Optional<Subject>(&subject);
+  const std::string cluster_id = "cluster_id";
+  const std::string discovery_prefix = "discovery_prefix1";
+  subject_retriever_->subject_ =
+      Optional<Subject>(Subject{&subject, &cluster_id, &discovery_prefix});
 
   callbacks_.buffer_.reset(new Buffer::OwnedImpl);
 
-  ASSERT_EQ(true, filter_->retrieveFunction(*filter_));
+  ASSERT_EQ(true, retreivefunction());
 
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::StopIteration,
-            filter_->functionDecodeHeaders(headers, false));
+            filter_->decodeHeaders(headers, false));
 
   Buffer::OwnedImpl data1("hello");
   callbacks_.buffer_->add(data1);
-  EXPECT_EQ(FilterDataStatus::StopIterationAndBuffer,
-            filter_->functionDecodeData(data1, false));
+  EXPECT_EQ(FilterDataStatus::StopIterationNoBuffer,
+            filter_->decodeData(data1, false));
 
   Buffer::OwnedImpl data2(" world");
   callbacks_.buffer_->add(data2);
-  EXPECT_EQ(FilterDataStatus::StopIterationAndBuffer,
-            filter_->functionDecodeData(data2, true));
+  EXPECT_EQ(FilterDataStatus::StopIterationNoBuffer,
+            filter_->decodeData(data2, true));
 
   const Buffer::OwnedImpl expectedPayload("hello world");
 
@@ -153,29 +175,32 @@ TEST_F(NatsStreamingFilterTest, RequestWithTrailers) {
       .Times(1);
 
   const std::string subject = "Subject1";
-  subject_retriever_->subject_ = Optional<Subject>(&subject);
+  const std::string cluster_id = "cluster_id";
+  const std::string discovery_prefix = "discovery_prefix1";
+  subject_retriever_->subject_ =
+      Optional<Subject>(Subject{&subject, &cluster_id, &discovery_prefix});
 
   callbacks_.buffer_.reset(new Buffer::OwnedImpl);
 
-  ASSERT_EQ(true, filter_->retrieveFunction(*filter_));
+  ASSERT_EQ(true, retreivefunction());
 
   TestHeaderMapImpl headers;
   EXPECT_EQ(FilterHeadersStatus::StopIteration,
-            filter_->functionDecodeHeaders(headers, false));
+            filter_->decodeHeaders(headers, false));
 
   Buffer::OwnedImpl data1("hello");
   callbacks_.buffer_->add(data1);
-  EXPECT_EQ(FilterDataStatus::StopIterationAndBuffer,
-            filter_->functionDecodeData(data1, false));
+  EXPECT_EQ(FilterDataStatus::StopIterationNoBuffer,
+            filter_->decodeData(data1, false));
 
   Buffer::OwnedImpl data2(" world");
   callbacks_.buffer_->add(data2);
-  EXPECT_EQ(FilterDataStatus::StopIterationAndBuffer,
-            filter_->functionDecodeData(data2, false));
+  EXPECT_EQ(FilterDataStatus::StopIterationNoBuffer,
+            filter_->decodeData(data2, false));
 
   TestHeaderMapImpl trailers;
   EXPECT_EQ(Envoy::Http::FilterTrailersStatus::StopIteration,
-            filter_->functionDecodeTrailers(trailers));
+            filter_->decodeTrailers(trailers));
 
   const Buffer::OwnedImpl expectedPayload("hello world");
 

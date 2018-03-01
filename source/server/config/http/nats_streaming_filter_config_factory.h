@@ -25,9 +25,6 @@ public:
 
   std::string name() override;
 
-  static const envoy::api::v2::filter::http::NatsStreaming
-  translateNatsStreamingFilter(const Json::Object &json_config);
-
 private:
   HttpFilterFactoryCb
   createFilter(const envoy::api::v2::filter::http::NatsStreaming &proto_config,

@@ -9,7 +9,12 @@
 namespace Envoy {
 namespace Http {
 
-using Subject = const std::string *;
+// TODO(yuval-k): rename this to something more descriptive?
+struct Subject {
+  const std::string *subject;
+  const std::string *cluster_id;
+  const std::string *discovery_prefix;
+};
 
 // TODO(talnordan): Make generic and move to `envoy-common`.
 class SubjectRetriever {
