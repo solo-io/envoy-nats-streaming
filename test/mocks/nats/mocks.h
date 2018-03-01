@@ -30,7 +30,7 @@ public:
 
   MOCK_METHOD4(makeRequest,
                PublishRequestPtr(const std::string &, const std::string &,
-                                 const Buffer::Instance *,
+                                 Buffer::Instance *,
                                  PublishCallbacks &callbacks));
 
   const Buffer::Instance *last_payload_;

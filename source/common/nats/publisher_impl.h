@@ -22,7 +22,7 @@ public:
   // Nats::Publisher::Instance
   PublishRequestPtr makeRequest(const std::string &cluster_name,
                                 const std::string &subject,
-                                const Buffer::Instance *payload,
+                                Buffer::Instance *payload,
                                 PublishCallbacks &callbacks) override;
 
   // Tcp::ConnPool::PoolCallbacks
@@ -57,6 +57,8 @@ private:
 
   inline void pubPubMsg();
 
+  inline std::string drainBufferToString(Buffer::Instance *buffer) const;
+
   inline std::string bufferToString(const Buffer::Instance &buffer) const;
 
   Tcp::ConnPool::InstancePtr<Message> conn_pool_;
@@ -64,7 +66,7 @@ private:
   Nats::Streaming::MessageUtility nats_streaming_message_utility_;
   State state_{};
   Optional<std::string> subject_{};
-  Optional<const Buffer::Instance *> payload_{};
+  Optional<std::string> payload_{};
   Optional<std::string> pub_prefix_{};
 
   // TODO(talnordan): This should be a collection.

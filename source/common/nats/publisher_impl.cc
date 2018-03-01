@@ -13,13 +13,12 @@ InstanceImpl::InstanceImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_)
 
 PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
                                             const std::string &subject,
-                                            const Buffer::Instance *payload,
+                                            Buffer::Instance *payload,
                                             PublishCallbacks &callbacks) {
   UNREFERENCED_PARAMETER(cluster_name);
-  UNREFERENCED_PARAMETER(payload);
 
   subject_.value(subject);
-  payload_.value(payload);
+  payload_.value(drainBufferToString(payload));
   callbacks_.value(&callbacks);
   conn_pool_->setPoolCallbacks(*this);
 
@@ -144,15 +143,26 @@ void InstanceImpl::pubPubMsg() {
   const std::string hash_key;
 
   // TODO(talnordan): Avoid using hard-coded string literals.
-  const std::string payload_string = bufferToString(*payload_.value());
   const std::string pub_msg_message =
       nats_streaming_message_utility_.createPubMsgMessage(
-          "client1", "guid1", subject_.value(), payload_string);
+          "client1", "guid1", subject_.value(), payload_.value());
   const Message pubMessage = nats_message_builder_.createPubMessage(
       pub_prefix_.value() + "." + subject_.value(), "reply-to.2",
       pub_msg_message);
 
   conn_pool_->makeRequest(hash_key, pubMessage);
+}
+
+// TODO(talnordan): Consider introducing `BufferUtility` and extracting this
+// member function into it.
+std::string InstanceImpl::drainBufferToString(Buffer::Instance *buffer) const {
+  if (!buffer) {
+    return "";
+  }
+
+  std::string output = bufferToString(*buffer);
+  buffer->drain(buffer->length());
+  return output;
 }
 
 // TODO(talnordan): This is duplicated from `TestUtility::bufferToString()`.
