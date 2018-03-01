@@ -40,11 +40,14 @@ void InstanceImpl::onResponse(Nats::MessagePtr &&value) {
   case State::SentConnectRequest:
     onSentConnectRequestResponse(std::move(value));
     break;
-  case State::WaitingForPayload:
-    onWaitingForPayloadResponse(std::move(value));
+  case State::WaitingForConnectResponsePayload:
+    onConnectResponsePayload(std::move(value));
     break;
   case State::SentPubMsg:
     onSentPubMsgResponse(std::move(value));
+    break;
+  case State::WaitingForPubAckPayload:
+    onPubAckPayload(std::move(value));
     break;
   case State::Done:
     break;
@@ -67,10 +70,10 @@ void InstanceImpl::onInitialResponse(Nats::MessagePtr &&value) {
 
 void InstanceImpl::onSentConnectRequestResponse(Nats::MessagePtr &&value) {
   UNREFERENCED_PARAMETER(value);
-  state_ = State::WaitingForPayload;
+  state_ = State::WaitingForConnectResponsePayload;
 }
 
-void InstanceImpl::onWaitingForPayloadResponse(Nats::MessagePtr &&value) {
+void InstanceImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
   const std::string &payload = value->asString();
   pub_prefix_.value(nats_streaming_message_utility_.getPubPrefix(payload));
 
@@ -87,8 +90,20 @@ void InstanceImpl::onSentPubMsgResponse(Nats::MessagePtr &&value) {
   RELEASE_ASSERT(value->asString() == "MSG reply-to.2 2 7");
 
   // TODO(talnordan): Read payload and parse it.
+  state_ = State::WaitingForPubAckPayload;
+}
+
+void InstanceImpl::onPubAckPayload(Nats::MessagePtr &&value) {
+  const std::string &payload = value->asString();
+  auto &&pub_ack = nats_streaming_message_utility_.parsePubAckMessage(payload);
+
+  if (pub_ack.error().empty()) {
+    callbacks_.value()->onResponse();
+  } else {
+    callbacks_.value()->onFailure();
+  }
+
   state_ = State::Done;
-  callbacks_.value()->onResponse();
 }
 
 void InstanceImpl::subHeartbeatInbox() {

@@ -33,18 +33,21 @@ private:
   enum class State {
     Initial,
     SentConnectRequest,
-    WaitingForPayload,
+    WaitingForConnectResponsePayload,
     SentPubMsg,
-    Done
+    WaitingForPubAckPayload,
+    Done,
   };
 
   inline void onInitialResponse(Nats::MessagePtr &&value);
 
   inline void onSentConnectRequestResponse(Nats::MessagePtr &&value);
 
-  inline void onWaitingForPayloadResponse(Nats::MessagePtr &&value);
+  inline void onConnectResponsePayload(Nats::MessagePtr &&value);
 
   inline void onSentPubMsgResponse(Nats::MessagePtr &&value);
+
+  inline void onPubAckPayload(Nats::MessagePtr &&value);
 
   inline void subHeartbeatInbox();
 
