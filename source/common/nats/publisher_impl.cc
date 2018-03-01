@@ -43,6 +43,9 @@ void InstanceImpl::onResponse(Nats::MessagePtr &&value) {
   case State::WaitingForPayload:
     onWaitingForPayloadResponse(std::move(value));
     break;
+  case State::SentPubMsg:
+    onSentPubMsgResponse(std::move(value));
+    break;
   case State::Done:
     break;
   }
@@ -69,12 +72,21 @@ void InstanceImpl::onSentConnectRequestResponse(Nats::MessagePtr &&value) {
 
 void InstanceImpl::onWaitingForPayloadResponse(Nats::MessagePtr &&value) {
   const std::string &payload = value->asString();
-  const std::string pub_prefix =
-      nats_streaming_message_utility_.getPubPrefix(payload);
+  pub_prefix_.value(nats_streaming_message_utility_.getPubPrefix(payload));
 
-  // TODO(talnordan)
+  // TODO(talnordan): Remove assertion.
   RELEASE_ASSERT(
-      StringUtil::startsWith(pub_prefix.c_str(), "_STAN.pub.", true));
+      StringUtil::startsWith(pub_prefix_.value().c_str(), "_STAN.pub.", true));
+
+  pubPubMsg();
+  state_ = State::SentPubMsg;
+}
+
+void InstanceImpl::onSentPubMsgResponse(Nats::MessagePtr &&value) {
+  // TODO(talnordan): Remove assertion.
+  RELEASE_ASSERT(value->asString() == "MSG reply-to.2 2 7");
+
+  // TODO(talnordan): Read payload and parse it.
   state_ = State::Done;
   callbacks_.value()->onResponse();
 }
@@ -108,6 +120,20 @@ void InstanceImpl::pubConnectRequest() {
           "client1", "heartbeat-inbox");
   const Message pubMessage = nats_message_builder_.createPubMessage(
       "_STAN.discover.test-cluster", "reply-to.1", connect_request_message);
+
+  conn_pool_->makeRequest(hash_key, pubMessage);
+}
+
+void InstanceImpl::pubPubMsg() {
+  const std::string hash_key;
+
+  // TODO(talnordan): Avoid using hard-coded string literals.
+  const std::string pub_msg_message =
+      nats_streaming_message_utility_.createPubMsgMessage(
+          "client1", "guid1", subject_.value(), "solopayload");
+  const Message pubMessage = nats_message_builder_.createPubMessage(
+      pub_prefix_.value() + "." + subject_.value(), "reply-to.2",
+      pub_msg_message);
 
   conn_pool_->makeRequest(hash_key, pubMessage);
 }

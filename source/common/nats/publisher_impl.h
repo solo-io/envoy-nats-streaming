@@ -34,7 +34,8 @@ private:
     Initial,
     SentConnectRequest,
     WaitingForPayload,
-    Done,
+    SentPubMsg,
+    Done
   };
 
   inline void onInitialResponse(Nats::MessagePtr &&value);
@@ -43,17 +44,22 @@ private:
 
   inline void onWaitingForPayloadResponse(Nats::MessagePtr &&value);
 
+  inline void onSentPubMsgResponse(Nats::MessagePtr &&value);
+
   inline void subHeartbeatInbox();
 
   inline void subReplyInbox();
 
   inline void pubConnectRequest();
 
+  inline void pubPubMsg();
+
   Tcp::ConnPool::InstancePtr<Message> conn_pool_;
   Nats::MessageBuilder nats_message_builder_;
   Nats::Streaming::MessageUtility nats_streaming_message_utility_;
   State state_{};
   Optional<std::string> subject_{};
+  Optional<std::string> pub_prefix_{};
 
   // TODO(talnordan): This should be a collection.
   Optional<PublishCallbacks *> callbacks_{};

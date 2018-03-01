@@ -22,7 +22,7 @@ sleep 5
 timeout 1 $STAN_SUB -id 17 -unsubscribe=false -durable=$DURABLE subject1 | :
 
 # TODO(talnordan): Remove this.
-$STAN_PUB subject1 $PAYLOAD
+# $STAN_PUB subject1 $PAYLOAD
 
 curl -v localhost:10000/post --data '"'$PAYLOAD'"' -H"content-type: application/json" 2>&1 | grep "200 OK"
 
