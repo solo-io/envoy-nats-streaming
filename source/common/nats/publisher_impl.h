@@ -57,11 +57,14 @@ private:
 
   inline void pubPubMsg();
 
+  inline std::string bufferToString(const Buffer::Instance &buffer) const;
+
   Tcp::ConnPool::InstancePtr<Message> conn_pool_;
   Nats::MessageBuilder nats_message_builder_;
   Nats::Streaming::MessageUtility nats_streaming_message_utility_;
   State state_{};
   Optional<std::string> subject_{};
+  Optional<const Buffer::Instance *> payload_{};
   Optional<std::string> pub_prefix_{};
 
   // TODO(talnordan): This should be a collection.

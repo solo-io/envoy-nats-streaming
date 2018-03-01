@@ -19,6 +19,7 @@ PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
   UNREFERENCED_PARAMETER(payload);
 
   subject_.value(subject);
+  payload_.value(payload);
   callbacks_.value(&callbacks);
   conn_pool_->setPoolCallbacks(*this);
 
@@ -143,14 +144,31 @@ void InstanceImpl::pubPubMsg() {
   const std::string hash_key;
 
   // TODO(talnordan): Avoid using hard-coded string literals.
+  const std::string payload_string = bufferToString(*payload_.value());
   const std::string pub_msg_message =
       nats_streaming_message_utility_.createPubMsgMessage(
-          "client1", "guid1", subject_.value(), "solopayload");
+          "client1", "guid1", subject_.value(), payload_string);
   const Message pubMessage = nats_message_builder_.createPubMessage(
       pub_prefix_.value() + "." + subject_.value(), "reply-to.2",
       pub_msg_message);
 
   conn_pool_->makeRequest(hash_key, pubMessage);
+}
+
+// TODO(talnordan): This is duplicated from `TestUtility::bufferToString()`.
+// Consider moving the code to a shared utility class.
+// TODO(talnordan): Consider leveraging the fact that `max_payload` is given in
+// the NATS `INFO` message and reuse the same pre-allocated `std:string`.
+std::string InstanceImpl::bufferToString(const Buffer::Instance &buffer) const {
+  std::string output;
+  uint64_t num_slices = buffer.getRawSlices(nullptr, 0);
+  Buffer::RawSlice slices[num_slices];
+  buffer.getRawSlices(slices, num_slices);
+  for (Buffer::RawSlice &slice : slices) {
+    output.append(static_cast<const char *>(slice.mem_), slice.len_);
+  }
+
+  return output;
 }
 
 } // namespace Publisher
