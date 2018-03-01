@@ -42,6 +42,8 @@ static_resources:
           - name: io.solo.nats_streaming
             config:
               op_timeout: 5s
+              cluster: cluster_0
+              max_connections: 1
           - name: envoy.router
   clusters:
   - connect_timeout: 5.000s
