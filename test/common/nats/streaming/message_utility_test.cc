@@ -24,8 +24,8 @@ TEST_F(NatsStreamingMessageUtilityTest, ConnectRequestMessage) {
   pb::ConnectRequest connect_request;
   connect_request.ParseFromString(message);
 
-  ASSERT_EQ("client_id", connect_request.clientid());
-  ASSERT_EQ("heartbeat_inbox", connect_request.heartbeatinbox());
+  EXPECT_EQ("client_id", connect_request.clientid());
+  EXPECT_EQ("heartbeat_inbox", connect_request.heartbeatinbox());
 }
 
 TEST_F(NatsStreamingMessageUtilityTest, ConnectResponseMessage) {
@@ -35,10 +35,10 @@ TEST_F(NatsStreamingMessageUtilityTest, ConnectResponseMessage) {
   pb::ConnectResponse connect_response;
   connect_response.ParseFromString(message);
 
-  ASSERT_EQ("pub_prefix", connect_response.pubprefix());
-  ASSERT_EQ("sub_requests", connect_response.subrequests());
-  ASSERT_EQ("unsub_requests", connect_response.unsubrequests());
-  ASSERT_EQ("close_requests", connect_response.closerequests());
+  EXPECT_EQ("pub_prefix", connect_response.pubprefix());
+  EXPECT_EQ("sub_requests", connect_response.subrequests());
+  EXPECT_EQ("unsub_requests", connect_response.unsubrequests());
+  EXPECT_EQ("close_requests", connect_response.closerequests());
 }
 
 TEST_F(NatsStreamingMessageUtilityTest, PubMsgMessage) {
@@ -52,10 +52,10 @@ TEST_F(NatsStreamingMessageUtilityTest, PubMsgMessage) {
   pb::PubMsg pub_msg;
   pub_msg.ParseFromString(message);
 
-  ASSERT_EQ(client_id, pub_msg.clientid());
-  ASSERT_EQ(uuid, pub_msg.guid());
-  ASSERT_EQ(subject, pub_msg.subject());
-  ASSERT_EQ(data, pub_msg.data());
+  EXPECT_EQ(client_id, pub_msg.clientid());
+  EXPECT_EQ(uuid, pub_msg.guid());
+  EXPECT_EQ(subject, pub_msg.subject());
+  EXPECT_EQ(data, pub_msg.data());
 }
 
 TEST_F(NatsStreamingMessageUtilityTest, PubAckMessage) {
@@ -66,8 +66,8 @@ TEST_F(NatsStreamingMessageUtilityTest, PubAckMessage) {
   pb::PubAck pub_ack;
   pub_ack.ParseFromString(message);
 
-  ASSERT_EQ(uuid, pub_ack.guid());
-  ASSERT_EQ(error, pub_ack.error());
+  EXPECT_EQ(uuid, pub_ack.guid());
+  EXPECT_EQ(error, pub_ack.error());
 }
 
 TEST_F(NatsStreamingMessageUtilityTest, GetPubPrefix) {
@@ -76,7 +76,7 @@ TEST_F(NatsStreamingMessageUtilityTest, GetPubPrefix) {
 
   const auto pub_prefix = message_utility_.getPubPrefix(message);
 
-  ASSERT_EQ("pub_prefix", pub_prefix);
+  EXPECT_EQ("pub_prefix", pub_prefix);
 }
 
 TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessage) {
@@ -88,8 +88,8 @@ TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessage) {
 
   const auto result = message_utility_.parsePubAckMessage(message);
 
-  ASSERT_EQ(uuid, result.guid());
-  ASSERT(result.error().empty());
+  EXPECT_EQ(uuid, result.guid());
+  EXPECT(result.error().empty());
 }
 
 TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessageWithError) {
@@ -99,8 +99,8 @@ TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessageWithError) {
 
   const auto result = message_utility_.parsePubAckMessage(message);
 
-  ASSERT_EQ(uuid, result.guid());
-  ASSERT_EQ(error, result.error());
+  EXPECT_EQ(uuid, result.guid());
+  EXPECT_EQ(error, result.error());
 }
 
 } // namespace Streaming
