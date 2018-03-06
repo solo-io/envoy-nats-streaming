@@ -16,6 +16,7 @@ public:
                                         const std::string &payload) const;
   Envoy::Nats::Message createSubMessage(const std::string &subject,
                                         const std::string &sid) const;
+  Envoy::Nats::Message createPongMessage() const;
 };
 
 } // namespace Nats

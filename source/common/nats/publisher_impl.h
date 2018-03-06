@@ -39,6 +39,8 @@ private:
     Done,
   };
 
+  inline void onPing();
+
   inline void onInitialResponse(Nats::MessagePtr &&value);
 
   inline void onSentConnectRequestResponse(Nats::MessagePtr &&value);
@@ -56,6 +58,8 @@ private:
   inline void pubConnectRequest();
 
   inline void pubPubMsg();
+
+  inline void pong();
 
   inline std::string drainBufferToString(Buffer::Instance &buffer) const;
 

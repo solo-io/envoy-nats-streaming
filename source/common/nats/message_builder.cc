@@ -38,5 +38,9 @@ MessageBuilder::createSubMessage(const std::string &subject,
   return Message(ss.str());
 }
 
+Envoy::Nats::Message MessageBuilder::createPongMessage() const {
+  return Message("PONG");
+}
+
 } // namespace Nats
 } // namespace Envoy

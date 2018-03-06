@@ -33,6 +33,12 @@ PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
 
 void InstanceImpl::onResponse(Nats::MessagePtr &&value) {
   ENVOY_LOG(trace, "on response: value is\n[{}]", value->asString());
+
+  if (value->asString() == "PING") {
+    onPing();
+    return;
+  }
+
   switch (state_) {
   case State::Initial:
     onInitialResponse(std::move(value));
@@ -57,6 +63,8 @@ void InstanceImpl::onResponse(Nats::MessagePtr &&value) {
 void InstanceImpl::onClose() {
   // TODO(talnordan)
 }
+
+void InstanceImpl::onPing() { pong(); }
 
 void InstanceImpl::onInitialResponse(Nats::MessagePtr &&value) {
   UNREFERENCED_PARAMETER(value);
@@ -175,6 +183,12 @@ std::string InstanceImpl::bufferToString(const Buffer::Instance &buffer) const {
   }
 
   return output;
+}
+
+void InstanceImpl::pong() {
+  const std::string hash_key;
+  const Message pongMessage = nats_message_builder_.createPongMessage();
+  conn_pool_->makeRequest(hash_key, pongMessage);
 }
 
 } // namespace Publisher
