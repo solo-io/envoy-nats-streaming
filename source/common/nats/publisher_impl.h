@@ -32,18 +32,19 @@ public:
 private:
   enum class State {
     Initial,
-    SentConnectRequest,
     WaitingForConnectResponsePayload,
     SentPubMsg,
     WaitingForPubAckPayload,
     Done,
   };
 
+  inline void onInfo(Nats::MessagePtr &&value);
+
+  inline void onMsg(Nats::MessagePtr &&value);
+
   inline void onPing();
 
   inline void onInitialResponse(Nats::MessagePtr &&value);
-
-  inline void onSentConnectRequestResponse(Nats::MessagePtr &&value);
 
   inline void onConnectResponsePayload(Nats::MessagePtr &&value);
 

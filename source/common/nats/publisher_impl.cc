@@ -34,17 +34,56 @@ PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
 void InstanceImpl::onResponse(Nats::MessagePtr &&value) {
   ENVOY_LOG(trace, "on response: value is\n[{}]", value->asString());
 
-  if (value->asString() == "PING") {
-    onPing();
-    return;
-  }
+  // TODO(talnordan): This implementation is provided as a proof of concept. In
+  // a production-ready implementation, the decoder should use zero allocation
+  // byte parsing, and this code should switch over an `enum class` representing
+  // the message type. See:
+  // https://github.com/nats-io/go-nats/blob/master/parser.go
+  // https://youtu.be/ylRKac5kSOk?t=10m46s
 
+  auto delimiters = " \t";
+
+  // This might be an empty payload.
+  auto keep_empty_string = true;
+
+  auto tokens =
+      StringUtil::splitToken(value->asString(), delimiters, keep_empty_string);
+
+  // TODO(talnordan): What if the payload happens to start with "INFO"? A test
+  // whether a payload is expected should be performed prior to NATS operation
+  // extraction. Eventually, we might want `onResponse()` to be passed a single
+  // decoded message consisting of both the `MSG` arguments and the payload.
+  auto &&op = tokens[0];
+  if (StringUtil::caseCompare(op, "INFO")) {
+    onInfo(std::move(value));
+  } else if (StringUtil::caseCompare(op, "MSG")) {
+    onMsg(std::move(value));
+  } else if (StringUtil::caseCompare(op, "PING")) {
+    onPing();
+  } else {
+    // This might be the payload.
+    onMsg(std::move(value));
+  }
+}
+
+void InstanceImpl::onClose() {
+  // TODO(talnordan)
+}
+
+void InstanceImpl::onInfo(Nats::MessagePtr &&value) {
+  // TODO(talnordan): Process `INFO` options.
+  UNREFERENCED_PARAMETER(value);
+
+  // TODO(talnordan): The following behavior is part of the PoC implementation.
+  subHeartbeatInbox();
+  subReplyInbox();
+  pubConnectRequest();
+}
+
+void InstanceImpl::onMsg(Nats::MessagePtr &&value) {
   switch (state_) {
   case State::Initial:
     onInitialResponse(std::move(value));
-    break;
-  case State::SentConnectRequest:
-    onSentConnectRequestResponse(std::move(value));
     break;
   case State::WaitingForConnectResponsePayload:
     onConnectResponsePayload(std::move(value));
@@ -60,23 +99,9 @@ void InstanceImpl::onResponse(Nats::MessagePtr &&value) {
   }
 }
 
-void InstanceImpl::onClose() {
-  // TODO(talnordan)
-}
-
 void InstanceImpl::onPing() { pong(); }
 
 void InstanceImpl::onInitialResponse(Nats::MessagePtr &&value) {
-  UNREFERENCED_PARAMETER(value);
-
-  subHeartbeatInbox();
-  subReplyInbox();
-  pubConnectRequest();
-
-  state_ = State::SentConnectRequest;
-}
-
-void InstanceImpl::onSentConnectRequestResponse(Nats::MessagePtr &&value) {
   UNREFERENCED_PARAMETER(value);
   state_ = State::WaitingForConnectResponsePayload;
 }
