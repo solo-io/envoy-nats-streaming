@@ -9,12 +9,11 @@ load(
 envoy_package()
 
 envoy_cc_mock(
-    name = "nats_mocks",
+    name = "nats_streaming_mocks",
     srcs = ["mocks.cc"],
     hdrs = ["mocks.h"],
     repository = "@envoy",
     deps = [
-        "//include/envoy/tcp:conn_pool_interface",
-        "//source/common/nats:codec_lib",
+        "//source/common/nats/streaming:publisher_lib",
     ],
 )

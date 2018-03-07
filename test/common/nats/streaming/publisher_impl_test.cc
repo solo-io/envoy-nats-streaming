@@ -1,6 +1,7 @@
 #include "common/nats/streaming/publisher_impl.h"
 
 #include "test/mocks/nats/mocks.h"
+#include "test/mocks/nats/streaming/mocks.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

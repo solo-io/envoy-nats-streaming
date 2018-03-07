@@ -26,6 +26,7 @@ envoy_cc_test(
     deps = [
         "//source/common/nats/streaming:publisher_lib",
         "//test/mocks/nats:nats_mocks",
+        "//test/mocks/nats/streaming:nats_streaming_mocks",
         "//test/mocks/tcp:tcp_mocks",
         "@envoy//source/common/common:assert_lib",
         "@envoy//test/test_common:utility_lib",

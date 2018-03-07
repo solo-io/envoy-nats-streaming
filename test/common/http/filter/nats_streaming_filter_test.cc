@@ -6,7 +6,7 @@
 
 #include "test/mocks/http/filter/mocks.h"
 #include "test/mocks/http/mocks.h"
-#include "test/mocks/nats/mocks.h"
+#include "test/mocks/nats/streaming/mocks.h"
 #include "test/mocks/server/mocks.h"
 #include "test/mocks/upstream/mocks.h"
 
