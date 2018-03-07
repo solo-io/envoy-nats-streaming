@@ -42,15 +42,15 @@ private:
 
   inline void onInfo(Nats::MessagePtr &&value);
 
-  inline void onMsg(Nats::MessagePtr &&value);
+  inline void onMsg(std::vector<absl::string_view> &&tokens);
 
   inline void onPing();
 
-  inline void onInitialResponse(Nats::MessagePtr &&value);
+  inline void onInitialResponse(std::vector<absl::string_view> &&tokens);
 
   inline void onConnectResponsePayload(Nats::MessagePtr &&value);
 
-  inline void onSentPubMsgResponse(Nats::MessagePtr &&value);
+  inline void onSentPubMsgResponse(std::vector<absl::string_view> &&tokens);
 
   inline void onPubAckPayload(Nats::MessagePtr &&value);
 

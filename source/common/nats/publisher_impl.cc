@@ -66,7 +66,7 @@ void InstanceImpl::onOperation(Nats::MessagePtr &&value) {
   if (StringUtil::caseCompare(op, "INFO")) {
     onInfo(std::move(value));
   } else if (StringUtil::caseCompare(op, "MSG")) {
-    onMsg(std::move(value));
+    onMsg(std::move(tokens));
   } else if (StringUtil::caseCompare(op, "PING")) {
     onPing();
   } else {
@@ -100,13 +100,13 @@ void InstanceImpl::onInfo(Nats::MessagePtr &&value) {
   pubConnectRequest();
 }
 
-void InstanceImpl::onMsg(Nats::MessagePtr &&value) {
+void InstanceImpl::onMsg(std::vector<absl::string_view> &&tokens) {
   switch (state_) {
   case State::Initial:
-    onInitialResponse(std::move(value));
+    onInitialResponse(std::move(tokens));
     break;
   case State::SentPubMsg:
-    onSentPubMsgResponse(std::move(value));
+    onSentPubMsgResponse(std::move(tokens));
     break;
   case State::Done:
     break;
@@ -115,8 +115,8 @@ void InstanceImpl::onMsg(Nats::MessagePtr &&value) {
 
 void InstanceImpl::onPing() { pong(); }
 
-void InstanceImpl::onInitialResponse(Nats::MessagePtr &&value) {
-  UNREFERENCED_PARAMETER(value);
+void InstanceImpl::onInitialResponse(std::vector<absl::string_view> &&tokens) {
+  UNREFERENCED_PARAMETER(tokens);
   waiting_for_payload_ = true;
 }
 
@@ -132,9 +132,12 @@ void InstanceImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
   state_ = State::SentPubMsg;
 }
 
-void InstanceImpl::onSentPubMsgResponse(Nats::MessagePtr &&value) {
+void InstanceImpl::onSentPubMsgResponse(
+    std::vector<absl::string_view> &&tokens) {
   // TODO(talnordan): Remove assertion.
-  RELEASE_ASSERT(value->asString() == "MSG reply-to.2 2 7");
+  std::vector<absl::string_view> expected_tokens{"MSG", "reply-to.2", "2", "7"};
+  RELEASE_ASSERT(tokens == expected_tokens);
+
   waiting_for_payload_ = true;
 }
 
