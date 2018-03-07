@@ -44,8 +44,8 @@ public:
 };
 
 /**
- * A NATS client that takes incoming NATS messages and publishes them using a
- * backend connection pool.
+ * A NATS streaming client that takes requests routed to NATS streaming and
+ * publishes them using a backend connection pool.
  */
 class Client {
 public:
