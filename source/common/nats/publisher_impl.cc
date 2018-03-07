@@ -78,15 +78,24 @@ void InstanceImpl::onPayload(Nats::MessagePtr &&value) {
   // Mark that the payload has been received.
   waiting_for_payload_ = false;
 
-  switch (state_) {
-  case State::Initial:
-    onConnectResponsePayload(std::move(value));
-    break;
-  case State::SentPubMsg:
-    onPubAckPayload(std::move(value));
-    break;
-  case State::Done:
-    break;
+  if (heartbeat_reply_to_.valid()) {
+    const std::string hash_key;
+    const Message hearbeatResponseMessage =
+        nats_message_builder_.createPubMessage(heartbeat_reply_to_.value());
+    conn_pool_->makeRequest(hash_key, hearbeatResponseMessage);
+
+    heartbeat_reply_to_ = Optional<std::string>{};
+  } else {
+    switch (state_) {
+    case State::Initial:
+      onConnectResponsePayload(std::move(value));
+      break;
+    case State::SentPubMsg:
+      onPubAckPayload(std::move(value));
+      break;
+    case State::Done:
+      break;
+    }
   }
 }
 
@@ -101,6 +110,20 @@ void InstanceImpl::onInfo(Nats::MessagePtr &&value) {
 }
 
 void InstanceImpl::onMsg(std::vector<absl::string_view> &&tokens) {
+  auto num_tokens = tokens.size();
+  if (!(num_tokens == 4 || num_tokens == 5)) {
+    throw ProtocolError("invalid MSG");
+  }
+
+  waiting_for_payload_ = true;
+
+  // TODO(talnordan): Avoid using hard-coded string literals.
+  const auto &subject = tokens[1];
+  if (subject == "heartbeat-inbox") {
+    onIncomingHeartbeat(std::move(tokens));
+    return;
+  }
+
   switch (state_) {
   case State::Initial:
     onInitialResponse(std::move(tokens));
@@ -115,9 +138,18 @@ void InstanceImpl::onMsg(std::vector<absl::string_view> &&tokens) {
 
 void InstanceImpl::onPing() { pong(); }
 
+void InstanceImpl::onIncomingHeartbeat(
+    std::vector<absl::string_view> &&tokens) {
+  if (tokens.size() != 5) {
+    throw ProtocolError("invalid incoming heartbeat");
+  }
+
+  RELEASE_ASSERT(!heartbeat_reply_to_.valid());
+  heartbeat_reply_to_.value(std::string(tokens[3]));
+}
+
 void InstanceImpl::onInitialResponse(std::vector<absl::string_view> &&tokens) {
   UNREFERENCED_PARAMETER(tokens);
-  waiting_for_payload_ = true;
 }
 
 void InstanceImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
@@ -137,8 +169,6 @@ void InstanceImpl::onSentPubMsgResponse(
   // TODO(talnordan): Remove assertion.
   std::vector<absl::string_view> expected_tokens{"MSG", "reply-to.2", "2", "7"};
   RELEASE_ASSERT(tokens == expected_tokens);
-
-  waiting_for_payload_ = true;
 }
 
 void InstanceImpl::onPubAckPayload(Nats::MessagePtr &&value) {

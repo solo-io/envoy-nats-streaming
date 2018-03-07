@@ -13,6 +13,15 @@ namespace Envoy {
 namespace Nats {
 namespace Publisher {
 
+// TODO(talnordan): This class is no longer responsible just for message
+// publishing. Therefore, consider renaming it to something like
+// `Nats::Streaming::Client`.
+// TODO(talnordan): Maintaining the state of multiple requests and multiple
+// inboxes in a single object is becoming cumbersome, error-prone and hard to
+// unit-test. Consider refactoring this code into an object hierarchy parallel
+// to the inbox hierarchy. After the refactoring, each object is going to be
+// responsible for changing its internal state upon incoming messages from a
+// particular inbox. Such design would be similar to an actor system.
 class InstanceImpl : public Instance,
                      public Tcp::ConnPool::PoolCallbacks<Message>,
                      public Envoy::Logger::Loggable<Envoy::Logger::Id::filter> {
@@ -46,6 +55,8 @@ private:
 
   inline void onPing();
 
+  inline void onIncomingHeartbeat(std::vector<absl::string_view> &&tokens);
+
   inline void onInitialResponse(std::vector<absl::string_view> &&tokens);
 
   inline void onConnectResponsePayload(Nats::MessagePtr &&value);
@@ -73,6 +84,7 @@ private:
   Nats::Streaming::MessageUtility nats_streaming_message_utility_;
   State state_{};
   bool waiting_for_payload_{};
+  Optional<std::string> heartbeat_reply_to_{};
   Optional<std::string> subject_{};
   Optional<std::string> payload_{};
   Optional<std::string> pub_prefix_{};
