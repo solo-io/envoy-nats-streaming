@@ -34,6 +34,22 @@ PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
 void InstanceImpl::onResponse(Nats::MessagePtr &&value) {
   ENVOY_LOG(trace, "on response: value is\n[{}]", value->asString());
 
+  // Check whether a payload is expected prior to NATS operation extraction.
+  // TODO(talnordan): Eventually, we might want `onResponse()` to be passed a
+  // single decoded message consisting of both the `MSG` arguments and the
+  // payload.
+  if (waiting_for_payload_) {
+    onPayload(std::move(value));
+  } else {
+    onOperation(std::move(value));
+  }
+}
+
+void InstanceImpl::onClose() {
+  // TODO(talnordan)
+}
+
+void InstanceImpl::onOperation(Nats::MessagePtr &&value) {
   // TODO(talnordan): This implementation is provided as a proof of concept. In
   // a production-ready implementation, the decoder should use zero allocation
   // byte parsing, and this code should switch over an `enum class` representing
@@ -42,17 +58,10 @@ void InstanceImpl::onResponse(Nats::MessagePtr &&value) {
   // https://youtu.be/ylRKac5kSOk?t=10m46s
 
   auto delimiters = " \t";
-
-  // This might be an empty payload.
-  auto keep_empty_string = true;
-
+  auto keep_empty_string = false;
   auto tokens =
       StringUtil::splitToken(value->asString(), delimiters, keep_empty_string);
 
-  // TODO(talnordan): What if the payload happens to start with "INFO"? A test
-  // whether a payload is expected should be performed prior to NATS operation
-  // extraction. Eventually, we might want `onResponse()` to be passed a single
-  // decoded message consisting of both the `MSG` arguments and the payload.
   auto &&op = tokens[0];
   if (StringUtil::caseCompare(op, "INFO")) {
     onInfo(std::move(value));
@@ -61,13 +70,24 @@ void InstanceImpl::onResponse(Nats::MessagePtr &&value) {
   } else if (StringUtil::caseCompare(op, "PING")) {
     onPing();
   } else {
-    // This might be the payload.
-    onMsg(std::move(value));
+    throw ProtocolError("invalid message");
   }
 }
 
-void InstanceImpl::onClose() {
-  // TODO(talnordan)
+void InstanceImpl::onPayload(Nats::MessagePtr &&value) {
+  // Mark that the payload has been received.
+  waiting_for_payload_ = false;
+
+  switch (state_) {
+  case State::Initial:
+    onConnectResponsePayload(std::move(value));
+    break;
+  case State::SentPubMsg:
+    onPubAckPayload(std::move(value));
+    break;
+  case State::Done:
+    break;
+  }
 }
 
 void InstanceImpl::onInfo(Nats::MessagePtr &&value) {
@@ -85,14 +105,8 @@ void InstanceImpl::onMsg(Nats::MessagePtr &&value) {
   case State::Initial:
     onInitialResponse(std::move(value));
     break;
-  case State::WaitingForConnectResponsePayload:
-    onConnectResponsePayload(std::move(value));
-    break;
   case State::SentPubMsg:
     onSentPubMsgResponse(std::move(value));
-    break;
-  case State::WaitingForPubAckPayload:
-    onPubAckPayload(std::move(value));
     break;
   case State::Done:
     break;
@@ -103,7 +117,7 @@ void InstanceImpl::onPing() { pong(); }
 
 void InstanceImpl::onInitialResponse(Nats::MessagePtr &&value) {
   UNREFERENCED_PARAMETER(value);
-  state_ = State::WaitingForConnectResponsePayload;
+  waiting_for_payload_ = true;
 }
 
 void InstanceImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
@@ -121,9 +135,7 @@ void InstanceImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
 void InstanceImpl::onSentPubMsgResponse(Nats::MessagePtr &&value) {
   // TODO(talnordan): Remove assertion.
   RELEASE_ASSERT(value->asString() == "MSG reply-to.2 2 7");
-
-  // TODO(talnordan): Read payload and parse it.
-  state_ = State::WaitingForPubAckPayload;
+  waiting_for_payload_ = true;
 }
 
 void InstanceImpl::onPubAckPayload(Nats::MessagePtr &&value) {

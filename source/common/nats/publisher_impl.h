@@ -32,11 +32,13 @@ public:
 private:
   enum class State {
     Initial,
-    WaitingForConnectResponsePayload,
     SentPubMsg,
-    WaitingForPubAckPayload,
     Done,
   };
+
+  inline void onOperation(Nats::MessagePtr &&value);
+
+  inline void onPayload(Nats::MessagePtr &&value);
 
   inline void onInfo(Nats::MessagePtr &&value);
 
@@ -70,6 +72,7 @@ private:
   Nats::MessageBuilder nats_message_builder_;
   Nats::Streaming::MessageUtility nats_streaming_message_utility_;
   State state_{};
+  bool waiting_for_payload_{};
   Optional<std::string> subject_{};
   Optional<std::string> payload_{};
   Optional<std::string> pub_prefix_{};
