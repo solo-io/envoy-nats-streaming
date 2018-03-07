@@ -9,16 +9,6 @@ load(
 envoy_package()
 
 envoy_cc_library(
-    name = "message_utility_lib",
-    srcs = ["message_utility.cc"],
-    hdrs = ["message_utility.h"],
-    repository = "@envoy",
-    deps = [
-        "//:protocol_proto_cc",
-    ],
-)
-
-envoy_cc_library(
     name = "client_lib",
     srcs = ["client_impl.cc"],
     hdrs = ["client_impl.h"],
@@ -30,5 +20,15 @@ envoy_cc_library(
         "//source/common/nats:message_builder_lib",
         "//source/common/nats/streaming:message_utility_lib",
         "@envoy//source/exe:envoy_common_lib",
+    ],
+)
+
+envoy_cc_library(
+    name = "message_utility_lib",
+    srcs = ["message_utility.cc"],
+    hdrs = ["message_utility.h"],
+    repository = "@envoy",
+    deps = [
+        "//:protocol_proto_cc",
     ],
 )
