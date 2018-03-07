@@ -161,6 +161,12 @@ void InstanceImpl::pubPubMsg() {
   conn_pool_->makeRequest(hash_key, pubMessage);
 }
 
+void InstanceImpl::pong() {
+  const std::string hash_key;
+  const Message pongMessage = nats_message_builder_.createPongMessage();
+  conn_pool_->makeRequest(hash_key, pongMessage);
+}
+
 // TODO(talnordan): Consider introducing `BufferUtility` and extracting this
 // member function into it.
 std::string InstanceImpl::drainBufferToString(Buffer::Instance &buffer) const {
@@ -183,12 +189,6 @@ std::string InstanceImpl::bufferToString(const Buffer::Instance &buffer) const {
   }
 
   return output;
-}
-
-void InstanceImpl::pong() {
-  const std::string hash_key;
-  const Message pongMessage = nats_message_builder_.createPongMessage();
-  conn_pool_->makeRequest(hash_key, pongMessage);
 }
 
 } // namespace Publisher
