@@ -21,7 +21,7 @@ envoy_cc_library(
         "//source/common/config:nats_streaming_well_known_names_lib",
         "//source/common/http/filter:nats_streaming_filter_lib",
         "//source/common/nats:codec_lib",
-        "//source/common/nats/streaming:publisher_lib",
+        "//source/common/nats/streaming:client_lib",
         "//source/common/tcp:conn_pool_lib",
         "@envoy//source/exe:envoy_common_lib",
     ],

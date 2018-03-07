@@ -9,7 +9,7 @@ load(
 envoy_package()
 
 envoy_cc_library(
-    name = "publisher_interface",
-    hdrs = ["publisher.h"],
+    name = "client_interface",
+    hdrs = ["client.h"],
     repository = "@envoy",
 )

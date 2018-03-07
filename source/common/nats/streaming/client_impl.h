@@ -2,7 +2,7 @@
 
 #include "envoy/common/optional.h"
 #include "envoy/nats/codec.h"
-#include "envoy/nats/streaming/publisher.h"
+#include "envoy/nats/streaming/client.h"
 #include "envoy/tcp/conn_pool.h"
 
 #include "common/common/logger.h"

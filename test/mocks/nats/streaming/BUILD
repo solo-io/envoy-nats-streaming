@@ -14,6 +14,6 @@ envoy_cc_mock(
     hdrs = ["mocks.h"],
     repository = "@envoy",
     deps = [
-        "//source/common/nats/streaming:publisher_lib",
+        "//source/common/nats/streaming:client_lib",
     ],
 )

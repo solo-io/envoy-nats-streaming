@@ -1,4 +1,4 @@
-#include "common/nats/streaming/publisher_impl.h"
+#include "common/nats/streaming/client_impl.h"
 
 #include "common/common/assert.h"
 #include "common/common/macros.h"

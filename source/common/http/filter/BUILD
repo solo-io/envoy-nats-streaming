@@ -53,7 +53,7 @@ envoy_cc_library(
     ],
     repository = "@envoy",
     deps = [
-        "//include/envoy/nats/streaming:publisher_interface",
+        "//include/envoy/nats/streaming:client_interface",
         "//source/common/http/filter:nats_streaming_filter_config",
         "//source/common/http/filter:subject_retriever_lib",
         "@envoy//source/exe:envoy_common_lib",

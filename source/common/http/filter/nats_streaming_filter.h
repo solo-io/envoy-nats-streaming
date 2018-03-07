@@ -1,6 +1,6 @@
 #pragma once
 
-#include "envoy/nats/streaming/publisher.h"
+#include "envoy/nats/streaming/client.h"
 
 #include "common/http/filter/nats_streaming_filter_config.h"
 #include "common/http/filter/subject_retriever.h"
