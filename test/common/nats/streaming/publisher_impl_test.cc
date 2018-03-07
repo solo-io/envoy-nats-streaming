@@ -1,4 +1,4 @@
-#include "common/nats/publisher_impl.h"
+#include "common/nats/streaming/publisher_impl.h"
 
 #include "test/mocks/nats/mocks.h"
 

@@ -3,7 +3,7 @@
 #include "envoy/tcp/conn_pool.h"
 
 #include "common/nats/codec_impl.h"
-#include "common/nats/publisher_impl.h"
+#include "common/nats/streaming/publisher_impl.h"
 
 #include "gmock/gmock.h"
 

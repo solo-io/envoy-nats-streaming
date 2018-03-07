@@ -11,7 +11,7 @@
 #include "common/http/filter/nats_streaming_filter.h"
 #include "common/http/filter/nats_streaming_filter_config.h"
 #include "common/nats/codec_impl.h"
-#include "common/nats/publisher_impl.h"
+#include "common/nats/streaming/publisher_impl.h"
 #include "common/protobuf/utility.h"
 #include "common/tcp/conn_pool_impl.h"
 

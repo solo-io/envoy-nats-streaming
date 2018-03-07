@@ -16,6 +16,6 @@ envoy_cc_mock(
     deps = [
         "//include/envoy/tcp:conn_pool_interface",
         "//source/common/nats:codec_lib",
-        "//source/common/nats:publisher_lib",
+        "//source/common/nats/streaming:publisher_lib",
     ],
 )
