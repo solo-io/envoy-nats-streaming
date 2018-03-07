@@ -6,7 +6,7 @@
 
 namespace Envoy {
 namespace Nats {
-namespace Publisher {
+namespace Streaming {
 
 class MockPublishCallbacks : public PublishCallbacks {
 public:
@@ -17,10 +17,10 @@ public:
   MOCK_METHOD0(onFailure, void());
 };
 
-class MockInstance : public Instance {
+class MockClient : public Client {
 public:
-  MockInstance();
-  ~MockInstance();
+  MockClient();
+  ~MockClient();
 
   MOCK_METHOD4(makeRequest,
                PublishRequestPtr(const std::string &, const std::string &,
@@ -30,6 +30,6 @@ public:
   Buffer::OwnedImpl last_payload_;
 };
 
-} // namespace Publisher
+} // namespace Streaming
 } // namespace Nats
 } // namespace Envoy

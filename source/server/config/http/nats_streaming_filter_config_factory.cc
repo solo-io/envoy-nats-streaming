@@ -91,14 +91,14 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
           "cluster_0", context.clusterManager(), client_factory,
           context.threadLocal()));
 
-  Nats::Publisher::InstancePtr publisher =
-      std::make_shared<Nats::Publisher::InstanceImpl>(std::move(conn_pool));
+  Nats::Streaming::ClientPtr nats_streaming_client =
+      std::make_shared<Nats::Streaming::ClientImpl>(std::move(conn_pool));
 
-  return [&context, config, subjectRetriever, publisher](
+  return [&context, config, subjectRetriever, nats_streaming_client](
              Envoy::Http::FilterChainFactoryCallbacks &callbacks) -> void {
     auto filter = new MixedNatsStreamingFilter(
         context, Config::SoloMetadataFilters::get().NATS_STREAMING, config,
-        subjectRetriever, publisher);
+        subjectRetriever, nats_streaming_client);
     callbacks.addStreamDecoderFilter(
         Http::StreamDecoderFilterSharedPtr{filter});
   };

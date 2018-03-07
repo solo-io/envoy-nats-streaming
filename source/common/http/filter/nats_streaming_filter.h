@@ -15,11 +15,11 @@ using Envoy::Upstream::ClusterManager;
 
 class NatsStreamingFilter : public StreamDecoderFilter,
                             public FunctionalFilter,
-                            public Nats::Publisher::PublishCallbacks {
+                            public Nats::Streaming::PublishCallbacks {
 public:
   NatsStreamingFilter(NatsStreamingFilterConfigSharedPtr config,
                       SubjectRetrieverSharedPtr retreiver,
-                      Nats::Publisher::InstancePtr publisher);
+                      Nats::Streaming::ClientPtr nats_streaming_client);
   ~NatsStreamingFilter();
 
   void onDestroy() override { stream_destroyed_ = true; }
@@ -40,7 +40,7 @@ public:
 
   bool retrieveFunction(const MetadataAccessor &meta_accessor) override;
 
-  // Nats::Publisher::PublishCallbacks
+  // Nats::Streaming::PublishCallbacks
   virtual void onResponse() override;
   virtual void onFailure() override;
 
@@ -53,7 +53,7 @@ private:
 
   const NatsStreamingFilterConfigSharedPtr config_;
   SubjectRetrieverSharedPtr subject_retriever_;
-  Nats::Publisher::InstancePtr publisher_;
+  Nats::Streaming::ClientPtr nats_streaming_client_;
   bool stream_destroyed_{};
   Optional<Subject> optional_subject_;
   StreamDecoderFilterCallbacks *decoder_callbacks_{};

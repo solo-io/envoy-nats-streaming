@@ -8,7 +8,7 @@
 
 namespace Envoy {
 namespace Nats {
-namespace Publisher {
+namespace Streaming {
 
 /**
  * A handle to a publish request.
@@ -44,12 +44,12 @@ public:
 };
 
 /**
- * A NATS publisher that takes incoming NATS messages and publishes them using a
+ * A NATS client that takes incoming NATS messages and publishes them using a
  * backend connection pool.
  */
-class Instance {
+class Client {
 public:
-  virtual ~Instance() {}
+  virtual ~Client() {}
 
   /**
    * Makes a request.
@@ -69,8 +69,8 @@ public:
                                         PublishCallbacks &callbacks) PURE;
 };
 
-typedef std::shared_ptr<Instance> InstancePtr;
+typedef std::shared_ptr<Client> ClientPtr;
 
-} // namespace Publisher
+} // namespace Streaming
 } // namespace Nats
 } // namespace Envoy

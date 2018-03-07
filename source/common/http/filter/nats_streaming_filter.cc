@@ -21,8 +21,10 @@ namespace Http {
 
 NatsStreamingFilter::NatsStreamingFilter(
     NatsStreamingFilterConfigSharedPtr config,
-    SubjectRetrieverSharedPtr retreiver, Nats::Publisher::InstancePtr publisher)
-    : config_(config), subject_retriever_(retreiver), publisher_(publisher) {}
+    SubjectRetrieverSharedPtr retreiver,
+    Nats::Streaming::ClientPtr nats_streaming_client)
+    : config_(config), subject_retriever_(retreiver),
+      nats_streaming_client_(nats_streaming_client) {}
 
 NatsStreamingFilter::~NatsStreamingFilter() {}
 
@@ -115,7 +117,7 @@ void NatsStreamingFilter::relayToNatsStreaming() {
   const std::string &subject = *optional_subject_.value().subject;
 
   // TODO(talnordan): Keep the return value of `makeRequest()`.
-  publisher_->makeRequest(*cluster_name, subject, body_, *this);
+  nats_streaming_client_->makeRequest(*cluster_name, subject, body_, *this);
 }
 
 } // namespace Http

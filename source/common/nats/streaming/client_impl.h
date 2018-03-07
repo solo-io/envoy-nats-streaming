@@ -11,24 +11,21 @@
 
 namespace Envoy {
 namespace Nats {
-namespace Publisher {
+namespace Streaming {
 
-// TODO(talnordan): This class is no longer responsible just for message
-// publishing. Therefore, consider renaming it to something like
-// `Nats::Streaming::Client`.
 // TODO(talnordan): Maintaining the state of multiple requests and multiple
 // inboxes in a single object is becoming cumbersome, error-prone and hard to
 // unit-test. Consider refactoring this code into an object hierarchy parallel
 // to the inbox hierarchy. After the refactoring, each object is going to be
 // responsible for changing its internal state upon incoming messages from a
 // particular inbox. Such design would be similar to an actor system.
-class InstanceImpl : public Instance,
-                     public Tcp::ConnPool::PoolCallbacks<Message>,
-                     public Envoy::Logger::Loggable<Envoy::Logger::Id::filter> {
+class ClientImpl : public Client,
+                   public Tcp::ConnPool::PoolCallbacks<Message>,
+                   public Envoy::Logger::Loggable<Envoy::Logger::Id::filter> {
 public:
-  InstanceImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool);
+  ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool);
 
-  // Nats::Publisher::Instance
+  // Nats::Streaming::Client
   PublishRequestPtr makeRequest(const std::string &cluster_name,
                                 const std::string &subject,
                                 Buffer::Instance &payload,
@@ -93,6 +90,6 @@ private:
   Optional<PublishCallbacks *> callbacks_{};
 };
 
-} // namespace Publisher
+} // namespace Streaming
 } // namespace Nats
 } // namespace Envoy

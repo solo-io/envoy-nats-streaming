@@ -8,20 +8,20 @@
 
 namespace Envoy {
 namespace Nats {
-namespace Publisher {
+namespace Streaming {
 
-class NatsPublisherImplTest : public testing::Test {
+class NatsStreamingClientImplTest : public testing::Test {
 public:
   Nats::ConnPool::MockInstance *conn_pool_{new Nats::ConnPool::MockInstance()};
-  InstanceImpl publisher_{Tcp::ConnPool::InstancePtr<Message>{conn_pool_}};
+  ClientImpl Client_{Tcp::ConnPool::InstancePtr<Message>{conn_pool_}};
   MockPublishCallbacks callbacks_;
   PublishRequestPtr handle_;
 };
 
-TEST_F(NatsPublisherImplTest, Empty) {
+TEST_F(NatsStreamingClientImplTest, Empty) {
   // TODO(talnordan): This is a dummy test.
 }
 
-} // namespace Publisher
+} // namespace Streaming
 } // namespace Nats
 } // namespace Envoy

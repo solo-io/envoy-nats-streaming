@@ -7,12 +7,12 @@ using testing::_;
 
 namespace Envoy {
 namespace Nats {
-namespace Publisher {
+namespace Streaming {
 
 MockPublishCallbacks::MockPublishCallbacks() {}
 MockPublishCallbacks::~MockPublishCallbacks() {}
 
-MockInstance::MockInstance() {
+MockClient::MockClient() {
   ON_CALL(*this, makeRequest(_, _, _, _))
       .WillByDefault(
           Invoke([this](const std::string &cluster_name,
@@ -29,8 +29,8 @@ MockInstance::MockInstance() {
           }));
 }
 
-MockInstance::~MockInstance() {}
+MockClient::~MockClient() {}
 
-} // namespace Publisher
+} // namespace Streaming
 } // namespace Nats
 } // namespace Envoy

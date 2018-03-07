@@ -6,15 +6,15 @@
 
 namespace Envoy {
 namespace Nats {
-namespace Publisher {
+namespace Streaming {
 
-InstanceImpl::InstanceImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_)
+ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_)
     : conn_pool_(std::move(conn_pool_)) {}
 
-PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
-                                            const std::string &subject,
-                                            Buffer::Instance &payload,
-                                            PublishCallbacks &callbacks) {
+PublishRequestPtr ClientImpl::makeRequest(const std::string &cluster_name,
+                                          const std::string &subject,
+                                          Buffer::Instance &payload,
+                                          PublishCallbacks &callbacks) {
   UNREFERENCED_PARAMETER(cluster_name);
 
   subject_.value(subject);
@@ -31,7 +31,7 @@ PublishRequestPtr InstanceImpl::makeRequest(const std::string &cluster_name,
   return nullptr;
 }
 
-void InstanceImpl::onResponse(Nats::MessagePtr &&value) {
+void ClientImpl::onResponse(Nats::MessagePtr &&value) {
   ENVOY_LOG(trace, "on response: value is\n[{}]", value->asString());
 
   // Check whether a payload is expected prior to NATS operation extraction.
@@ -45,11 +45,11 @@ void InstanceImpl::onResponse(Nats::MessagePtr &&value) {
   }
 }
 
-void InstanceImpl::onClose() {
+void ClientImpl::onClose() {
   // TODO(talnordan)
 }
 
-void InstanceImpl::onOperation(Nats::MessagePtr &&value) {
+void ClientImpl::onOperation(Nats::MessagePtr &&value) {
   // TODO(talnordan): This implementation is provided as a proof of concept. In
   // a production-ready implementation, the decoder should use zero allocation
   // byte parsing, and this code should switch over an `enum class` representing
@@ -74,7 +74,7 @@ void InstanceImpl::onOperation(Nats::MessagePtr &&value) {
   }
 }
 
-void InstanceImpl::onPayload(Nats::MessagePtr &&value) {
+void ClientImpl::onPayload(Nats::MessagePtr &&value) {
   // Mark that the payload has been received.
   waiting_for_payload_ = false;
 
@@ -99,7 +99,7 @@ void InstanceImpl::onPayload(Nats::MessagePtr &&value) {
   }
 }
 
-void InstanceImpl::onInfo(Nats::MessagePtr &&value) {
+void ClientImpl::onInfo(Nats::MessagePtr &&value) {
   // TODO(talnordan): Process `INFO` options.
   UNREFERENCED_PARAMETER(value);
 
@@ -109,7 +109,7 @@ void InstanceImpl::onInfo(Nats::MessagePtr &&value) {
   pubConnectRequest();
 }
 
-void InstanceImpl::onMsg(std::vector<absl::string_view> &&tokens) {
+void ClientImpl::onMsg(std::vector<absl::string_view> &&tokens) {
   auto num_tokens = tokens.size();
   if (!(num_tokens == 4 || num_tokens == 5)) {
     throw ProtocolError("invalid MSG");
@@ -136,10 +136,9 @@ void InstanceImpl::onMsg(std::vector<absl::string_view> &&tokens) {
   }
 }
 
-void InstanceImpl::onPing() { pong(); }
+void ClientImpl::onPing() { pong(); }
 
-void InstanceImpl::onIncomingHeartbeat(
-    std::vector<absl::string_view> &&tokens) {
+void ClientImpl::onIncomingHeartbeat(std::vector<absl::string_view> &&tokens) {
   if (tokens.size() != 5) {
     throw ProtocolError("invalid incoming heartbeat");
   }
@@ -148,11 +147,11 @@ void InstanceImpl::onIncomingHeartbeat(
   heartbeat_reply_to_.value(std::string(tokens[3]));
 }
 
-void InstanceImpl::onInitialResponse(std::vector<absl::string_view> &&tokens) {
+void ClientImpl::onInitialResponse(std::vector<absl::string_view> &&tokens) {
   UNREFERENCED_PARAMETER(tokens);
 }
 
-void InstanceImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
+void ClientImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
   const std::string &payload = value->asString();
   pub_prefix_.value(nats_streaming_message_utility_.getPubPrefix(payload));
 
@@ -164,14 +163,13 @@ void InstanceImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
   state_ = State::SentPubMsg;
 }
 
-void InstanceImpl::onSentPubMsgResponse(
-    std::vector<absl::string_view> &&tokens) {
+void ClientImpl::onSentPubMsgResponse(std::vector<absl::string_view> &&tokens) {
   // TODO(talnordan): Remove assertion.
   std::vector<absl::string_view> expected_tokens{"MSG", "reply-to.2", "2", "7"};
   RELEASE_ASSERT(tokens == expected_tokens);
 }
 
-void InstanceImpl::onPubAckPayload(Nats::MessagePtr &&value) {
+void ClientImpl::onPubAckPayload(Nats::MessagePtr &&value) {
   const std::string &payload = value->asString();
   auto &&pub_ack = nats_streaming_message_utility_.parsePubAckMessage(payload);
 
@@ -184,7 +182,7 @@ void InstanceImpl::onPubAckPayload(Nats::MessagePtr &&value) {
   state_ = State::Done;
 }
 
-void InstanceImpl::subHeartbeatInbox() {
+void ClientImpl::subHeartbeatInbox() {
   const std::string hash_key;
 
   // TODO(talnordan): Avoid using hard-coded string literals.
@@ -194,7 +192,7 @@ void InstanceImpl::subHeartbeatInbox() {
   conn_pool_->makeRequest(hash_key, subMessage);
 }
 
-void InstanceImpl::subReplyInbox() {
+void ClientImpl::subReplyInbox() {
   const std::string hash_key;
 
   // TODO(talnordan): Avoid using hard-coded string literals.
@@ -204,7 +202,7 @@ void InstanceImpl::subReplyInbox() {
   conn_pool_->makeRequest(hash_key, subMessage);
 }
 
-void InstanceImpl::pubConnectRequest() {
+void ClientImpl::pubConnectRequest() {
   const std::string hash_key;
 
   // TODO(talnordan): Avoid using hard-coded string literals.
@@ -217,7 +215,7 @@ void InstanceImpl::pubConnectRequest() {
   conn_pool_->makeRequest(hash_key, pubMessage);
 }
 
-void InstanceImpl::pubPubMsg() {
+void ClientImpl::pubPubMsg() {
   const std::string hash_key;
 
   // TODO(talnordan): Avoid using hard-coded string literals.
@@ -231,7 +229,7 @@ void InstanceImpl::pubPubMsg() {
   conn_pool_->makeRequest(hash_key, pubMessage);
 }
 
-void InstanceImpl::pong() {
+void ClientImpl::pong() {
   const std::string hash_key;
   const Message pongMessage = nats_message_builder_.createPongMessage();
   conn_pool_->makeRequest(hash_key, pongMessage);
@@ -239,7 +237,7 @@ void InstanceImpl::pong() {
 
 // TODO(talnordan): Consider introducing `BufferUtility` and extracting this
 // member function into it.
-std::string InstanceImpl::drainBufferToString(Buffer::Instance &buffer) const {
+std::string ClientImpl::drainBufferToString(Buffer::Instance &buffer) const {
   std::string output = bufferToString(buffer);
   buffer.drain(buffer.length());
   return output;
@@ -249,7 +247,7 @@ std::string InstanceImpl::drainBufferToString(Buffer::Instance &buffer) const {
 // Consider moving the code to a shared utility class.
 // TODO(talnordan): Consider leveraging the fact that `max_payload` is given in
 // the NATS `INFO` message and reuse the same pre-allocated `std:string`.
-std::string InstanceImpl::bufferToString(const Buffer::Instance &buffer) const {
+std::string ClientImpl::bufferToString(const Buffer::Instance &buffer) const {
   std::string output;
   uint64_t num_slices = buffer.getRawSlices(nullptr, 0);
   Buffer::RawSlice slices[num_slices];
@@ -261,6 +259,6 @@ std::string InstanceImpl::bufferToString(const Buffer::Instance &buffer) const {
   return output;
 }
 
-} // namespace Publisher
+} // namespace Streaming
 } // namespace Nats
 } // namespace Envoy

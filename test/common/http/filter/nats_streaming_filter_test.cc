@@ -53,9 +53,9 @@ protected:
     config_.reset(new NatsStreamingFilterConfig(
         proto_config, factory_context_.clusterManager()));
     subject_retriever_.reset(new NiceMock<MockSubjectRetriever>);
-    publisher_.reset(new NiceMock<Nats::Publisher::MockInstance>);
-    filter_.reset(
-        new NatsStreamingFilter(config_, subject_retriever_, publisher_));
+    nats_streaming_client_.reset(new NiceMock<Nats::Streaming::MockClient>);
+    filter_.reset(new NatsStreamingFilter(config_, subject_retriever_,
+                                          nats_streaming_client_));
     filter_->setDecoderFilterCallbacks(callbacks_);
   }
 
@@ -66,7 +66,7 @@ protected:
   NiceMock<Envoy::Server::Configuration::MockFactoryContext> factory_context_;
   NatsStreamingFilterConfigSharedPtr config_;
   std::shared_ptr<NiceMock<MockSubjectRetriever>> subject_retriever_;
-  std::shared_ptr<NiceMock<Nats::Publisher::MockInstance>> publisher_;
+  std::shared_ptr<NiceMock<Nats::Streaming::MockClient>> nats_streaming_client_;
   std::unique_ptr<NatsStreamingFilter> filter_;
   NiceMock<MockStreamDecoderFilterCallbacks> callbacks_;
 };
@@ -75,8 +75,8 @@ TEST_F(NatsStreamingFilterTest, NoSubjectHeaderOnlyRequest) {
   // `subject_retriever_->getSubject()` should be called.
   EXPECT_CALL(*subject_retriever_, getSubject(_)).Times(1);
 
-  // `publisher_->makeRequest()` should not be called.
-  EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(0);
+  // `nats_streaming_client_->makeRequest()` should not be called.
+  EXPECT_CALL(*nats_streaming_client_, makeRequest(_, _, _, _)).Times(0);
 
   ASSERT_EQ(false, retreivefunction());
 }
@@ -85,8 +85,8 @@ TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithData) {
   // `subject_retriever_->getSubject()` should be called.
   EXPECT_CALL(*subject_retriever_, getSubject(_)).Times(1);
 
-  // `publisher_->makeRequest()` should not be called.
-  EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(0);
+  // `nats_streaming_client_->makeRequest()` should not be called.
+  EXPECT_CALL(*nats_streaming_client_, makeRequest(_, _, _, _)).Times(0);
 
   ASSERT_EQ(false, retreivefunction());
 }
@@ -95,8 +95,8 @@ TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithTrailers) {
   // `subject_retriever_->getSubject()` should be called.
   EXPECT_CALL(*subject_retriever_, getSubject(_)).Times(1);
 
-  // `publisher_->makeRequest()` should not be called.
-  EXPECT_CALL(*publisher_, makeRequest(_, _, _, _)).Times(0);
+  // `nats_streaming_client_->makeRequest()` should not be called.
+  EXPECT_CALL(*nats_streaming_client_, makeRequest(_, _, _, _)).Times(0);
 
   ASSERT_EQ(false, retreivefunction());
 }
@@ -105,8 +105,8 @@ TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
   // `subject_retriever_->getSubject()` should be called.
   EXPECT_CALL(*subject_retriever_, getSubject(_)).Times(1);
 
-  // `publisher_->makeRequest()` should be called exactly once.
-  EXPECT_CALL(*publisher_,
+  // `nats_streaming_client_->makeRequest()` should be called exactly once.
+  EXPECT_CALL(*nats_streaming_client_,
               makeRequest("fake_cluster", "Subject1", _, Ref(*filter_)))
       .Times(1);
 
@@ -122,15 +122,15 @@ TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
   EXPECT_EQ(FilterHeadersStatus::StopIteration,
             filter_->decodeHeaders(headers, true));
 
-  EXPECT_EQ(0, publisher_->last_payload_.length());
+  EXPECT_EQ(0, nats_streaming_client_->last_payload_.length());
 }
 
 TEST_F(NatsStreamingFilterTest, RequestWithData) {
   // `subject_retriever_->getSubject()` should be called.
   EXPECT_CALL(*subject_retriever_, getSubject(_)).Times(1);
 
-  // `publisher_->makeRequest()` should be called exactly once.
-  EXPECT_CALL(*publisher_,
+  // `nats_streaming_client_->makeRequest()` should be called exactly once.
+  EXPECT_CALL(*nats_streaming_client_,
               makeRequest("fake_cluster", "Subject1", _, Ref(*filter_)))
       .Times(1);
 
@@ -161,15 +161,16 @@ TEST_F(NatsStreamingFilterTest, RequestWithData) {
   const Buffer::OwnedImpl expectedPayload("hello world");
 
   // TODO(talnordan): Compare buffer content too.
-  EXPECT_EQ(expectedPayload.length(), publisher_->last_payload_.length());
+  EXPECT_EQ(expectedPayload.length(),
+            nats_streaming_client_->last_payload_.length());
 }
 
 TEST_F(NatsStreamingFilterTest, RequestWithTrailers) {
   // `subject_retriever_->getSubject()` should be called.
   EXPECT_CALL(*subject_retriever_, getSubject(_)).Times(1);
 
-  // `publisher_->makeRequest()` should be called exactly once.
-  EXPECT_CALL(*publisher_,
+  // `nats_streaming_client_->makeRequest()` should be called exactly once.
+  EXPECT_CALL(*nats_streaming_client_,
               makeRequest("fake_cluster", "Subject1", _, Ref(*filter_)))
       .Times(1);
 
@@ -204,7 +205,8 @@ TEST_F(NatsStreamingFilterTest, RequestWithTrailers) {
   const Buffer::OwnedImpl expectedPayload("hello world");
 
   // TODO(talnordan): Compare buffer content too.
-  EXPECT_EQ(expectedPayload.length(), publisher_->last_payload_.length());
+  EXPECT_EQ(expectedPayload.length(),
+            nats_streaming_client_->last_payload_.length());
 }
 
 } // namespace Http
