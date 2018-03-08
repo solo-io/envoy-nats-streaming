@@ -70,6 +70,8 @@ void ClientImpl::onOperation(Nats::MessagePtr &&value) {
   } else if (StringUtil::caseCompare(op, "PING")) {
     onPing();
   } else {
+    // TODO(talnordan): Error handling.
+    // TODO(talnordan): Increment error stats.
     throw ProtocolError("invalid message");
   }
 }
@@ -79,7 +81,9 @@ void ClientImpl::onPayload(Nats::MessagePtr &&value) {
   waiting_for_payload_ = false;
 
   if (heartbeat_reply_to_.valid()) {
+    // TODO(talnordan): Manage hash key computation.
     const std::string hash_key;
+
     const Message hearbeatResponseMessage =
         nats_message_builder_.createPubMessage(heartbeat_reply_to_.value());
     conn_pool_->makeRequest(hash_key, hearbeatResponseMessage);
@@ -112,6 +116,7 @@ void ClientImpl::onInfo(Nats::MessagePtr &&value) {
 void ClientImpl::onMsg(std::vector<absl::string_view> &&tokens) {
   auto num_tokens = tokens.size();
   if (!(num_tokens == 4 || num_tokens == 5)) {
+    // TODO(talnordan): Error handling.
     throw ProtocolError("invalid MSG");
   }
 
@@ -140,9 +145,11 @@ void ClientImpl::onPing() { pong(); }
 
 void ClientImpl::onIncomingHeartbeat(std::vector<absl::string_view> &&tokens) {
   if (tokens.size() != 5) {
+    // TODO(talnordan): Error handling.
     throw ProtocolError("invalid incoming heartbeat");
   }
 
+  // TODO(talnordan): Remove assertion.
   RELEASE_ASSERT(!heartbeat_reply_to_.valid());
   heartbeat_reply_to_.value(std::string(tokens[3]));
 }
