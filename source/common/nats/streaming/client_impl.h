@@ -69,6 +69,8 @@ private:
 
   inline void onPubAckPayload(Nats::MessagePtr &&value);
 
+  inline void subInbox(const std::string &subject, const std::string &sid);
+
   inline void subHeartbeatInbox();
 
   inline void subReplyInbox();

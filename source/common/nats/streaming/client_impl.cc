@@ -192,24 +192,23 @@ void ClientImpl::onPubAckPayload(Nats::MessagePtr &&value) {
   state_ = State::Done;
 }
 
-void ClientImpl::subHeartbeatInbox() {
+void ClientImpl::subInbox(const std::string &subject, const std::string &sid) {
+  // TODO(talnordan): Manage hash key computation.
   const std::string hash_key;
 
-  // TODO(talnordan): Avoid using hard-coded string literals.
   const Message subMessage =
-      nats_message_builder_.createSubMessage("heartbeat-inbox", "1");
-
+      nats_message_builder_.createSubMessage(subject, sid);
   conn_pool_->makeRequest(hash_key, subMessage);
 }
 
-void ClientImpl::subReplyInbox() {
-  const std::string hash_key;
-
+void ClientImpl::subHeartbeatInbox() {
   // TODO(talnordan): Avoid using hard-coded string literals.
-  const Message subMessage =
-      nats_message_builder_.createSubMessage("reply-to.*", "2");
+  subInbox("heartbeat-inbox", "1");
+}
 
-  conn_pool_->makeRequest(hash_key, subMessage);
+void ClientImpl::subReplyInbox() {
+  // TODO(talnordan): Avoid using hard-coded string literals.
+  subInbox("reply-to.*", "2");
 }
 
 void ClientImpl::pubConnectRequest() {
