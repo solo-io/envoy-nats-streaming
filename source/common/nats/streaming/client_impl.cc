@@ -11,7 +11,7 @@ namespace Nats {
 namespace Streaming {
 
 ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_)
-    : conn_pool_(std::move(conn_pool_)) {}
+    : conn_pool_(std::move(conn_pool_)), sid_(1) {}
 
 PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
                                           const std::string &cluster_id,
@@ -185,18 +185,19 @@ void ClientImpl::onPubAckPayload(Nats::MessagePtr &&value) {
   state_ = State::Done;
 }
 
-void ClientImpl::subInbox(const std::string &subject, const std::string &sid) {
-  sendNatsMessage(nats_message_builder_.createSubMessage(subject, sid));
+void ClientImpl::subInbox(const std::string &subject) {
+  sendNatsMessage(nats_message_builder_.createSubMessage(subject, sid_));
+  ++sid_;
 }
 
 void ClientImpl::subHeartbeatInbox() {
   // TODO(talnordan): Avoid using hard-coded string literals.
-  subInbox("heartbeat-inbox", "1");
+  subInbox("heartbeat-inbox");
 }
 
 void ClientImpl::subReplyInbox() {
   // TODO(talnordan): Avoid using hard-coded string literals.
-  subInbox("reply-to.*", "2");
+  subInbox("reply-to.*");
 }
 
 void ClientImpl::pubConnectRequest() {

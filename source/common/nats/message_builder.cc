@@ -32,7 +32,7 @@ MessageBuilder::createPubMessage(const std::string &subject,
 
 Envoy::Nats::Message
 MessageBuilder::createSubMessage(const std::string &subject,
-                                 const std::string &sid) const {
+                                 uint64_t sid) const {
   std::stringstream ss;
   ss << "SUB " << subject << " " << sid;
   return Message(ss.str());

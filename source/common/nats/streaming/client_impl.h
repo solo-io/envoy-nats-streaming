@@ -69,7 +69,7 @@ private:
 
   inline void onPubAckPayload(Nats::MessagePtr &&value);
 
-  inline void subInbox(const std::string &subject, const std::string &sid);
+  inline void subInbox(const std::string &subject);
 
   inline void subHeartbeatInbox();
 
@@ -97,6 +97,7 @@ private:
   Nats::MessageBuilder nats_message_builder_;
   Nats::Streaming::MessageUtility nats_streaming_message_utility_;
   State state_{};
+  uint64_t sid_;
   bool waiting_for_payload_{};
   Optional<std::string> heartbeat_reply_to_{};
   Optional<std::string> cluster_id_{};

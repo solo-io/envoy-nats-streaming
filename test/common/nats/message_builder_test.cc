@@ -30,8 +30,8 @@ TEST_F(NatsMessageBuilderTest, PubMessage) {
 }
 
 TEST_F(NatsMessageBuilderTest, SubMessage) {
-  Message expected_message{"SUB subject1 sid1"};
-  auto actual_message = message_builder_.createSubMessage("subject1", "sid1");
+  Message expected_message{"SUB subject1 6"};
+  auto actual_message = message_builder_.createSubMessage("subject1", 6);
   ASSERT_EQ(expected_message, actual_message);
 }
 
