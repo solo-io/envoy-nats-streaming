@@ -20,10 +20,8 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
                                           PublishCallbacks &callbacks) {
   cluster_id_.value(cluster_id);
   discover_prefix_.value(discover_prefix);
-  outbound_subject_and_payload_.value(
-      make_pair(subject, drainBufferToString(payload)));
+  outbound_request_.value({subject, drainBufferToString(payload), &callbacks});
 
-  callbacks_.value(&callbacks);
   conn_pool_->setPoolCallbacks(*this);
 
   // Send a NATS CONNECT message.
@@ -183,11 +181,12 @@ void ClientImpl::onSentPubMsgResponse(std::vector<absl::string_view> &&tokens) {
 void ClientImpl::onPubAckPayload(Nats::MessagePtr &&value) {
   const std::string &payload = value->asString();
   auto &&pub_ack = nats_streaming_message_utility_.parsePubAckMessage(payload);
+  auto &&callbacks = outbound_request_.value().callbacks;
 
   if (pub_ack.error().empty()) {
-    callbacks_.value()->onResponse();
+    callbacks->onResponse();
   } else {
-    callbacks_.value()->onFailure();
+    callbacks->onFailure();
   }
 
   state_ = State::Done;
@@ -235,8 +234,8 @@ void ClientImpl::pubPubMsg() {
   const std::string hash_key;
 
   // TODO(talnordan): Avoid using hard-coded string literals.
-  auto &&subject = outbound_subject_and_payload_.value().first;
-  auto &&payload = outbound_subject_and_payload_.value().second;
+  auto &&subject = outbound_request_.value().subject;
+  auto &&payload = outbound_request_.value().payload;
   const std::string pub_msg_message =
       nats_streaming_message_utility_.createPubMsgMessage("client1", "guid1",
                                                           subject, payload);

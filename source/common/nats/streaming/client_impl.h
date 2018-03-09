@@ -37,6 +37,12 @@ public:
   void onClose() override;
 
 private:
+  struct OutboundRequest {
+    std::string subject;
+    std::string payload;
+    PublishCallbacks *callbacks;
+  };
+
   enum class State {
     Initial,
     SentPubMsg,
@@ -85,12 +91,8 @@ private:
   Optional<std::string> heartbeat_reply_to_{};
   Optional<std::string> cluster_id_{};
   Optional<std::string> discover_prefix_{};
-  Optional<std::pair<std::string, std::string>> outbound_subject_and_payload_{};
-
+  Optional<OutboundRequest> outbound_request_{};
   Optional<std::string> pub_prefix_{};
-
-  // TODO(talnordan): This should be a collection.
-  Optional<PublishCallbacks *> callbacks_{};
 };
 
 } // namespace Streaming
