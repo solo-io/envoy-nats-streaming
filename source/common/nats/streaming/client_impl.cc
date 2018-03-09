@@ -168,9 +168,7 @@ void ClientImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
 }
 
 void ClientImpl::onSentPubMsgResponse(std::vector<absl::string_view> &&tokens) {
-  // TODO(talnordan): Remove assertion.
-  std::vector<absl::string_view> expected_tokens{"MSG", "reply-to.2", "2", "7"};
-  RELEASE_ASSERT(tokens == expected_tokens);
+  UNREFERENCED_PARAMETER(tokens);
 }
 
 void ClientImpl::onPubAckPayload(Nats::MessagePtr &&value) {
