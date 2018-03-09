@@ -61,11 +61,7 @@ private:
 
   inline void onIncomingHeartbeat(std::vector<absl::string_view> &&tokens);
 
-  inline void onInitialResponse(std::vector<absl::string_view> &&tokens);
-
   inline void onConnectResponsePayload(Nats::MessagePtr &&value);
-
-  inline void onSentPubMsgResponse(std::vector<absl::string_view> &&tokens);
 
   inline void onPubAckPayload(Nats::MessagePtr &&value);
 

@@ -125,17 +125,6 @@ void ClientImpl::onMsg(std::vector<absl::string_view> &&tokens) {
     onIncomingHeartbeat(std::move(tokens));
     return;
   }
-
-  switch (state_) {
-  case State::Initial:
-    onInitialResponse(std::move(tokens));
-    break;
-  case State::SentPubMsg:
-    onSentPubMsgResponse(std::move(tokens));
-    break;
-  case State::Done:
-    break;
-  }
 }
 
 void ClientImpl::onPing() { pong(); }
@@ -151,10 +140,6 @@ void ClientImpl::onIncomingHeartbeat(std::vector<absl::string_view> &&tokens) {
   heartbeat_reply_to_.value(std::string(tokens[3]));
 }
 
-void ClientImpl::onInitialResponse(std::vector<absl::string_view> &&tokens) {
-  UNREFERENCED_PARAMETER(tokens);
-}
-
 void ClientImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
   const std::string &payload = value->asString();
   pub_prefix_.value(nats_streaming_message_utility_.getPubPrefix(payload));
@@ -165,10 +150,6 @@ void ClientImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
 
   pubPubMsg();
   state_ = State::SentPubMsg;
-}
-
-void ClientImpl::onSentPubMsgResponse(std::vector<absl::string_view> &&tokens) {
-  UNREFERENCED_PARAMETER(tokens);
 }
 
 void ClientImpl::onPubAckPayload(Nats::MessagePtr &&value) {
