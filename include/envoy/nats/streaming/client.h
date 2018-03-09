@@ -51,10 +51,14 @@ class Client {
 public:
   virtual ~Client() {}
 
+  // TODO(talnordan): Add `ack_prefix`.
   /**
    * Makes a request.
-   * @param cluster_name supplies the the cluster name.
    * @param subject supplies the subject.
+   * @param cluster_id supplies the cluster-id with which the NATS Streaming
+   * Server was started.
+   * @param discover_prefix supplies the prefix subject used to connect to the
+   * NATS Streaming server.
    * @param payload supplies the fully buffered payload as buffered by this
    * filter or previous ones in the filter chain. The buffer passed should not
    * be used anymore by the caller, as the implementation of this function might
@@ -63,8 +67,9 @@ public:
    * @return PublishRequestPtr a handle to the active request or nullptr if the
    * request could not be made for some reason.
    */
-  virtual PublishRequestPtr makeRequest(const std::string &cluster_name,
-                                        const std::string &subject,
+  virtual PublishRequestPtr makeRequest(const std::string &subject,
+                                        const std::string &cluster_id,
+                                        const std::string &discover_prefix,
                                         Buffer::Instance &payload,
                                         PublishCallbacks &callbacks) PURE;
 };

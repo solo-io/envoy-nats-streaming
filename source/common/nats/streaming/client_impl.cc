@@ -4,6 +4,8 @@
 #include "common/common/macros.h"
 #include "common/common/utility.h"
 
+#include "fmt/format.h"
+
 namespace Envoy {
 namespace Nats {
 namespace Streaming {
@@ -11,13 +13,14 @@ namespace Streaming {
 ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_)
     : conn_pool_(std::move(conn_pool_)) {}
 
-PublishRequestPtr ClientImpl::makeRequest(const std::string &cluster_name,
-                                          const std::string &subject,
+PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
+                                          const std::string &cluster_id,
+                                          const std::string &discover_prefix,
                                           Buffer::Instance &payload,
                                           PublishCallbacks &callbacks) {
-  UNREFERENCED_PARAMETER(cluster_name);
-
   subject_.value(subject);
+  cluster_id_.value(cluster_id);
+  discover_prefix_.value(discover_prefix);
   payload_.value(drainBufferToString(payload));
   callbacks_.value(&callbacks);
   conn_pool_->setPoolCallbacks(*this);
@@ -212,12 +215,17 @@ void ClientImpl::subReplyInbox() {
 void ClientImpl::pubConnectRequest() {
   const std::string hash_key;
 
+  // TODO(talnordan): Extract a helper function for prepending a prefix to a
+  // subject.
+  const std::string subject =
+      fmt::format("{}.{}", discover_prefix_.value(), cluster_id_.value());
+
   // TODO(talnordan): Avoid using hard-coded string literals.
   const std::string connect_request_message =
       nats_streaming_message_utility_.createConnectRequestMessage(
           "client1", "heartbeat-inbox");
   const Message pubMessage = nats_message_builder_.createPubMessage(
-      "_STAN.discover.test-cluster", "reply-to.1", connect_request_message);
+      subject, "reply-to.1", connect_request_message);
 
   conn_pool_->makeRequest(hash_key, pubMessage);
 }

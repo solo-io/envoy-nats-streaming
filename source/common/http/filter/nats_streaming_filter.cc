@@ -113,11 +113,15 @@ void NatsStreamingFilter::relayToNatsStreaming() {
     // returning `false`.
     return;
   }
-  // TODO:(yuval-k): use the cluster id and discover prefix
-  const std::string &subject = *optional_subject_.value().subject;
+
+  auto &&subject_entry = optional_subject_.value();
+  const std::string &subject = *subject_entry.subject;
+  const std::string &cluster_id = *subject_entry.cluster_id;
+  const std::string &discover_prefix = *subject_entry.discover_prefix;
 
   // TODO(talnordan): Keep the return value of `makeRequest()`.
-  nats_streaming_client_->makeRequest(*cluster_name, subject, body_, *this);
+  nats_streaming_client_->makeRequest(subject, cluster_id, discover_prefix,
+                                      body_, *this);
 }
 
 } // namespace Http

@@ -26,8 +26,9 @@ public:
   ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool);
 
   // Nats::Streaming::Client
-  PublishRequestPtr makeRequest(const std::string &cluster_name,
-                                const std::string &subject,
+  PublishRequestPtr makeRequest(const std::string &subject,
+                                const std::string &cluster_id,
+                                const std::string &discover_prefix,
                                 Buffer::Instance &payload,
                                 PublishCallbacks &callbacks) override;
 
@@ -83,6 +84,8 @@ private:
   bool waiting_for_payload_{};
   Optional<std::string> heartbeat_reply_to_{};
   Optional<std::string> subject_{};
+  Optional<std::string> cluster_id_{};
+  Optional<std::string> discover_prefix_{};
   Optional<std::string> payload_{};
   Optional<std::string> pub_prefix_{};
 

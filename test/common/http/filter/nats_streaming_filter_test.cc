@@ -76,7 +76,7 @@ TEST_F(NatsStreamingFilterTest, NoSubjectHeaderOnlyRequest) {
   EXPECT_CALL(*subject_retriever_, getSubject(_)).Times(1);
 
   // `nats_streaming_client_->makeRequest()` should not be called.
-  EXPECT_CALL(*nats_streaming_client_, makeRequest(_, _, _, _)).Times(0);
+  EXPECT_CALL(*nats_streaming_client_, makeRequest(_, _, _, _, _)).Times(0);
 
   ASSERT_EQ(false, retreivefunction());
 }
@@ -86,7 +86,7 @@ TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithData) {
   EXPECT_CALL(*subject_retriever_, getSubject(_)).Times(1);
 
   // `nats_streaming_client_->makeRequest()` should not be called.
-  EXPECT_CALL(*nats_streaming_client_, makeRequest(_, _, _, _)).Times(0);
+  EXPECT_CALL(*nats_streaming_client_, makeRequest(_, _, _, _, _)).Times(0);
 
   ASSERT_EQ(false, retreivefunction());
 }
@@ -96,7 +96,7 @@ TEST_F(NatsStreamingFilterTest, NoSubjectRequestWithTrailers) {
   EXPECT_CALL(*subject_retriever_, getSubject(_)).Times(1);
 
   // `nats_streaming_client_->makeRequest()` should not be called.
-  EXPECT_CALL(*nats_streaming_client_, makeRequest(_, _, _, _)).Times(0);
+  EXPECT_CALL(*nats_streaming_client_, makeRequest(_, _, _, _, _)).Times(0);
 
   ASSERT_EQ(false, retreivefunction());
 }
@@ -107,7 +107,8 @@ TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
 
   // `nats_streaming_client_->makeRequest()` should be called exactly once.
   EXPECT_CALL(*nats_streaming_client_,
-              makeRequest("fake_cluster", "Subject1", _, Ref(*filter_)))
+              makeRequest("Subject1", "cluster_id", "discover_prefix1", _,
+                          Ref(*filter_)))
       .Times(1);
 
   const std::string subject = "Subject1";
@@ -131,7 +132,8 @@ TEST_F(NatsStreamingFilterTest, RequestWithData) {
 
   // `nats_streaming_client_->makeRequest()` should be called exactly once.
   EXPECT_CALL(*nats_streaming_client_,
-              makeRequest("fake_cluster", "Subject1", _, Ref(*filter_)))
+              makeRequest("Subject1", "cluster_id", "discover_prefix1", _,
+                          Ref(*filter_)))
       .Times(1);
 
   const std::string subject = "Subject1";
@@ -171,7 +173,8 @@ TEST_F(NatsStreamingFilterTest, RequestWithTrailers) {
 
   // `nats_streaming_client_->makeRequest()` should be called exactly once.
   EXPECT_CALL(*nats_streaming_client_,
-              makeRequest("fake_cluster", "Subject1", _, Ref(*filter_)))
+              makeRequest("Subject1", "cluster_id", "discover_prefix1", _,
+                          Ref(*filter_)))
       .Times(1);
 
   const std::string subject = "Subject1";

@@ -22,9 +22,9 @@ public:
   MockClient();
   ~MockClient();
 
-  MOCK_METHOD4(makeRequest,
+  MOCK_METHOD5(makeRequest,
                PublishRequestPtr(const std::string &, const std::string &,
-                                 Buffer::Instance &,
+                                 const std::string &, Buffer::Instance &,
                                  PublishCallbacks &callbacks));
 
   Buffer::OwnedImpl last_payload_;
