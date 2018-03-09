@@ -81,6 +81,8 @@ private:
 
   inline void pong();
 
+  inline void sendNatsMessage(const Message &message);
+
   inline std::string drainBufferToString(Buffer::Instance &buffer) const;
 
   inline std::string bufferToString(const Buffer::Instance &buffer) const;

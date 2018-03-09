@@ -25,9 +25,7 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
   conn_pool_->setPoolCallbacks(*this);
 
   // Send a NATS CONNECT message.
-  const std::string hash_key;
-  const Message request = nats_message_builder_.createConnectMessage();
-  conn_pool_->makeRequest(hash_key, request);
+  sendNatsMessage(nats_message_builder_.createConnectMessage());
 
   // TODO(talnordan)
   return nullptr;
@@ -83,13 +81,8 @@ void ClientImpl::onPayload(Nats::MessagePtr &&value) {
   waiting_for_payload_ = false;
 
   if (heartbeat_reply_to_.valid()) {
-    // TODO(talnordan): Manage hash key computation.
-    const std::string hash_key;
-
-    const Message hearbeatResponseMessage =
-        nats_message_builder_.createPubMessage(heartbeat_reply_to_.value());
-    conn_pool_->makeRequest(hash_key, hearbeatResponseMessage);
-
+    sendNatsMessage(
+        nats_message_builder_.createPubMessage(heartbeat_reply_to_.value()));
     heartbeat_reply_to_ = Optional<std::string>{};
   } else {
     switch (state_) {
@@ -193,12 +186,7 @@ void ClientImpl::onPubAckPayload(Nats::MessagePtr &&value) {
 }
 
 void ClientImpl::subInbox(const std::string &subject, const std::string &sid) {
-  // TODO(talnordan): Manage hash key computation.
-  const std::string hash_key;
-
-  const Message subMessage =
-      nats_message_builder_.createSubMessage(subject, sid);
-  conn_pool_->makeRequest(hash_key, subMessage);
+  sendNatsMessage(nats_message_builder_.createSubMessage(subject, sid));
 }
 
 void ClientImpl::subHeartbeatInbox() {
@@ -226,28 +214,32 @@ void ClientImpl::pubConnectRequest() {
   const Message pubMessage = nats_message_builder_.createPubMessage(
       subject, "reply-to.1", connect_request_message);
 
-  conn_pool_->makeRequest(hash_key, pubMessage);
+  sendNatsMessage(pubMessage);
 }
 
 void ClientImpl::pubPubMsg() {
-  const std::string hash_key;
-
-  // TODO(talnordan): Avoid using hard-coded string literals.
   auto &&subject = outbound_request_.value().subject;
   auto &&payload = outbound_request_.value().payload;
+
+  // TODO(talnordan): Avoid using hard-coded string literals.
   const std::string pub_msg_message =
       nats_streaming_message_utility_.createPubMsgMessage("client1", "guid1",
                                                           subject, payload);
   const Message pubMessage = nats_message_builder_.createPubMessage(
       pub_prefix_.value() + "." + subject, "reply-to.2", pub_msg_message);
 
-  conn_pool_->makeRequest(hash_key, pubMessage);
+  sendNatsMessage(pubMessage);
 }
 
 void ClientImpl::pong() {
+  sendNatsMessage(nats_message_builder_.createPongMessage());
+}
+
+inline void ClientImpl::sendNatsMessage(const Message &message) {
+  // TODO(talnordan): Manage hash key computation.
   const std::string hash_key;
-  const Message pongMessage = nats_message_builder_.createPongMessage();
-  conn_pool_->makeRequest(hash_key, pongMessage);
+
+  conn_pool_->makeRequest(hash_key, message);
 }
 
 // TODO(talnordan): Consider introducing `BufferUtility` and extracting this
