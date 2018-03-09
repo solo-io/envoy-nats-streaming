@@ -104,6 +104,8 @@ private:
   Optional<std::string> discover_prefix_{};
   Optional<OutboundRequest> outbound_request_{};
   Optional<std::string> pub_prefix_{};
+
+  static const std::string HEARTBEAT_INBOX;
 };
 
 } // namespace Streaming

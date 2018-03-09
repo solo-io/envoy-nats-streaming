@@ -10,6 +10,8 @@ namespace Envoy {
 namespace Nats {
 namespace Streaming {
 
+const std::string ClientImpl::HEARTBEAT_INBOX{"_INBOX.H39pAjTnENSgSH3HIHnEON"};
+
 ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_)
     : conn_pool_(std::move(conn_pool_)), sid_(1) {}
 
@@ -119,7 +121,7 @@ void ClientImpl::onMsg(std::vector<absl::string_view> &&tokens) {
 
   // TODO(talnordan): Avoid using hard-coded string literals.
   const auto &subject = tokens[1];
-  if (subject == "heartbeat-inbox") {
+  if (subject == HEARTBEAT_INBOX) {
     onIncomingHeartbeat(std::move(tokens));
     return;
   }
@@ -190,10 +192,7 @@ void ClientImpl::subInbox(const std::string &subject) {
   ++sid_;
 }
 
-void ClientImpl::subHeartbeatInbox() {
-  // TODO(talnordan): Avoid using hard-coded string literals.
-  subInbox("heartbeat-inbox");
-}
+void ClientImpl::subHeartbeatInbox() { subInbox(HEARTBEAT_INBOX); }
 
 void ClientImpl::subReplyInbox() {
   // TODO(talnordan): Avoid using hard-coded string literals.
@@ -211,7 +210,7 @@ void ClientImpl::pubConnectRequest() {
   // TODO(talnordan): Avoid using hard-coded string literals.
   const std::string connect_request_message =
       nats_streaming_message_utility_.createConnectRequestMessage(
-          "client1", "heartbeat-inbox");
+          "client1", HEARTBEAT_INBOX);
 
   pubNatsStreamingMessage(subject, "reply-to.1", connect_request_message);
 }
