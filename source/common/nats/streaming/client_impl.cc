@@ -211,10 +211,8 @@ void ClientImpl::pubConnectRequest() {
   const std::string connect_request_message =
       nats_streaming_message_utility_.createConnectRequestMessage(
           "client1", "heartbeat-inbox");
-  const Message pubMessage = nats_message_builder_.createPubMessage(
-      subject, "reply-to.1", connect_request_message);
 
-  sendNatsMessage(pubMessage);
+  pubNatsStreamingMessage(subject, "reply-to.1", connect_request_message);
 }
 
 void ClientImpl::pubPubMsg() {
@@ -225,10 +223,8 @@ void ClientImpl::pubPubMsg() {
   const std::string pub_msg_message =
       nats_streaming_message_utility_.createPubMsgMessage("client1", "guid1",
                                                           subject, payload);
-  const Message pubMessage = nats_message_builder_.createPubMessage(
-      pub_prefix_.value() + "." + subject, "reply-to.2", pub_msg_message);
-
-  sendNatsMessage(pubMessage);
+  pubNatsStreamingMessage(pub_prefix_.value() + "." + subject, "reply-to.2",
+                          pub_msg_message);
 }
 
 void ClientImpl::pong() {
@@ -240,6 +236,14 @@ inline void ClientImpl::sendNatsMessage(const Message &message) {
   const std::string hash_key;
 
   conn_pool_->makeRequest(hash_key, message);
+}
+
+inline void ClientImpl::pubNatsStreamingMessage(const std::string &subject,
+                                                const std::string &reply_to,
+                                                const std::string &message) {
+  const Message pubMessage =
+      nats_message_builder_.createPubMessage(subject, reply_to, message);
+  sendNatsMessage(pubMessage);
 }
 
 // TODO(talnordan): Consider introducing `BufferUtility` and extracting this

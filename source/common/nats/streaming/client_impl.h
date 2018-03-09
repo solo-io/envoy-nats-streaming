@@ -83,6 +83,12 @@ private:
 
   inline void sendNatsMessage(const Message &message);
 
+  // TODO(talnordan): Consider introducing `Nats::streaming::Message` instead of
+  // using `std::string`.
+  inline void pubNatsStreamingMessage(const std::string &subject,
+                                      const std::string &reply_to,
+                                      const std::string &message);
+
   inline std::string drainBufferToString(Buffer::Instance &buffer) const;
 
   inline std::string bufferToString(const Buffer::Instance &buffer) const;
