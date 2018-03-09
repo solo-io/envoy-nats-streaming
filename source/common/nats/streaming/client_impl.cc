@@ -18,10 +18,11 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
                                           const std::string &discover_prefix,
                                           Buffer::Instance &payload,
                                           PublishCallbacks &callbacks) {
-  subject_.value(subject);
   cluster_id_.value(cluster_id);
   discover_prefix_.value(discover_prefix);
-  payload_.value(drainBufferToString(payload));
+  outbound_subject_and_payload_.value(
+      make_pair(subject, drainBufferToString(payload)));
+
   callbacks_.value(&callbacks);
   conn_pool_->setPoolCallbacks(*this);
 
@@ -234,12 +235,13 @@ void ClientImpl::pubPubMsg() {
   const std::string hash_key;
 
   // TODO(talnordan): Avoid using hard-coded string literals.
+  auto &&subject = outbound_subject_and_payload_.value().first;
+  auto &&payload = outbound_subject_and_payload_.value().second;
   const std::string pub_msg_message =
-      nats_streaming_message_utility_.createPubMsgMessage(
-          "client1", "guid1", subject_.value(), payload_.value());
+      nats_streaming_message_utility_.createPubMsgMessage("client1", "guid1",
+                                                          subject, payload);
   const Message pubMessage = nats_message_builder_.createPubMessage(
-      pub_prefix_.value() + "." + subject_.value(), "reply-to.2",
-      pub_msg_message);
+      pub_prefix_.value() + "." + subject, "reply-to.2", pub_msg_message);
 
   conn_pool_->makeRequest(hash_key, pubMessage);
 }

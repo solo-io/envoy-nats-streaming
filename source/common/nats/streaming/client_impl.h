@@ -83,10 +83,10 @@ private:
   State state_{};
   bool waiting_for_payload_{};
   Optional<std::string> heartbeat_reply_to_{};
-  Optional<std::string> subject_{};
   Optional<std::string> cluster_id_{};
   Optional<std::string> discover_prefix_{};
-  Optional<std::string> payload_{};
+  Optional<std::pair<std::string, std::string>> outbound_subject_and_payload_{};
+
   Optional<std::string> pub_prefix_{};
 
   // TODO(talnordan): This should be a collection.
