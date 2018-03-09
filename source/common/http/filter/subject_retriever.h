@@ -13,7 +13,7 @@ namespace Http {
 struct Subject {
   const std::string *subject;
   const std::string *cluster_id;
-  const std::string *discovery_prefix;
+  const std::string *discover_prefix;
 };
 
 // TODO(talnordan): Make generic and move to `envoy-common`.

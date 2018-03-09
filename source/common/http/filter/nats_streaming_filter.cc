@@ -113,7 +113,7 @@ void NatsStreamingFilter::relayToNatsStreaming() {
     // returning `false`.
     return;
   }
-  // TODO:(yuval-k): use the cluster id and discovery prefix
+  // TODO:(yuval-k): use the cluster id and discover prefix
   const std::string &subject = *optional_subject_.value().subject;
 
   // TODO(talnordan): Keep the return value of `makeRequest()`.

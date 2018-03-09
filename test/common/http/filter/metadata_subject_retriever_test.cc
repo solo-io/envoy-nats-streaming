@@ -135,7 +135,7 @@ TEST(MetadataSubjectRetrieverTest, ConfiguredSubject) {
   auto actual_subject = maybe_actual_subject.value();
   EXPECT_EQ(*actual_subject.subject, configuredSubject);
   EXPECT_EQ(*actual_subject.cluster_id, "ci");
-  EXPECT_EQ(*actual_subject.discovery_prefix, "dp");
+  EXPECT_EQ(*actual_subject.discover_prefix, "dp");
 }
 
 } // namespace Envoy

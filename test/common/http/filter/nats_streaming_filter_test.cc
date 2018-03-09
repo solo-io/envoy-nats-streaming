@@ -112,9 +112,9 @@ TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
 
   const std::string subject = "Subject1";
   const std::string cluster_id = "cluster_id";
-  const std::string discovery_prefix = "discovery_prefix1";
+  const std::string discover_prefix = "discover_prefix1";
   subject_retriever_->subject_ =
-      Optional<Subject>(Subject{&subject, &cluster_id, &discovery_prefix});
+      Optional<Subject>(Subject{&subject, &cluster_id, &discover_prefix});
 
   ASSERT_EQ(true, retreivefunction());
 
@@ -136,9 +136,9 @@ TEST_F(NatsStreamingFilterTest, RequestWithData) {
 
   const std::string subject = "Subject1";
   const std::string cluster_id = "cluster_id";
-  const std::string discovery_prefix = "discovery_prefix1";
+  const std::string discover_prefix = "discover_prefix1";
   subject_retriever_->subject_ =
-      Optional<Subject>(Subject{&subject, &cluster_id, &discovery_prefix});
+      Optional<Subject>(Subject{&subject, &cluster_id, &discover_prefix});
 
   callbacks_.buffer_.reset(new Buffer::OwnedImpl);
 
@@ -176,9 +176,9 @@ TEST_F(NatsStreamingFilterTest, RequestWithTrailers) {
 
   const std::string subject = "Subject1";
   const std::string cluster_id = "cluster_id";
-  const std::string discovery_prefix = "discovery_prefix1";
+  const std::string discover_prefix = "discover_prefix1";
   subject_retriever_->subject_ =
-      Optional<Subject>(Subject{&subject, &cluster_id, &discovery_prefix});
+      Optional<Subject>(Subject{&subject, &cluster_id, &discover_prefix});
 
   callbacks_.buffer_.reset(new Buffer::OwnedImpl);
 
