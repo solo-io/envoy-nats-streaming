@@ -10,7 +10,13 @@ namespace Envoy {
 namespace Nats {
 namespace Streaming {
 
+// TODO(talnordan): Generate a pseudorandom UUIDs.
 const std::string ClientImpl::HEARTBEAT_INBOX{"_INBOX.H39pAjTnENSgSH3HIHnEON"};
+const std::string ClientImpl::ROOT_INBOX{"_INBOX.M2kl72gBUTGH12kgXu5c9i.*"};
+const std::string ClientImpl::CONNECT_RESPONSE_INBOX{
+    "_INBOX.M2kl72gBUTGH12kgXu5c9i.gSH3HIH1YJ70TA744uhFid"};
+const std::string ClientImpl::PUB_ACK_INBOX{
+    "_STAN.acks.M2kl72gBUTGH1vpPycOhxa"};
 
 ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_)
     : conn_pool_(std::move(conn_pool_)), sid_(1) {}
@@ -173,10 +179,7 @@ void ClientImpl::subInbox(const std::string &subject) {
 
 void ClientImpl::subHeartbeatInbox() { subInbox(HEARTBEAT_INBOX); }
 
-void ClientImpl::subReplyInbox() {
-  // TODO(talnordan): Avoid using hard-coded string literals.
-  subInbox("reply-to.*");
-}
+void ClientImpl::subReplyInbox() { subInbox(ROOT_INBOX); }
 
 void ClientImpl::pubConnectRequest() {
   const std::string hash_key;
@@ -191,18 +194,22 @@ void ClientImpl::pubConnectRequest() {
       nats_streaming_message_utility_.createConnectRequestMessage(
           "client1", HEARTBEAT_INBOX);
 
-  pubNatsStreamingMessage(subject, "reply-to.1", connect_request_message);
+  pubNatsStreamingMessage(subject, CONNECT_RESPONSE_INBOX,
+                          connect_request_message);
 }
 
 void ClientImpl::pubPubMsg() {
   auto &&subject = outbound_request_.value().subject;
   auto &&payload = outbound_request_.value().payload;
 
+  // TODO(talnordan): `UNSUB` once the response has arrived.
+  subInbox(PUB_ACK_INBOX);
+
   // TODO(talnordan): Avoid using hard-coded string literals.
   const std::string pub_msg_message =
       nats_streaming_message_utility_.createPubMsgMessage("client1", "guid1",
                                                           subject, payload);
-  pubNatsStreamingMessage(pub_prefix_.value() + "." + subject, "reply-to.2",
+  pubNatsStreamingMessage(pub_prefix_.value() + "." + subject, PUB_ACK_INBOX,
                           pub_msg_message);
 }
 

@@ -102,6 +102,9 @@ private:
   Optional<std::string> pub_prefix_{};
 
   static const std::string HEARTBEAT_INBOX;
+  static const std::string ROOT_INBOX;
+  static const std::string CONNECT_RESPONSE_INBOX;
+  static const std::string PUB_ACK_INBOX;
 };
 
 } // namespace Streaming
