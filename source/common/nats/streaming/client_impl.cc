@@ -16,8 +16,11 @@ const std::string ClientImpl::CONNECT_RESPONSE_INBOX{
 const std::string ClientImpl::PUB_ACK_INBOX{
     "_STAN.acks.M2kl72gBUTGH1vpPycOhxa"};
 
-ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_)
-    : conn_pool_(std::move(conn_pool_)), sid_(1) {}
+ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_,
+                       Runtime::RandomGenerator &random)
+    : conn_pool_(std::move(conn_pool_)), sid_(1) {
+  UNREFERENCED_PARAMETER(random);
+}
 
 PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
                                           const std::string &cluster_id,

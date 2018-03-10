@@ -93,7 +93,8 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
           context.threadLocal()));
 
   Nats::Streaming::ClientPtr nats_streaming_client =
-      std::make_shared<Nats::Streaming::ClientImpl>(std::move(conn_pool));
+      std::make_shared<Nats::Streaming::ClientImpl>(std::move(conn_pool),
+                                                    context.random());
 
   return [&context, config, subjectRetriever, nats_streaming_client](
              Envoy::Http::FilterChainFactoryCallbacks &callbacks) -> void {

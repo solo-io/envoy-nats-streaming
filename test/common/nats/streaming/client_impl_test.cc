@@ -2,6 +2,7 @@
 
 #include "test/mocks/nats/mocks.h"
 #include "test/mocks/nats/streaming/mocks.h"
+#include "test/mocks/runtime/mocks.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -13,7 +14,8 @@ namespace Streaming {
 class NatsStreamingClientImplTest : public testing::Test {
 public:
   Nats::ConnPool::MockInstance *conn_pool_{new Nats::ConnPool::MockInstance()};
-  ClientImpl Client_{Tcp::ConnPool::InstancePtr<Message>{conn_pool_}};
+  Runtime::MockRandomGenerator random_;
+  ClientImpl Client_{Tcp::ConnPool::InstancePtr<Message>{conn_pool_}, random_};
   MockPublishCallbacks callbacks_;
   PublishRequestPtr handle_;
 };

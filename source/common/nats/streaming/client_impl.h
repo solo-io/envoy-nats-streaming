@@ -3,6 +3,7 @@
 #include "envoy/common/optional.h"
 #include "envoy/nats/codec.h"
 #include "envoy/nats/streaming/client.h"
+#include "envoy/runtime/runtime.h"
 #include "envoy/tcp/conn_pool.h"
 
 #include "common/common/logger.h"
@@ -24,7 +25,8 @@ class ClientImpl : public Client,
                    public Tcp::ConnPool::PoolCallbacks<Message>,
                    public Envoy::Logger::Loggable<Envoy::Logger::Id::filter> {
 public:
-  ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool);
+  ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool,
+             Runtime::RandomGenerator &random);
 
   // Nats::Streaming::Client
   PublishRequestPtr makeRequest(const std::string &subject,
