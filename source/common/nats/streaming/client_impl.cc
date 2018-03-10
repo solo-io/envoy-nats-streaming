@@ -182,8 +182,6 @@ void ClientImpl::subHeartbeatInbox() { subInbox(HEARTBEAT_INBOX); }
 void ClientImpl::subReplyInbox() { subInbox(ROOT_INBOX); }
 
 void ClientImpl::pubConnectRequest() {
-  const std::string hash_key;
-
   // TODO(talnordan): Extract a helper function for prepending a prefix to a
   // subject.
   const std::string subject =
