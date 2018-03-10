@@ -8,6 +8,7 @@
 #include "common/common/logger.h"
 #include "common/nats/message_builder.h"
 #include "common/nats/streaming/message_utility.h"
+#include "common/nats/subject_utility.h"
 
 namespace Envoy {
 namespace Nats {
@@ -91,6 +92,7 @@ private:
 
   Tcp::ConnPool::InstancePtr<Message> conn_pool_;
   Nats::MessageBuilder nats_message_builder_;
+  Nats::SubjectUtility nats_subject_utility_;
   Nats::Streaming::MessageUtility nats_streaming_message_utility_;
   State state_{};
   uint64_t sid_;

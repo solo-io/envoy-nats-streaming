@@ -4,8 +4,6 @@
 #include "common/common/macros.h"
 #include "common/common/utility.h"
 
-#include "fmt/format.h"
-
 namespace Envoy {
 namespace Nats {
 namespace Streaming {
@@ -182,10 +180,8 @@ void ClientImpl::subHeartbeatInbox() { subInbox(HEARTBEAT_INBOX); }
 void ClientImpl::subReplyInbox() { subInbox(ROOT_INBOX); }
 
 void ClientImpl::pubConnectRequest() {
-  // TODO(talnordan): Extract a helper function for prepending a prefix to a
-  // subject.
-  const std::string subject =
-      fmt::format("{}.{}", discover_prefix_.value(), cluster_id_.value());
+  const std::string subject{nats_subject_utility_.join(discover_prefix_.value(),
+                                                       cluster_id_.value())};
 
   // TODO(talnordan): Avoid using hard-coded string literals.
   const std::string connect_request_message =
@@ -203,12 +199,15 @@ void ClientImpl::pubPubMsg() {
   // TODO(talnordan): `UNSUB` once the response has arrived.
   subInbox(PUB_ACK_INBOX);
 
+  const std::string pub_subject{
+      nats_subject_utility_.join(pub_prefix_.value(), subject)};
+
   // TODO(talnordan): Avoid using hard-coded string literals.
   const std::string pub_msg_message =
       nats_streaming_message_utility_.createPubMsgMessage("client1", "guid1",
                                                           subject, payload);
-  pubNatsStreamingMessage(pub_prefix_.value() + "." + subject, PUB_ACK_INBOX,
-                          pub_msg_message);
+
+  pubNatsStreamingMessage(pub_subject, PUB_ACK_INBOX, pub_msg_message);
 }
 
 void ClientImpl::pong() {
