@@ -31,3 +31,12 @@ envoy_cc_library(
         "//include/envoy/nats:codec_interface",
     ],
 )
+
+envoy_cc_library(
+    name = "subject_utility_lib",
+    hdrs = ["subject_utility.h"],
+    repository = "@envoy",
+    deps = [
+        "@envoy//source/exe:envoy_common_lib",
+    ],
+)

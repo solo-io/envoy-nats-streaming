@@ -32,3 +32,13 @@ envoy_cc_test(
         "@envoy//test/test_common:utility_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "subject_utility_test",
+    srcs = ["subject_utility_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common/nats:subject_utility_lib",
+        "@envoy//source/common/common:assert_lib",
+    ],
+)
