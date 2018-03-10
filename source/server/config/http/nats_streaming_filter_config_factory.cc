@@ -86,6 +86,7 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
   //       Tcp::ConnPool::ManagerImpl<Nats::Message, Nats::DecoderImpl>>(
   //       context.clusterManager(), client_factory, context.threadLocal());
 
+  // TODO(talnordan): Avoid using hard-coded string literals.
   Tcp::ConnPool::InstancePtr<Nats::Message> conn_pool(
       new Tcp::ConnPool::InstanceImpl<Nats::Message, Nats::DecoderImpl>(
           "cluster_0", context.clusterManager(), client_factory,
