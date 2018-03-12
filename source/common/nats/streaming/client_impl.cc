@@ -56,10 +56,9 @@ void ClientImpl::onClose() {
 }
 
 void ClientImpl::onOperation(Nats::MessagePtr &&value) {
-  // TODO(talnordan): This implementation is provided as a proof of concept. In
-  // a production-ready implementation, the decoder should use zero allocation
-  // byte parsing, and this code should switch over an `enum class` representing
-  // the message type. See:
+  // TODO(talnordan): For better performance, a future decoder implementation
+  // might use zero allocation byte parsing. In such case, this function would
+  // need to switch over an `enum class` representing the message type. See:
   // https://github.com/nats-io/go-nats/blob/master/parser.go
   // https://youtu.be/ylRKac5kSOk?t=10m46s
 
