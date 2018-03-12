@@ -10,6 +10,7 @@
 #include "common/nats/message_builder.h"
 #include "common/nats/streaming/message_utility.h"
 #include "common/nats/subject_utility.h"
+#include "common/nats/token_generator_impl.h"
 
 namespace Envoy {
 namespace Nats {
@@ -93,8 +94,13 @@ private:
   inline std::string bufferToString(const Buffer::Instance &buffer) const;
 
   Tcp::ConnPool::InstancePtr<Message> conn_pool_;
-  Nats::MessageBuilder nats_message_builder_;
+  TokenGeneratorImpl token_generator_;
   Nats::SubjectUtility nats_subject_utility_;
+  const std::string heartbeat_inbox;
+  const std::string root_inbox;
+  const std::string connect_response_inbox;
+  const std::string pub_ack_inbox;
+  Nats::MessageBuilder nats_message_builder_;
   Nats::Streaming::MessageUtility nats_streaming_message_utility_;
   State state_{};
   uint64_t sid_;
@@ -105,10 +111,8 @@ private:
   Optional<OutboundRequest> outbound_request_{};
   Optional<std::string> pub_prefix_{};
 
-  static const std::string HEARTBEAT_INBOX;
-  static const std::string ROOT_INBOX;
-  static const std::string CONNECT_RESPONSE_INBOX;
-  static const std::string PUB_ACK_INBOX;
+  static const std::string INBOX_PREFIX;
+  static const std::string PUB_ACK_PREFIX;
 };
 
 } // namespace Streaming

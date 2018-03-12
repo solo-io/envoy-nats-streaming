@@ -19,6 +19,7 @@ envoy_cc_library(
         "//include/envoy/tcp:conn_pool_interface",
         "//source/common/nats:message_builder_lib",
         "//source/common/nats:subject_utility_lib",
+        "//source/common/nats:token_generator_lib",
         "//source/common/nats/streaming:message_utility_lib",
         "@envoy//source/exe:envoy_common_lib",
     ],
