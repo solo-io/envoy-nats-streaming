@@ -41,3 +41,14 @@ envoy_cc_library(
         "@envoy//source/exe:envoy_common_lib",
     ],
 )
+
+envoy_cc_library(
+    name = "token_generator_lib",
+    srcs = ["token_generator_impl.cc"],
+    hdrs = ["token_generator_impl.h"],
+    repository = "@envoy",
+    deps = [
+        "//include/envoy/nats:token_generator_interface",
+        "@envoy//source/exe:envoy_common_lib",
+    ],
+)

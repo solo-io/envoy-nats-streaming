@@ -42,3 +42,14 @@ envoy_cc_test(
         "@envoy//source/common/common:assert_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "token_generator_impl_test",
+    srcs = ["token_generator_impl_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common/nats:token_generator_lib",
+        "@envoy//source/common/common:assert_lib",
+        "@envoy//test/mocks/runtime:runtime_mocks",
+    ],
+)
