@@ -14,13 +14,13 @@ const std::string ClientImpl::PUB_ACK_PREFIX{"_STAN.acks"};
 ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_,
                        Runtime::RandomGenerator &random)
     : conn_pool_(std::move(conn_pool_)), token_generator_(random),
-      heartbeat_inbox(
+      heartbeat_inbox_(
           nats_subject_utility_.randomChild(INBOX_PREFIX, token_generator_)),
-      root_inbox(
+      root_inbox_(
           nats_subject_utility_.randomChild(INBOX_PREFIX, token_generator_)),
-      connect_response_inbox(
-          nats_subject_utility_.randomChild(root_inbox, token_generator_)),
-      pub_ack_inbox(
+      connect_response_inbox_(
+          nats_subject_utility_.randomChild(root_inbox_, token_generator_)),
+      pub_ack_inbox_(
           nats_subject_utility_.randomChild(PUB_ACK_PREFIX, token_generator_)),
       sid_(1) {}
 
@@ -128,7 +128,7 @@ void ClientImpl::onMsg(std::vector<absl::string_view> &&tokens) {
   waiting_for_payload_ = true;
 
   const auto &subject = tokens[1];
-  if (subject == heartbeat_inbox) {
+  if (subject == heartbeat_inbox_) {
     onIncomingHeartbeat(std::move(tokens));
     return;
   }
@@ -178,11 +178,11 @@ void ClientImpl::subInbox(const std::string &subject) {
   ++sid_;
 }
 
-void ClientImpl::subHeartbeatInbox() { subInbox(heartbeat_inbox); }
+void ClientImpl::subHeartbeatInbox() { subInbox(heartbeat_inbox_); }
 
 void ClientImpl::subReplyInbox() {
   std::string root_inbox_child_wildcard{
-      nats_subject_utility_.childWildcard(root_inbox)};
+      nats_subject_utility_.childWildcard(root_inbox_)};
   subInbox(root_inbox_child_wildcard);
 }
 
@@ -193,9 +193,9 @@ void ClientImpl::pubConnectRequest() {
   // TODO(talnordan): Avoid using hard-coded string literals.
   const std::string connect_request_message =
       nats_streaming_message_utility_.createConnectRequestMessage(
-          "client1", heartbeat_inbox);
+          "client1", heartbeat_inbox_);
 
-  pubNatsStreamingMessage(subject, connect_response_inbox,
+  pubNatsStreamingMessage(subject, connect_response_inbox_,
                           connect_request_message);
 }
 
@@ -204,7 +204,7 @@ void ClientImpl::pubPubMsg() {
   auto &&payload = outbound_request_.value().payload;
 
   // TODO(talnordan): `UNSUB` once the response has arrived.
-  subInbox(pub_ack_inbox);
+  subInbox(pub_ack_inbox_);
 
   const std::string pub_subject{
       nats_subject_utility_.join(pub_prefix_.value(), subject)};
@@ -214,7 +214,7 @@ void ClientImpl::pubPubMsg() {
       nats_streaming_message_utility_.createPubMsgMessage("client1", "guid1",
                                                           subject, payload);
 
-  pubNatsStreamingMessage(pub_subject, pub_ack_inbox, pub_msg_message);
+  pubNatsStreamingMessage(pub_subject, pub_ack_inbox_, pub_msg_message);
 }
 
 void ClientImpl::pong() {
