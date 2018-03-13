@@ -95,7 +95,6 @@ private:
 
   Tcp::ConnPool::InstancePtr<Message> conn_pool_;
   TokenGeneratorImpl token_generator_;
-  Nats::SubjectUtility nats_subject_utility_;
   const std::string heartbeat_inbox_;
   const std::string root_inbox_;
   const std::string connect_response_inbox_;

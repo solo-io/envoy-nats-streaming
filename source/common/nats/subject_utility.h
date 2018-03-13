@@ -11,17 +11,17 @@ namespace Nats {
 
 class SubjectUtility {
 public:
-  inline std::string join(const std::string &prefix,
-                          const std::string &subject) const {
+  static inline std::string join(const std::string &prefix,
+                                 const std::string &subject) {
     return fmt::format("{}.{}", prefix, subject);
   }
 
-  inline std::string randomChild(const std::string &parent,
-                                 TokenGenerator &token_generator) const {
+  static inline std::string randomChild(const std::string &parent,
+                                        TokenGenerator &token_generator) {
     return join(parent, token_generator.random());
   }
 
-  inline std::string childWildcard(const std::string &parent) const {
+  static inline std::string childWildcard(const std::string &parent) {
     return join(parent, "*");
   }
 };

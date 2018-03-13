@@ -15,13 +15,12 @@ ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_,
                        Runtime::RandomGenerator &random)
     : conn_pool_(std::move(conn_pool_)), token_generator_(random),
       heartbeat_inbox_(
-          nats_subject_utility_.randomChild(INBOX_PREFIX, token_generator_)),
-      root_inbox_(
-          nats_subject_utility_.randomChild(INBOX_PREFIX, token_generator_)),
+          SubjectUtility::randomChild(INBOX_PREFIX, token_generator_)),
+      root_inbox_(SubjectUtility::randomChild(INBOX_PREFIX, token_generator_)),
       connect_response_inbox_(
-          nats_subject_utility_.randomChild(root_inbox_, token_generator_)),
+          SubjectUtility::randomChild(root_inbox_, token_generator_)),
       pub_ack_inbox_(
-          nats_subject_utility_.randomChild(PUB_ACK_PREFIX, token_generator_)),
+          SubjectUtility::randomChild(PUB_ACK_PREFIX, token_generator_)),
       sid_(1) {}
 
 PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
@@ -182,13 +181,13 @@ void ClientImpl::subHeartbeatInbox() { subInbox(heartbeat_inbox_); }
 
 void ClientImpl::subReplyInbox() {
   std::string root_inbox_child_wildcard{
-      nats_subject_utility_.childWildcard(root_inbox_)};
+      SubjectUtility::childWildcard(root_inbox_)};
   subInbox(root_inbox_child_wildcard);
 }
 
 void ClientImpl::pubConnectRequest() {
-  const std::string subject{nats_subject_utility_.join(discover_prefix_.value(),
-                                                       cluster_id_.value())};
+  const std::string subject{
+      SubjectUtility::join(discover_prefix_.value(), cluster_id_.value())};
 
   // TODO(talnordan): Avoid using hard-coded string literals.
   const std::string connect_request_message =
@@ -207,7 +206,7 @@ void ClientImpl::pubPubMsg() {
   subInbox(pub_ack_inbox_);
 
   const std::string pub_subject{
-      nats_subject_utility_.join(pub_prefix_.value(), subject)};
+      SubjectUtility::join(pub_prefix_.value(), subject)};
 
   // TODO(talnordan): Avoid using hard-coded string literals.
   const std::string pub_msg_message =
