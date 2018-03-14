@@ -11,30 +11,28 @@ namespace Streaming {
 
 class MessageUtility {
 public:
-  std::string
+  static std::string
   createConnectRequestMessage(const std::string &client_id,
-                              const std::string &heartbeat_inbox) const;
+                              const std::string &heartbeat_inbox);
 
-  std::string
-  createConnectResponseMessage(const std::string &pub_prefix,
-                               const std::string &sub_requests,
-                               const std::string &unsub_requests,
-                               const std::string &close_requests) const;
+  static std::string createConnectResponseMessage(
+      const std::string &pub_prefix, const std::string &sub_requests,
+      const std::string &unsub_requests, const std::string &close_requests);
 
-  std::string createPubMsgMessage(const std::string &client_id,
-                                  const std::string &guid,
-                                  const std::string &subject,
-                                  const std::string &data) const;
+  static std::string createPubMsgMessage(const std::string &client_id,
+                                         const std::string &guid,
+                                         const std::string &subject,
+                                         const std::string &data);
 
-  std::string createPubAckMessage(const std::string &guid,
-                                  const std::string &error) const;
+  static std::string createPubAckMessage(const std::string &guid,
+                                         const std::string &error);
 
-  pb::PubAck parsePubAckMessage(const std::string &pub_ack_message) const;
+  static pb::PubAck parsePubAckMessage(const std::string &pub_ack_message);
 
-  std::string getPubPrefix(const std::string &connect_response_message) const;
+  static std::string getPubPrefix(const std::string &connect_response_message);
 
 private:
-  template <typename T> std::string serializeToString(T &&message) const {
+  template <typename T> static std::string serializeToString(T &&message) {
     std::string message_str;
     message.SerializeToString(&message_str);
 

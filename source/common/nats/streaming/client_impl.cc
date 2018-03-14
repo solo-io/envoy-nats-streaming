@@ -148,7 +148,7 @@ void ClientImpl::onIncomingHeartbeat(std::vector<absl::string_view> &&tokens) {
 
 void ClientImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
   const std::string &payload = value->asString();
-  pub_prefix_.value(nats_streaming_message_utility_.getPubPrefix(payload));
+  pub_prefix_.value(MessageUtility::getPubPrefix(payload));
 
   // TODO(talnordan): Remove assertion.
   RELEASE_ASSERT(
@@ -160,7 +160,7 @@ void ClientImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
 
 void ClientImpl::onPubAckPayload(Nats::MessagePtr &&value) {
   const std::string &payload = value->asString();
-  auto &&pub_ack = nats_streaming_message_utility_.parsePubAckMessage(payload);
+  auto &&pub_ack = MessageUtility::parsePubAckMessage(payload);
   auto &&callbacks = outbound_request_.value().callbacks;
 
   if (pub_ack.error().empty()) {
@@ -191,8 +191,7 @@ void ClientImpl::pubConnectRequest() {
 
   // TODO(talnordan): Avoid using hard-coded string literals.
   const std::string connect_request_message =
-      nats_streaming_message_utility_.createConnectRequestMessage(
-          "client1", heartbeat_inbox_);
+      MessageUtility::createConnectRequestMessage("client1", heartbeat_inbox_);
 
   pubNatsStreamingMessage(subject, connect_response_inbox_,
                           connect_request_message);
@@ -210,8 +209,7 @@ void ClientImpl::pubPubMsg() {
 
   // TODO(talnordan): Avoid using hard-coded string literals.
   const std::string pub_msg_message =
-      nats_streaming_message_utility_.createPubMsgMessage("client1", "guid1",
-                                                          subject, payload);
+      MessageUtility::createPubMsgMessage("client1", "guid1", subject, payload);
 
   pubNatsStreamingMessage(pub_subject, pub_ack_inbox_, pub_msg_message);
 }

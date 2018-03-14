@@ -100,7 +100,6 @@ private:
   const std::string connect_response_inbox_;
   const std::string pub_ack_inbox_;
   Nats::MessageBuilder nats_message_builder_;
-  Nats::Streaming::MessageUtility nats_streaming_message_utility_;
   State state_{};
   uint64_t sid_;
   bool waiting_for_payload_{};

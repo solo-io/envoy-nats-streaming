@@ -12,13 +12,10 @@ namespace Streaming {
 class NatsStreamingMessageUtilityTest : public testing::Test {
 public:
   NatsStreamingMessageUtilityTest() {}
-
-protected:
-  MessageUtility message_utility_{};
 };
 
 TEST_F(NatsStreamingMessageUtilityTest, ConnectRequestMessage) {
-  const auto message = message_utility_.createConnectRequestMessage(
+  const auto message = MessageUtility::createConnectRequestMessage(
       "client_id", "heartbeat_inbox");
 
   pb::ConnectRequest connect_request;
@@ -29,7 +26,7 @@ TEST_F(NatsStreamingMessageUtilityTest, ConnectRequestMessage) {
 }
 
 TEST_F(NatsStreamingMessageUtilityTest, ConnectResponseMessage) {
-  const auto message = message_utility_.createConnectResponseMessage(
+  const auto message = MessageUtility::createConnectResponseMessage(
       "pub_prefix", "sub_requests", "unsub_requests", "close_requests");
 
   pb::ConnectResponse connect_response;
@@ -47,7 +44,7 @@ TEST_F(NatsStreamingMessageUtilityTest, PubMsgMessage) {
   const std::string subject{"subject1"};
   const std::string data{"\"d\ra\0t\t \na\v"};
   const auto message =
-      message_utility_.createPubMsgMessage(client_id, uuid, subject, data);
+      MessageUtility::createPubMsgMessage(client_id, uuid, subject, data);
 
   pb::PubMsg pub_msg;
   pub_msg.ParseFromString(message);
@@ -61,7 +58,7 @@ TEST_F(NatsStreamingMessageUtilityTest, PubMsgMessage) {
 TEST_F(NatsStreamingMessageUtilityTest, PubAckMessage) {
   const std::string uuid{"13581321-dead-beef-b77c-24f6818b6043"};
   const std::string error{"E\"R\rR\0O\t \nR\v"};
-  const auto message = message_utility_.createPubAckMessage(uuid, error);
+  const auto message = MessageUtility::createPubAckMessage(uuid, error);
 
   pb::PubAck pub_ack;
   pub_ack.ParseFromString(message);
@@ -71,10 +68,10 @@ TEST_F(NatsStreamingMessageUtilityTest, PubAckMessage) {
 }
 
 TEST_F(NatsStreamingMessageUtilityTest, GetPubPrefix) {
-  const auto message = message_utility_.createConnectResponseMessage(
+  const auto message = MessageUtility::createConnectResponseMessage(
       "pub_prefix", "sub_requests", "unsub_requests", "close_requests");
 
-  const auto pub_prefix = message_utility_.getPubPrefix(message);
+  const auto pub_prefix = MessageUtility::getPubPrefix(message);
 
   EXPECT_EQ("pub_prefix", pub_prefix);
 }
@@ -84,9 +81,9 @@ TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessage) {
 
   // No error.
   const std::string error{""};
-  const auto message = message_utility_.createPubAckMessage(uuid, error);
+  const auto message = MessageUtility::createPubAckMessage(uuid, error);
 
-  const auto result = message_utility_.parsePubAckMessage(message);
+  const auto result = MessageUtility::parsePubAckMessage(message);
 
   EXPECT_EQ(uuid, result.guid());
   EXPECT_TRUE(result.error().empty());
@@ -95,9 +92,9 @@ TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessage) {
 TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessageWithError) {
   const std::string uuid{"13581321-dead-beef-b77c-24f6818b6043"};
   const std::string error{"Error!"};
-  const auto message = message_utility_.createPubAckMessage(uuid, error);
+  const auto message = MessageUtility::createPubAckMessage(uuid, error);
 
-  const auto result = message_utility_.parsePubAckMessage(message);
+  const auto result = MessageUtility::parsePubAckMessage(message);
 
   EXPECT_EQ(uuid, result.guid());
   EXPECT_EQ(error, result.error());
