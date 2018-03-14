@@ -7,7 +7,6 @@
 #include "envoy/tcp/conn_pool.h"
 
 #include "common/common/logger.h"
-#include "common/nats/message_builder.h"
 #include "common/nats/streaming/message_utility.h"
 #include "common/nats/subject_utility.h"
 #include "common/nats/token_generator_impl.h"
@@ -99,7 +98,6 @@ private:
   const std::string root_inbox_;
   const std::string connect_response_inbox_;
   const std::string pub_ack_inbox_;
-  Nats::MessageBuilder nats_message_builder_;
   State state_{};
   uint64_t sid_;
   bool waiting_for_payload_{};

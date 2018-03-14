@@ -9,14 +9,13 @@ namespace Nats {
 
 class MessageBuilder {
 public:
-  Envoy::Nats::Message createConnectMessage() const;
-  Envoy::Nats::Message createPubMessage(const std::string &subject) const;
-  Envoy::Nats::Message createPubMessage(const std::string &subject,
-                                        const std::string &reply_to,
-                                        const std::string &payload) const;
-  Envoy::Nats::Message createSubMessage(const std::string &subject,
-                                        uint64_t sid) const;
-  Envoy::Nats::Message createPongMessage() const;
+  static Message createConnectMessage();
+  static Message createPubMessage(const std::string &subject);
+  static Message createPubMessage(const std::string &subject,
+                                  const std::string &reply_to,
+                                  const std::string &payload);
+  static Message createSubMessage(const std::string &subject, uint64_t sid);
+  static Message createPongMessage();
 };
 
 } // namespace Nats

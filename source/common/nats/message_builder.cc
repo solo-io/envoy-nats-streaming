@@ -5,22 +5,20 @@
 namespace Envoy {
 namespace Nats {
 
-Envoy::Nats::Message MessageBuilder::createConnectMessage() const {
+Message MessageBuilder::createConnectMessage() {
   return Message(
       R"(CONNECT {"verbose":false,"pedantic":false,"tls_required":false,"name":"","lang":"cpp","version":"1.2.2","protocol":1})");
 }
 
-Envoy::Nats::Message
-MessageBuilder::createPubMessage(const std::string &subject) const {
+Message MessageBuilder::createPubMessage(const std::string &subject) {
   std::stringstream ss;
   ss << "PUB " << subject << " 0\r\n";
   return Message(ss.str());
 }
 
-Envoy::Nats::Message
-MessageBuilder::createPubMessage(const std::string &subject,
-                                 const std::string &reply_to,
-                                 const std::string &payload) const {
+Message MessageBuilder::createPubMessage(const std::string &subject,
+                                         const std::string &reply_to,
+                                         const std::string &payload) {
   // TODO(talnordan): Consider introducing a more explicit way to construct and
   // encode messages consisting of two lines.
   std::stringstream ss;
@@ -30,17 +28,14 @@ MessageBuilder::createPubMessage(const std::string &subject,
   return Message(ss.str());
 }
 
-Envoy::Nats::Message
-MessageBuilder::createSubMessage(const std::string &subject,
-                                 uint64_t sid) const {
+Message MessageBuilder::createSubMessage(const std::string &subject,
+                                         uint64_t sid) {
   std::stringstream ss;
   ss << "SUB " << subject << " " << sid;
   return Message(ss.str());
 }
 
-Envoy::Nats::Message MessageBuilder::createPongMessage() const {
-  return Message("PONG");
-}
+Message MessageBuilder::createPongMessage() { return Message("PONG"); }
 
 } // namespace Nats
 } // namespace Envoy

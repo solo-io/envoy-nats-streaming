@@ -3,6 +3,7 @@
 #include "common/common/assert.h"
 #include "common/common/macros.h"
 #include "common/common/utility.h"
+#include "common/nats/message_builder.h"
 
 namespace Envoy {
 namespace Nats {
@@ -35,7 +36,7 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
   conn_pool_->setPoolCallbacks(*this);
 
   // Send a NATS CONNECT message.
-  sendNatsMessage(nats_message_builder_.createConnectMessage());
+  sendNatsMessage(MessageBuilder::createConnectMessage());
 
   // TODO(talnordan)
   return nullptr;
@@ -91,7 +92,7 @@ void ClientImpl::onPayload(Nats::MessagePtr &&value) {
 
   if (heartbeat_reply_to_.valid()) {
     sendNatsMessage(
-        nats_message_builder_.createPubMessage(heartbeat_reply_to_.value()));
+        MessageBuilder::createPubMessage(heartbeat_reply_to_.value()));
     heartbeat_reply_to_ = Optional<std::string>{};
   } else {
     switch (state_) {
@@ -173,7 +174,7 @@ void ClientImpl::onPubAckPayload(Nats::MessagePtr &&value) {
 }
 
 void ClientImpl::subInbox(const std::string &subject) {
-  sendNatsMessage(nats_message_builder_.createSubMessage(subject, sid_));
+  sendNatsMessage(MessageBuilder::createSubMessage(subject, sid_));
   ++sid_;
 }
 
@@ -215,7 +216,7 @@ void ClientImpl::pubPubMsg() {
 }
 
 void ClientImpl::pong() {
-  sendNatsMessage(nats_message_builder_.createPongMessage());
+  sendNatsMessage(MessageBuilder::createPongMessage());
 }
 
 inline void ClientImpl::sendNatsMessage(const Message &message) {
@@ -229,7 +230,7 @@ inline void ClientImpl::pubNatsStreamingMessage(const std::string &subject,
                                                 const std::string &reply_to,
                                                 const std::string &message) {
   const Message pubMessage =
-      nats_message_builder_.createPubMessage(subject, reply_to, message);
+      MessageBuilder::createPubMessage(subject, reply_to, message);
   sendNatsMessage(pubMessage);
 }
 
