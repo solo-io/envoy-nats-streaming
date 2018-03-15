@@ -24,7 +24,7 @@ public:
 TEST_F(NatsStreamingClientImplTest, Empty) {
   // TODO(talnordan): This is a dummy test.
   EXPECT_CALL(random_, uuid())
-      .Times(4)
+      .Times(3)
       .WillRepeatedly(Return("a121e9e1-feae-4136-9e0e-6fac343d56c9"));
   ClientImpl client{Tcp::ConnPool::InstancePtr<Message>{conn_pool_}, random_};
 }

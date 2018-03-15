@@ -1,5 +1,7 @@
 #pragma once
 
+#include <map>
+
 #include "envoy/common/optional.h"
 #include "envoy/nats/codec.h"
 #include "envoy/nats/streaming/client.h"
@@ -69,9 +71,6 @@ private:
 
   inline void onPing();
 
-  inline void onPubAckPayload(Optional<std::string> &reply_to,
-                              std::string &payload);
-
   inline void subInbox(const std::string &subject);
 
   inline void subHeartbeatInbox();
@@ -124,7 +123,7 @@ private:
   const std::string heartbeat_inbox_;
   const std::string root_inbox_;
   const std::string connect_response_inbox_;
-  const std::string pub_ack_inbox_;
+  std::map<std::string, PublishCallbacks *> callbacks_per_pub_ack_inbox_;
   uint64_t sid_;
   Optional<std::string> cluster_id_{};
   Optional<std::string> discover_prefix_{};

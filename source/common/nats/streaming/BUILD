@@ -23,6 +23,7 @@ envoy_cc_library(
         "//source/common/nats/streaming:connect_response_handler_lib",
         "//source/common/nats/streaming:heartbeat_handler_lib",
         "//source/common/nats/streaming:message_utility_lib",
+        "//source/common/nats/streaming:pub_ack_handler_lib",
         "@envoy//source/exe:envoy_common_lib",
     ],
 )

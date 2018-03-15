@@ -4,6 +4,7 @@
 #include "common/common/macros.h"
 #include "common/common/utility.h"
 #include "common/nats/message_builder.h"
+#include "common/nats/streaming/pub_ack_handler.h"
 
 namespace Envoy {
 namespace Nats {
@@ -20,8 +21,6 @@ ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_,
       root_inbox_(SubjectUtility::randomChild(INBOX_PREFIX, token_generator_)),
       connect_response_inbox_(
           SubjectUtility::randomChild(root_inbox_, token_generator_)),
-      pub_ack_inbox_(
-          SubjectUtility::randomChild(PUB_ACK_PREFIX, token_generator_)),
       sid_(1) {}
 
 PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
@@ -109,7 +108,9 @@ void ClientImpl::onPayload(Nats::MessagePtr &&value) {
   } else if (subject == connect_response_inbox_) {
     ConnectResponseHandler::onMessage(reply_to, payload, *this);
   } else {
-    onPubAckPayload(reply_to, payload);
+    PubAckHandler::onMessage(reply_to, payload, *this,
+                             *callbacks_per_pub_ack_inbox_[subject]);
+    callbacks_per_pub_ack_inbox_.erase(subject);
   }
 
   // Mark that the payload has been received.
@@ -144,19 +145,6 @@ void ClientImpl::onMsg(std::vector<absl::string_view> &&tokens) {
 
 void ClientImpl::onPing() { pong(); }
 
-void ClientImpl::onPubAckPayload(Optional<std::string> &reply_to,
-                                 std::string &payload) {
-  UNREFERENCED_PARAMETER(reply_to);
-  auto &&pub_ack = MessageUtility::parsePubAckMessage(payload);
-  auto &&callbacks = outbound_request_.value().callbacks;
-
-  if (pub_ack.error().empty()) {
-    callbacks->onResponse();
-  } else {
-    callbacks->onFailure();
-  }
-}
-
 void ClientImpl::subInbox(const std::string &subject) {
   sendNatsMessage(MessageBuilder::createSubMessage(subject, sid_));
   ++sid_;
@@ -185,9 +173,13 @@ void ClientImpl::pubConnectRequest() {
 void ClientImpl::pubPubMsg() {
   auto &&subject = outbound_request_.value().subject;
   auto &&payload = outbound_request_.value().payload;
+  auto &&callbacks = outbound_request_.value().callbacks;
+  std::string pub_ack_inbox{
+      SubjectUtility::randomChild(PUB_ACK_PREFIX, token_generator_)};
 
   // TODO(talnordan): `UNSUB` once the response has arrived.
-  subInbox(pub_ack_inbox_);
+  callbacks_per_pub_ack_inbox_[pub_ack_inbox] = callbacks;
+  subInbox(pub_ack_inbox);
 
   const std::string pub_subject{
       SubjectUtility::join(pub_prefix_.value(), subject)};
@@ -196,7 +188,7 @@ void ClientImpl::pubPubMsg() {
   const std::string pub_msg_message =
       MessageUtility::createPubMsgMessage("client1", "guid1", subject, payload);
 
-  pubNatsStreamingMessage(pub_subject, pub_ack_inbox_, pub_msg_message);
+  pubNatsStreamingMessage(pub_subject, pub_ack_inbox, pub_msg_message);
 }
 
 void ClientImpl::pong() {
