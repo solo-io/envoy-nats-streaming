@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <vector>
 
 #include "envoy/common/optional.h"
 #include "envoy/nats/codec.h"
@@ -79,7 +80,8 @@ private:
 
   inline void pubConnectRequest();
 
-  inline void pubPubMsg();
+  inline void pubPubMsg(const std::string &subject, const std::string &payload,
+                        PublishCallbacks &callbacks);
 
   inline void pong();
 
@@ -120,6 +122,8 @@ private:
 
   Tcp::ConnPool::InstancePtr<Message> conn_pool_;
   TokenGeneratorImpl token_generator_;
+  bool connected_{};
+  bool connecting_{};
   const std::string heartbeat_inbox_;
   const std::string root_inbox_;
   const std::string connect_response_inbox_;
@@ -129,7 +133,7 @@ private:
   Optional<std::string> discover_prefix_{};
   Optional<std::pair<std::string, Optional<std::string>>>
       subect_and_reply_to_waiting_for_payload_{};
-  Optional<OutboundRequest> outbound_request_{};
+  std::vector<OutboundRequest> outbound_requests_{};
   Optional<std::string> pub_prefix_{};
 
   static const std::string INBOX_PREFIX;

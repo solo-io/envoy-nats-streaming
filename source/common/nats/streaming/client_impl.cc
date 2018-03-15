@@ -28,14 +28,19 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
                                           const std::string &discover_prefix,
                                           Buffer::Instance &payload,
                                           PublishCallbacks &callbacks) {
-  cluster_id_.value(cluster_id);
-  discover_prefix_.value(discover_prefix);
-  outbound_request_.value({subject, drainBufferToString(payload), &callbacks});
-
-  conn_pool_->setPoolCallbacks(*this);
-
-  // Send a NATS CONNECT message.
-  sendNatsMessage(MessageBuilder::createConnectMessage());
+  std::string payload_string{drainBufferToString(payload)};
+  if (connected_) {
+    pubPubMsg(subject, payload_string, callbacks);
+  } else {
+    outbound_requests_.push_back({subject, payload_string, &callbacks});
+    if (!connecting_) {
+      connecting_ = true;
+      cluster_id_.value(cluster_id);
+      discover_prefix_.value(discover_prefix);
+      conn_pool_->setPoolCallbacks(*this);
+      sendNatsMessage(MessageBuilder::createConnectMessage());
+    }
+  }
 
   // TODO(talnordan)
   return nullptr;
@@ -65,10 +70,15 @@ void ClientImpl::onFailure(const std::string &error) {
 }
 
 void ClientImpl::onConnected(const std::string &pub_prefix) {
+  connecting_ = false;
+  connected_ = true;
   pub_prefix_.value(pub_prefix);
 
-  // TODO(talnordan): Support publishing multiple enqued messages.
-  pubPubMsg();
+  for (auto &&outbound_request : outbound_requests_) {
+    pubPubMsg(outbound_request.subject, outbound_request.payload,
+              *outbound_request.callbacks);
+  }
+  outbound_requests_ = {};
 }
 
 void ClientImpl::send(const Message &message) { sendNatsMessage(message); }
@@ -170,15 +180,14 @@ void ClientImpl::pubConnectRequest() {
                           connect_request_message);
 }
 
-void ClientImpl::pubPubMsg() {
-  auto &&subject = outbound_request_.value().subject;
-  auto &&payload = outbound_request_.value().payload;
-  auto &&callbacks = outbound_request_.value().callbacks;
+void ClientImpl::pubPubMsg(const std::string &subject,
+                           const std::string &payload,
+                           PublishCallbacks &callbacks) {
   std::string pub_ack_inbox{
       SubjectUtility::randomChild(PUB_ACK_PREFIX, token_generator_)};
 
   // TODO(talnordan): `UNSUB` once the response has arrived.
-  callbacks_per_pub_ack_inbox_[pub_ack_inbox] = callbacks;
+  callbacks_per_pub_ack_inbox_[pub_ack_inbox] = &callbacks;
   subInbox(pub_ack_inbox);
 
   const std::string pub_subject{
