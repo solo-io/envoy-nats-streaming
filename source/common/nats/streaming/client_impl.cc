@@ -21,7 +21,7 @@ ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_,
       root_inbox_(SubjectUtility::randomChild(INBOX_PREFIX, token_generator_)),
       connect_response_inbox_(
           SubjectUtility::randomChild(root_inbox_, token_generator_)),
-      sid_(1) {}
+      client_id_(token_generator_.random()), sid_(1) {}
 
 PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
                                           const std::string &cluster_id,
@@ -172,9 +172,8 @@ void ClientImpl::pubConnectRequest() {
   const std::string subject{
       SubjectUtility::join(discover_prefix_.value(), cluster_id_.value())};
 
-  // TODO(talnordan): Avoid using hard-coded string literals.
   const std::string connect_request_message =
-      MessageUtility::createConnectRequestMessage("client1", heartbeat_inbox_);
+      MessageUtility::createConnectRequestMessage(client_id_, heartbeat_inbox_);
 
   pubNatsStreamingMessage(subject, connect_response_inbox_,
                           connect_request_message);
@@ -193,9 +192,9 @@ void ClientImpl::pubPubMsg(const std::string &subject,
   const std::string pub_subject{
       SubjectUtility::join(pub_prefix_.value(), subject)};
 
-  // TODO(talnordan): Avoid using hard-coded string literals.
+  const std::string guid = token_generator_.random();
   const std::string pub_msg_message =
-      MessageUtility::createPubMsgMessage("client1", "guid1", subject, payload);
+      MessageUtility::createPubMsgMessage(client_id_, guid, subject, payload);
 
   pubNatsStreamingMessage(pub_subject, pub_ack_inbox, pub_msg_message);
 }

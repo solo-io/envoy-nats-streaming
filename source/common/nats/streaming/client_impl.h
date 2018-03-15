@@ -127,6 +127,7 @@ private:
   const std::string heartbeat_inbox_;
   const std::string root_inbox_;
   const std::string connect_response_inbox_;
+  const std::string client_id_;
   std::map<std::string, PublishCallbacks *> callbacks_per_pub_ack_inbox_;
   uint64_t sid_;
   Optional<std::string> cluster_id_{};
