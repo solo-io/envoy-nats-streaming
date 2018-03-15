@@ -60,3 +60,16 @@ envoy_cc_library(
         "//:protocol_proto_cc",
     ],
 )
+
+envoy_cc_library(
+    name = "pub_ack_handler_lib",
+    srcs = ["pub_ack_handler.cc"],
+    hdrs = ["pub_ack_handler.h"],
+    repository = "@envoy",
+    deps = [
+        "//include/envoy/nats/streaming:client_interface",
+        "//include/envoy/nats/streaming:inbox_handler_interface",
+        "//source/common/nats/streaming:message_utility_lib",
+        "@envoy//source/exe:envoy_common_lib",
+    ],
+)

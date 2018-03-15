@@ -56,3 +56,16 @@ envoy_cc_test(
         "@envoy//test/test_common:utility_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "pub_ack_handler_test",
+    srcs = ["pub_ack_handler_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common/nats:codec_lib",
+        "//source/common/nats/streaming:pub_ack_handler_lib",
+        "//test/mocks/nats/streaming:nats_streaming_mocks",
+        "@envoy//source/common/common:assert_lib",
+        "@envoy//test/test_common:utility_lib",
+    ],
+)
