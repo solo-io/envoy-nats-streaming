@@ -20,7 +20,19 @@ envoy_cc_library(
         "//source/common/nats:message_builder_lib",
         "//source/common/nats:subject_utility_lib",
         "//source/common/nats:token_generator_lib",
+        "//source/common/nats/streaming:heartbeat_handler_lib",
         "//source/common/nats/streaming:message_utility_lib",
+        "@envoy//source/exe:envoy_common_lib",
+    ],
+)
+
+envoy_cc_library(
+    name = "heartbeat_handler_lib",
+    srcs = ["heartbeat_handler.cc"],
+    hdrs = ["heartbeat_handler.h"],
+    repository = "@envoy",
+    deps = [
+        "//source/common/nats:message_builder_lib",
         "@envoy//source/exe:envoy_common_lib",
     ],
 )

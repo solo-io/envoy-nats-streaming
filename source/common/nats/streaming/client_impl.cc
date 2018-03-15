@@ -49,7 +49,7 @@ void ClientImpl::onResponse(Nats::MessagePtr &&value) {
   // TODO(talnordan): Eventually, we might want `onResponse()` to be passed a
   // single decoded message consisting of both the `MSG` arguments and the
   // payload.
-  if (waiting_for_payload_) {
+  if (isWaitingForPayload()) {
     onPayload(std::move(value));
   } else {
     onOperation(std::move(value));
@@ -58,6 +58,13 @@ void ClientImpl::onResponse(Nats::MessagePtr &&value) {
 
 void ClientImpl::onClose() {
   // TODO(talnordan)
+}
+
+void ClientImpl::send(const Message &message) { sendNatsMessage(message); }
+
+void ClientImpl::onFailure(const std::string &error) {
+  // TODO(talnordan): Error handling.
+  ENVOY_LOG(error, "on failure: error is\n[{}]", error);
 }
 
 void ClientImpl::onOperation(Nats::MessagePtr &&value) {
@@ -87,25 +94,26 @@ void ClientImpl::onOperation(Nats::MessagePtr &&value) {
 }
 
 void ClientImpl::onPayload(Nats::MessagePtr &&value) {
-  // Mark that the payload has been received.
-  waiting_for_payload_ = false;
-
-  if (heartbeat_reply_to_.valid()) {
-    sendNatsMessage(
-        MessageBuilder::createPubMessage(heartbeat_reply_to_.value()));
-    heartbeat_reply_to_ = Optional<std::string>{};
+  std::string &subject = getSubjectWaitingForPayload();
+  Optional<std::string> &reply_to = getReplyToWaitingForPayload();
+  std::string &payload = value->asString();
+  if (subject == heartbeat_inbox_) {
+    HeartbeatHandler::onMessage(reply_to, payload, *this);
   } else {
     switch (state_) {
     case State::Initial:
-      onConnectResponsePayload(std::move(value));
+      onConnectResponsePayload(reply_to, payload);
       break;
     case State::SentPubMsg:
-      onPubAckPayload(std::move(value));
+      onPubAckPayload(reply_to, payload);
       break;
     case State::Done:
       break;
     }
   }
+
+  // Mark that the payload has been received.
+  doneWaitingForPayload();
 }
 
 void ClientImpl::onInfo(Nats::MessagePtr &&value) {
@@ -120,35 +128,25 @@ void ClientImpl::onInfo(Nats::MessagePtr &&value) {
 
 void ClientImpl::onMsg(std::vector<absl::string_view> &&tokens) {
   auto num_tokens = tokens.size();
-  if (!(num_tokens == 4 || num_tokens == 5)) {
+  switch (num_tokens) {
+  case 4:
+    waitForPayload(std::string(tokens[1]), Optional<std::string>{});
+    break;
+  case 5:
+    waitForPayload(std::string(tokens[1]),
+                   Optional<std::string>(std::string(tokens[3])));
+    break;
+  default:
     // TODO(talnordan): Error handling.
     throw ProtocolError("invalid MSG");
-  }
-
-  waiting_for_payload_ = true;
-
-  const auto &subject = tokens[1];
-  if (subject == heartbeat_inbox_) {
-    onIncomingHeartbeat(std::move(tokens));
-    return;
   }
 }
 
 void ClientImpl::onPing() { pong(); }
 
-void ClientImpl::onIncomingHeartbeat(std::vector<absl::string_view> &&tokens) {
-  if (tokens.size() != 5) {
-    // TODO(talnordan): Error handling.
-    throw ProtocolError("invalid incoming heartbeat");
-  }
-
-  // TODO(talnordan): Remove assertion.
-  RELEASE_ASSERT(!heartbeat_reply_to_.valid());
-  heartbeat_reply_to_.value(std::string(tokens[3]));
-}
-
-void ClientImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
-  const std::string &payload = value->asString();
+void ClientImpl::onConnectResponsePayload(Optional<std::string> &reply_to,
+                                          std::string &payload) {
+  UNREFERENCED_PARAMETER(reply_to);
   pub_prefix_.value(MessageUtility::getPubPrefix(payload));
 
   // TODO(talnordan): Remove assertion.
@@ -159,8 +157,9 @@ void ClientImpl::onConnectResponsePayload(Nats::MessagePtr &&value) {
   state_ = State::SentPubMsg;
 }
 
-void ClientImpl::onPubAckPayload(Nats::MessagePtr &&value) {
-  const std::string &payload = value->asString();
+void ClientImpl::onPubAckPayload(Optional<std::string> &reply_to,
+                                 std::string &payload) {
+  UNREFERENCED_PARAMETER(reply_to);
   auto &&pub_ack = MessageUtility::parsePubAckMessage(payload);
   auto &&callbacks = outbound_request_.value().callbacks;
 
