@@ -7,6 +7,7 @@
 #include "envoy/tcp/conn_pool.h"
 
 #include "common/common/logger.h"
+#include "common/nats/streaming/connect_response_handler.h"
 #include "common/nats/streaming/heartbeat_handler.h"
 #include "common/nats/streaming/message_utility.h"
 #include "common/nats/subject_utility.h"
@@ -24,6 +25,7 @@ namespace Streaming {
 // particular inbox. Such design would be similar to an actor system.
 class ClientImpl : public Client,
                    public Tcp::ConnPool::PoolCallbacks<Message>,
+                   public ConnectResponseHandler::Callbacks,
                    public HeartbeatHandler::Callbacks,
                    public Envoy::Logger::Loggable<Envoy::Logger::Id::filter> {
 public:
@@ -41,9 +43,14 @@ public:
   void onResponse(Nats::MessagePtr &&value) override;
   void onClose() override;
 
+  // Nats::Streaming::InboxCallbacks
+  void onFailure(const std::string &error) override;
+
+  // Nats::Streaming::ConnectResponseHandler::Callbacks
+  void onConnected(const std::string &pub_prefix) override;
+
   // Nats::Streaming::HeartbeatHandler::Callbacks
   void send(const Message &message) override;
-  void onFailure(const std::string &error) override;
 
 private:
   struct OutboundRequest {
@@ -61,9 +68,6 @@ private:
   inline void onMsg(std::vector<absl::string_view> &&tokens);
 
   inline void onPing();
-
-  inline void onConnectResponsePayload(Optional<std::string> &reply_to,
-                                       std::string &payload);
 
   inline void onPubAckPayload(Optional<std::string> &reply_to,
                               std::string &payload);

@@ -24,6 +24,17 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "connect_response_handler_test",
+    srcs = ["connect_response_handler_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common/nats/streaming:connect_response_handler_lib",
+        "@envoy//source/common/common:assert_lib",
+        "@envoy//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
     name = "heartbeat_handler_test",
     srcs = ["heartbeat_handler_test.cc"],
     repository = "@envoy",

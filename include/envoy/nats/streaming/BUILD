@@ -13,3 +13,9 @@ envoy_cc_library(
     hdrs = ["client.h"],
     repository = "@envoy",
 )
+
+envoy_cc_library(
+    name = "inbox_handler_interface",
+    hdrs = ["inbox_handler.h"],
+    repository = "@envoy",
+)

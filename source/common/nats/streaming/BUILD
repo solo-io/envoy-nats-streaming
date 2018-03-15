@@ -20,7 +20,20 @@ envoy_cc_library(
         "//source/common/nats:message_builder_lib",
         "//source/common/nats:subject_utility_lib",
         "//source/common/nats:token_generator_lib",
+        "//source/common/nats/streaming:connect_response_handler_lib",
         "//source/common/nats/streaming:heartbeat_handler_lib",
+        "//source/common/nats/streaming:message_utility_lib",
+        "@envoy//source/exe:envoy_common_lib",
+    ],
+)
+
+envoy_cc_library(
+    name = "connect_response_handler_lib",
+    srcs = ["connect_response_handler.cc"],
+    hdrs = ["connect_response_handler.h"],
+    repository = "@envoy",
+    deps = [
+        "//include/envoy/nats/streaming:inbox_handler_interface",
         "//source/common/nats/streaming:message_utility_lib",
         "@envoy//source/exe:envoy_common_lib",
     ],
@@ -32,6 +45,7 @@ envoy_cc_library(
     hdrs = ["heartbeat_handler.h"],
     repository = "@envoy",
     deps = [
+        "//include/envoy/nats/streaming:inbox_handler_interface",
         "//source/common/nats:message_builder_lib",
         "@envoy//source/exe:envoy_common_lib",
     ],

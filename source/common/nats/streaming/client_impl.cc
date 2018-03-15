@@ -60,12 +60,19 @@ void ClientImpl::onClose() {
   // TODO(talnordan)
 }
 
-void ClientImpl::send(const Message &message) { sendNatsMessage(message); }
-
 void ClientImpl::onFailure(const std::string &error) {
   // TODO(talnordan): Error handling.
   ENVOY_LOG(error, "on failure: error is\n[{}]", error);
 }
+
+void ClientImpl::onConnected(const std::string &pub_prefix) {
+  pub_prefix_.value(pub_prefix);
+
+  // TODO(talnordan): Support publishing multiple enqued messages.
+  pubPubMsg();
+}
+
+void ClientImpl::send(const Message &message) { sendNatsMessage(message); }
 
 void ClientImpl::onOperation(Nats::MessagePtr &&value) {
   // TODO(talnordan): For better performance, a future decoder implementation
@@ -100,7 +107,7 @@ void ClientImpl::onPayload(Nats::MessagePtr &&value) {
   if (subject == heartbeat_inbox_) {
     HeartbeatHandler::onMessage(reply_to, payload, *this);
   } else if (subject == connect_response_inbox_) {
-    onConnectResponsePayload(reply_to, payload);
+    ConnectResponseHandler::onMessage(reply_to, payload, *this);
   } else {
     onPubAckPayload(reply_to, payload);
   }
@@ -136,18 +143,6 @@ void ClientImpl::onMsg(std::vector<absl::string_view> &&tokens) {
 }
 
 void ClientImpl::onPing() { pong(); }
-
-void ClientImpl::onConnectResponsePayload(Optional<std::string> &reply_to,
-                                          std::string &payload) {
-  UNREFERENCED_PARAMETER(reply_to);
-  pub_prefix_.value(MessageUtility::getPubPrefix(payload));
-
-  // TODO(talnordan): Remove assertion.
-  RELEASE_ASSERT(
-      StringUtil::startsWith(pub_prefix_.value().c_str(), "_STAN.pub.", true));
-
-  pubPubMsg();
-}
 
 void ClientImpl::onPubAckPayload(Optional<std::string> &reply_to,
                                  std::string &payload) {
