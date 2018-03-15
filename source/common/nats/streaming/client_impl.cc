@@ -99,17 +99,10 @@ void ClientImpl::onPayload(Nats::MessagePtr &&value) {
   std::string &payload = value->asString();
   if (subject == heartbeat_inbox_) {
     HeartbeatHandler::onMessage(reply_to, payload, *this);
+  } else if (subject == connect_response_inbox_) {
+    onConnectResponsePayload(reply_to, payload);
   } else {
-    switch (state_) {
-    case State::Initial:
-      onConnectResponsePayload(reply_to, payload);
-      break;
-    case State::SentPubMsg:
-      onPubAckPayload(reply_to, payload);
-      break;
-    case State::Done:
-      break;
-    }
+    onPubAckPayload(reply_to, payload);
   }
 
   // Mark that the payload has been received.
@@ -154,7 +147,6 @@ void ClientImpl::onConnectResponsePayload(Optional<std::string> &reply_to,
       StringUtil::startsWith(pub_prefix_.value().c_str(), "_STAN.pub.", true));
 
   pubPubMsg();
-  state_ = State::SentPubMsg;
 }
 
 void ClientImpl::onPubAckPayload(Optional<std::string> &reply_to,
@@ -168,8 +160,6 @@ void ClientImpl::onPubAckPayload(Optional<std::string> &reply_to,
   } else {
     callbacks->onFailure();
   }
-
-  state_ = State::Done;
 }
 
 void ClientImpl::subInbox(const std::string &subject) {

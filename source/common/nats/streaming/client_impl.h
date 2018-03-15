@@ -52,12 +52,6 @@ private:
     PublishCallbacks *callbacks;
   };
 
-  enum class State {
-    Initial,
-    SentPubMsg,
-    Done,
-  };
-
   inline void onOperation(Nats::MessagePtr &&value);
 
   inline void onPayload(Nats::MessagePtr &&value);
@@ -127,7 +121,6 @@ private:
   const std::string root_inbox_;
   const std::string connect_response_inbox_;
   const std::string pub_ack_inbox_;
-  State state_{};
   uint64_t sid_;
   Optional<std::string> cluster_id_{};
   Optional<std::string> discover_prefix_{};
