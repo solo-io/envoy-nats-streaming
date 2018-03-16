@@ -56,6 +56,8 @@ public:
   void send(const Message &message) override;
 
 private:
+  enum class State { NotConnected, Connecting, Connected };
+
   struct OutboundRequest {
     std::string subject;
     std::string payload;
@@ -122,8 +124,7 @@ private:
 
   Tcp::ConnPool::InstancePtr<Message> conn_pool_;
   TokenGeneratorImpl token_generator_;
-  bool connected_{};
-  bool connecting_{};
+  State state_{};
   const std::string heartbeat_inbox_;
   const std::string root_inbox_;
   const std::string connect_response_inbox_;

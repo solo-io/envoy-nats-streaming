@@ -29,17 +29,22 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
                                           Buffer::Instance &payload,
                                           PublishCallbacks &callbacks) {
   std::string payload_string{drainBufferToString(payload)};
-  if (connected_) {
-    pubPubMsg(subject, payload_string, callbacks);
-  } else {
+
+  switch (state_) {
+  case State::NotConnected:
     outbound_requests_.push_back({subject, payload_string, &callbacks});
-    if (!connecting_) {
-      connecting_ = true;
-      cluster_id_.value(cluster_id);
-      discover_prefix_.value(discover_prefix);
-      conn_pool_->setPoolCallbacks(*this);
-      sendNatsMessage(MessageBuilder::createConnectMessage());
-    }
+    cluster_id_.value(cluster_id);
+    discover_prefix_.value(discover_prefix);
+    conn_pool_->setPoolCallbacks(*this);
+    sendNatsMessage(MessageBuilder::createConnectMessage());
+    state_ = State::Connecting;
+    break;
+  case State::Connecting:
+    outbound_requests_.push_back({subject, payload_string, &callbacks});
+    break;
+  case State::Connected:
+    pubPubMsg(subject, payload_string, callbacks);
+    break;
   }
 
   // TODO(talnordan)
@@ -70,8 +75,8 @@ void ClientImpl::onFailure(const std::string &error) {
 }
 
 void ClientImpl::onConnected(const std::string &pub_prefix) {
-  connecting_ = false;
-  connected_ = true;
+  state_ = State::Connected;
+
   pub_prefix_.value(pub_prefix);
 
   for (auto &&outbound_request : outbound_requests_) {
