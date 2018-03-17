@@ -376,38 +376,6 @@ TEST_F(TcpConnPoolImplTest, Basic) {
   tls_.shutdownThread();
 };
 
-TEST_F(TcpConnPoolImplTest, HostRemove) {
-  InSequence s;
-
-  T value;
-  std::shared_ptr<Upstream::Host> host1(new Upstream::MockHost());
-  std::shared_ptr<Upstream::Host> host2(new Upstream::MockHost());
-  MockClient *client1 = new NiceMock<MockClient>();
-  MockClient *client2 = new NiceMock<MockClient>();
-
-  EXPECT_CALL(cm_.thread_local_cluster_.lb_, chooseHost(_))
-      .WillOnce(Return(host1));
-  EXPECT_CALL(*this, create_(Eq(host1))).WillOnce(Return(client1));
-
-  EXPECT_CALL(*client1, makeRequest(Ref(value))).Times(1);
-  conn_pool_->makeRequest("foo", value);
-
-  EXPECT_CALL(cm_.thread_local_cluster_.lb_, chooseHost(_))
-      .WillOnce(Return(host2));
-  EXPECT_CALL(*this, create_(Eq(host2))).WillOnce(Return(client2));
-
-  EXPECT_CALL(*client2, makeRequest(Ref(value))).Times(1);
-  conn_pool_->makeRequest("bar", value);
-
-  EXPECT_CALL(*client2, close());
-  cm_.thread_local_cluster_.cluster_.prioritySet()
-      .getMockHostSet(0)
-      ->runCallbacks({}, {host2});
-
-  EXPECT_CALL(*client1, close());
-  tls_.shutdownThread();
-}
-
 TEST_F(TcpConnPoolImplTest, DeleteFollowedByClusterUpdateCallback) {
   conn_pool_.reset();
 

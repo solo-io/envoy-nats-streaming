@@ -7,6 +7,7 @@
 #include "envoy/tcp/conn_pool.h"
 #include "envoy/thread_local/thread_local.h"
 #include "envoy/upstream/cluster_manager.h"
+#include "envoy/upstream/thread_local_cluster.h"
 #include "envoy/upstream/upstream.h"
 
 #include "common/buffer/buffer_impl.h"
@@ -248,18 +249,17 @@ private:
     void onEvent(Network::ConnectionEvent event) override {
       if (event == Network::ConnectionEvent::RemoteClose ||
           event == Network::ConnectionEvent::LocalClose) {
-        auto client_to_delete = parent_.client_map_.find(host_);
-        ASSERT(client_to_delete != parent_.client_map_.end());
+        ASSERT(parent_.maybe_client_);
+        ThreadLocalActiveClientPtr &client_to_delete = parent_.maybe_client_;
         parent_.dispatcher_.deferredDelete(
-            std::move(client_to_delete->second->client_));
-        parent_.client_map_.erase(client_to_delete);
+            std::move(client_to_delete->client_));
+        parent_.maybe_client_ = nullptr;
       }
     }
     void onAboveWriteBufferHighWatermark() override {}
     void onBelowWriteBufferLowWatermark() override {}
 
     ThreadLocalPool &parent_;
-    Upstream::HostConstSharedPtr host_;
     ClientPtr<T> client_;
   };
 
@@ -269,64 +269,47 @@ private:
     ThreadLocalPool(InstanceImpl &parent, Event::Dispatcher &dispatcher,
                     const std::string &cluster_name)
         : parent_(parent), dispatcher_(dispatcher),
-          cluster_(parent_.cm_.get(cluster_name)) {
-
-      // TODO(mattklein123): Redis is not currently safe for use with CDS. In
-      // order to make this work
-      //                     we will need to add thread local cluster removal
-      //                     callbacks so that we can safely clean things up and
-      //                     fail requests.
-      ASSERT(!cluster_->info()->addedViaApi());
-      local_host_set_member_update_cb_handle_ =
-          cluster_->prioritySet().addMemberUpdateCb(
-              [this](uint32_t, const std::vector<Upstream::HostSharedPtr> &,
-                     const std::vector<Upstream::HostSharedPtr> &hosts_removed)
-                  -> void { onHostsRemoved(hosts_removed); });
-    }
+          cluster_name_(cluster_name) {}
     ~ThreadLocalPool() {
-      local_host_set_member_update_cb_handle_->remove();
-      while (!client_map_.empty()) {
-        client_map_.begin()->second->client_->close();
+      if (maybe_client_) {
+        maybe_client_->client_->close();
       }
     }
     void makeRequest(const std::string &hash_key, const T &request) {
-      LbContextImpl lb_context(hash_key);
-      Upstream::HostConstSharedPtr host =
-          cluster_->loadBalancer().chooseHost(&lb_context);
-      if (!host) {
-        return;
-      }
+      if (!maybe_client_) {
+        auto *cluster = parent_.cm_.get(cluster_name_);
+        if (!cluster) {
+          // TODO(talnordan):
+          // parent_.callbacks_->onFailure("no cluster");
+          return;
+        }
+        LbContextImpl lb_context(hash_key);
+        Upstream::HostConstSharedPtr host =
+            cluster->loadBalancer().chooseHost(&lb_context);
+        if (!host) {
+          // TODO(talnordan):
+          // parent_.callbacks_->onFailure("no host");
+          return;
+        }
 
-      ThreadLocalActiveClientPtr &client = client_map_[host];
-      if (!client) {
-        client.reset(new ThreadLocalActiveClient(*this));
-        client->host_ = host;
+        ThreadLocalActiveClientPtr client{new ThreadLocalActiveClient(*this)};
         RELEASE_ASSERT(parent_.callbacks_ != nullptr);
         client->client_ = parent_.client_factory_.create(
             host, dispatcher_, *parent_.callbacks_, parent_.config_);
         client->client_->addConnectionCallbacks(*client);
+
+        maybe_client_ = std::move(client);
       }
 
+      ThreadLocalActiveClientPtr &client = maybe_client_;
+
       client->client_->makeRequest(request);
-    }
-    void
-    onHostsRemoved(const std::vector<Upstream::HostSharedPtr> &hosts_removed) {
-      for (const auto &host : hosts_removed) {
-        auto it = client_map_.find(host);
-        if (it != client_map_.end()) {
-          // We don't currently support any type of draining for
-          // connections. If a host is gone, we just close the connection. This
-          // will fail any pending requests.
-          it->second->client_->close();
-        }
-      }
     }
 
     InstanceImpl &parent_;
     Event::Dispatcher &dispatcher_;
-    Upstream::ThreadLocalCluster *cluster_;
-    std::unordered_map<Upstream::HostConstSharedPtr, ThreadLocalActiveClientPtr>
-        client_map_;
+    std::string cluster_name_;
+    ThreadLocalActiveClientPtr maybe_client_;
     Common::CallbackHandle *local_host_set_member_update_cb_handle_;
   };
 
