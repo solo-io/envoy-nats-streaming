@@ -70,7 +70,12 @@ void ClientImpl::onClose() {
 }
 
 void ClientImpl::onFailure(const std::string &error) {
-  // TODO(talnordan): Error handling.
+  // TODO(talnordan): Error handling:
+  // 1. Fail all things pending: `outbound_requests_`,
+  // `callbacks_per_pub_ack_inbox_`.
+  // 2. Do a best effort to gracefully unsubscribe and disconnect from NATS
+  // streaming and NATS.
+  // 3. Mark the `State` as `State::NotConnected`.
   ENVOY_LOG(error, "on failure: error is\n[{}]", error);
 }
 
@@ -123,6 +128,9 @@ void ClientImpl::onPayload(Nats::MessagePtr &&value) {
   } else if (subject == connect_response_inbox_) {
     ConnectResponseHandler::onMessage(reply_to, payload, *this);
   } else {
+    // TODO(talnordan): Check if `callbacks_per_pub_ack_inbox_[subject]` doesn't
+    // exist. In such case, gracfully ignore the incoming message, log it and/or
+    // update stats.
     PubAckHandler::onMessage(reply_to, payload, *this,
                              *callbacks_per_pub_ack_inbox_[subject]);
     callbacks_per_pub_ack_inbox_.erase(subject);
