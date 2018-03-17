@@ -80,16 +80,9 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
       Tcp::ConnPool::ClientFactoryImpl<Nats::Message, Nats::EncoderImpl,
                                        Nats::DecoderImpl>::instance_;
 
-  // TODO(talnordan):
-  //   Tcp::ConnPool::ManagerPtr<Nats::Message> conn_pool_manager =
-  //   std::make_shared<
-  //       Tcp::ConnPool::ManagerImpl<Nats::Message, Nats::DecoderImpl>>(
-  //       context.clusterManager(), client_factory, context.threadLocal());
-
-  // TODO(talnordan): Avoid using hard-coded string literals.
   Tcp::ConnPool::InstancePtr<Nats::Message> conn_pool(
       new Tcp::ConnPool::InstanceImpl<Nats::Message, Nats::DecoderImpl>(
-          "cluster_0", context.clusterManager(), client_factory,
+          config->cluster(), context.clusterManager(), client_factory,
           context.threadLocal()));
 
   Nats::Streaming::ClientPtr nats_streaming_client =
