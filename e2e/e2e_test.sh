@@ -9,7 +9,6 @@ NATS_SERVER=${NATS_SERVER:-nats-streaming-server}
 STAN_SUB=${STAN_SUB:-stan-sub}
 STAN_PUB=${STAN_PUB:-stan-pub}
 DURABLE=solo
-PAYLOAD=solopayload
 
 # Test code:
 echo "Starting NATS Streaming Server"
@@ -24,11 +23,14 @@ timeout 1 $STAN_SUB -id 17 -unsubscribe=false -durable=$DURABLE subject1 | :
 # TODO(talnordan): Remove this.
 # $STAN_PUB subject1 $PAYLOAD
 
-curl -v localhost:10000/post --data '"'$PAYLOAD'"' -H"content-type: application/json" 2>&1 | grep "200 OK"
+for i in `seq 1 100`;
+do
+  curl -v localhost:10000/post --data '"'solopayload$i'"' -H"content-type: application/json" 2>&1 | grep "200 OK"
+done
 
 echo "Waiting for response"
 
 # Test that we got the mssage
-[[ -n $(timeout 1 $STAN_SUB -id 17 -durable=$DURABLE subject1 2>&1 |grep $PAYLOAD) ]]
+[[ -n $(timeout 1 $STAN_SUB -id 17 -durable=$DURABLE subject1 2>&1 |grep solopayload100) ]]
 
 echo PASS

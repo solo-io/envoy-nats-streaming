@@ -15,9 +15,6 @@ namespace ConnPool {
 MockInstance::MockInstance() {}
 MockInstance::~MockInstance() {}
 
-MockManager::MockManager() {}
-MockManager::~MockManager() {}
-
 } // namespace ConnPool
 
 } // namespace Nats

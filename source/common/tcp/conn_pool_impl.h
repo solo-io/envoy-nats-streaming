@@ -221,13 +221,10 @@ ClientFactoryImpl<T, E, D> ClientFactoryImpl<T, E, D>::instance_;
 template <typename T, typename D> class InstanceImpl : public Instance<T> {
 public:
   InstanceImpl(const std::string &cluster_name, Upstream::ClusterManager &cm,
-               ClientFactory<T> &client_factory,
-               ThreadLocal::SlotAllocator &tls)
-      : cm_(cm), client_factory_(client_factory), tls_(tls.allocateSlot()) {
-    tls_->set([this, cluster_name](Event::Dispatcher &dispatcher)
-                  -> ThreadLocal::ThreadLocalObjectSharedPtr {
-      return std::make_shared<ThreadLocalPool>(*this, dispatcher, cluster_name);
-    });
+               ClientFactory<T> &client_factory, Event::Dispatcher &dispatcher)
+      : cm_(cm), client_factory_(client_factory) {
+    thread_local_pool_ =
+        std::make_shared<ThreadLocalPool>(*this, dispatcher, cluster_name);
   }
 
   // Tcp::ConnPool::Instance
@@ -236,7 +233,7 @@ public:
     callbacks_ = &callbacks;
   }
   void makeRequest(const std::string &hash_key, const T &request) override {
-    tls_->getTyped<ThreadLocalPool>().makeRequest(hash_key, request);
+    thread_local_pool_->makeRequest(hash_key, request);
   }
 
 private:
@@ -332,57 +329,13 @@ private:
 
   Upstream::ClusterManager &cm_;
   ClientFactory<T> &client_factory_;
-  ThreadLocal::SlotPtr tls_;
+
+  // TODO(talnordan): This member can be owned directly rather than using a
+  // `shared_ptr<>`.
+  std::shared_ptr<ThreadLocalPool> thread_local_pool_;
+
   ConfigImpl config_;
   PoolCallbacks<T> *callbacks_{};
-};
-
-template <typename T, typename D> class ManagerImpl : public Manager<T> {
-public:
-  ManagerImpl(Upstream::ClusterManager &cm, ClientFactory<T> &client_factory,
-              ThreadLocal::SlotAllocator &tls)
-      : cm_(cm), client_factory_(client_factory), tls_(tls),
-        slot_(tls_.allocateSlot()) {
-    slot_->set([this](Event::Dispatcher &dispatcher)
-                   -> ThreadLocal::ThreadLocalObjectSharedPtr {
-      UNREFERENCED_PARAMETER(dispatcher);
-      return std::make_shared<ThreadLocalPoolManager>(*this);
-    });
-  }
-
-  // Nats::ConnPool::Manager
-  Instance<T> &getInstance(const std::string &cluster_name,
-                           PoolCallbacks<T> &callbacks) override {
-    return slot_->getTyped<ThreadLocalPoolManager>().getInstance(cluster_name,
-                                                                 callbacks);
-  }
-
-private:
-  struct ThreadLocalPoolManager : public ThreadLocal::ThreadLocalObject {
-    ThreadLocalPoolManager(ManagerImpl &parent) : parent_(parent) {}
-
-    Instance<T> &getInstance(const std::string &cluster_name,
-                             PoolCallbacks<T> &callbacks) {
-      InstancePtr<T> &instance = instance_map_[cluster_name];
-      if (!instance) {
-        // TODO(talnordan): Under what circumstances should we remove a
-        // connection pool instance from the map?
-        instance.reset(new InstanceImpl<T, D>(
-            cluster_name, parent_.cm_, parent_.client_factory_, parent_.tls_));
-        instance->setPoolCallbacks(callbacks);
-      }
-
-      return *instance;
-    }
-
-    ManagerImpl &parent_;
-    std::unordered_map<std::string, InstancePtr<T>> instance_map_;
-  };
-
-  Upstream::ClusterManager &cm_;
-  ClientFactory<T> &client_factory_;
-  ThreadLocal::SlotAllocator &tls_;
-  ThreadLocal::SlotPtr slot_;
 };
 
 } // namespace ConnPool

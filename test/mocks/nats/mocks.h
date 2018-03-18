@@ -25,17 +25,6 @@ public:
                void(const std::string &hash_key, const Message &request));
 };
 
-class MockManager : public Tcp::ConnPool::Manager<Message> {
-public:
-  MockManager();
-  ~MockManager();
-
-  MOCK_METHOD2(getInstance,
-               Tcp::ConnPool::Instance<Message> &(
-                   const std::string &cluster_name,
-                   Tcp::ConnPool::PoolCallbacks<Message> &callbacks));
-};
-
 } // namespace ConnPool
 
 } // namespace Nats

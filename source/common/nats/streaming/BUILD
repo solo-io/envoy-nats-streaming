@@ -29,6 +29,22 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "client_pool_lib",
+    srcs = ["client_pool.cc"],
+    hdrs = ["client_pool.h"],
+    repository = "@envoy",
+    deps = [
+        "//include/envoy/nats:codec_interface",
+        "//include/envoy/nats/streaming:client_interface",
+        "//include/envoy/tcp:conn_pool_interface",
+        "//source/common/nats:codec_lib",
+        "//source/common/nats/streaming:client_lib",
+        "//source/common/tcp:conn_pool_lib",
+        "@envoy//source/exe:envoy_common_lib",
+    ],
+)
+
+envoy_cc_library(
     name = "connect_response_handler_lib",
     srcs = ["connect_response_handler.cc"],
     hdrs = ["connect_response_handler.h"],

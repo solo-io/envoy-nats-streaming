@@ -122,16 +122,6 @@ public:
 
 template <typename T> using InstancePtr = std::unique_ptr<Instance<T>>;
 
-template <typename T> class Manager {
-public:
-  virtual ~Manager() {}
-
-  virtual Instance<T> &getInstance(const std::string &cluster_name,
-                                   PoolCallbacks<T> &callbacks) PURE;
-};
-
-template <typename T> using ManagerPtr = std::shared_ptr<Manager<T>>;
-
 } // namespace ConnPool
 } // namespace Tcp
 } // namespace Envoy

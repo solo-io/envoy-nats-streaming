@@ -91,15 +91,6 @@ public:
                void(const std::string &hash_key, const T &request));
 };
 
-class MockManager : public Manager<T> {
-public:
-  MockManager();
-  ~MockManager();
-
-  MOCK_METHOD2(getInstance, Instance<T> &(const std::string &cluster_name,
-                                          PoolCallbacks<T> &callbacks));
-};
-
 } // namespace ConnPool
 
 } // namespace Tcp

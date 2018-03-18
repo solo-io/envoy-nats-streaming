@@ -7,6 +7,7 @@
 #include "common/tcp/conn_pool_impl.h"
 #include "common/upstream/upstream_impl.h"
 
+#include "test/mocks/event/mocks.h"
 #include "test/mocks/network/mocks.h"
 #include "test/mocks/tcp/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
@@ -331,8 +332,8 @@ TEST(TcpClientFactoryImplTest, Basic) {
 class TcpConnPoolImplTest : public testing::Test, public ClientFactory<T> {
 public:
   TcpConnPoolImplTest() {
-    conn_pool_.reset(
-        new InstanceImpl<T, MockDecoder>(cluster_name_, cm_, *this, tls_));
+    conn_pool_.reset(new InstanceImpl<T, MockDecoder>(cluster_name_, cm_, *this,
+                                                      dispatcher_));
     conn_pool_->setPoolCallbacks(callbacks_);
   }
 
@@ -349,7 +350,7 @@ public:
   const std::string cluster_name_{"foo"};
   NiceMock<Upstream::MockClusterManager> cm_;
   MockPoolCallbacks callbacks_;
-  NiceMock<ThreadLocal::MockInstance> tls_;
+  NiceMock<Event::MockDispatcher> dispatcher_;
   InstancePtr<T> conn_pool_;
 };
 
@@ -373,7 +374,7 @@ TEST_F(TcpConnPoolImplTest, Basic) {
   // TODO(talnordan): Should `onClose()` be invoked?
   // EXPECT_CALL(callbacks_, onClose());
   EXPECT_CALL(*client, close());
-  tls_.shutdownThread();
+  conn_pool_ = {};
 };
 
 TEST_F(TcpConnPoolImplTest, DeleteFollowedByClusterUpdateCallback) {
@@ -393,7 +394,7 @@ TEST_F(TcpConnPoolImplTest, NoHost) {
       .WillOnce(Return(nullptr));
   conn_pool_->makeRequest("foo", value);
 
-  tls_.shutdownThread();
+  conn_pool_ = {};
 }
 
 TEST_F(TcpConnPoolImplTest, RemoteClose) {
@@ -407,48 +408,10 @@ TEST_F(TcpConnPoolImplTest, RemoteClose) {
   EXPECT_CALL(*client, makeRequest(Ref(value))).Times(1);
   conn_pool_->makeRequest("foo", value);
 
-  EXPECT_CALL(tls_.dispatcher_, deferredDelete_(_));
+  EXPECT_CALL(dispatcher_, deferredDelete_(_));
   client->raiseEvent(Network::ConnectionEvent::RemoteClose);
 
-  tls_.shutdownThread();
-}
-
-class TcpConnPoolManagerImplTest : public testing::Test {
-public:
-  TcpConnPoolManagerImplTest() {
-    conn_pool_mgr_.reset(new ManagerImpl<T, MockDecoder>(cm_, factory_, tls_));
-  }
-
-  NiceMock<Upstream::MockClusterManager> cm_;
-  NiceMock<MockClientFactory> factory_;
-  NiceMock<ThreadLocal::MockInstance> tls_;
-  ManagerPtr<T> conn_pool_mgr_;
-  MockPoolCallbacks callbacks_;
-};
-
-TEST_F(TcpConnPoolManagerImplTest, SameCluster) {
-  auto &instance1 = conn_pool_mgr_->getInstance("cluster1", callbacks_);
-  auto &instance2 = conn_pool_mgr_->getInstance("cluster1", callbacks_);
-  EXPECT_EQ(&instance1, &instance2);
-}
-
-TEST_F(TcpConnPoolManagerImplTest, DifferentClusters) {
-  auto &instance1 = conn_pool_mgr_->getInstance("cluster1", callbacks_);
-  auto &instance2 = conn_pool_mgr_->getInstance("cluster2", callbacks_);
-  EXPECT_NE(&instance1, &instance2);
-}
-
-TEST_F(TcpConnPoolManagerImplTest, InterleavedClusters) {
-  // TODO(talnordan): Make the `PoolCallbacks` instance a member of
-  // `ManagerImpl`. This would let us avoid having to deal with consecutive
-  // invocations of `getInstance()` using the same `cluster_name` but different
-  // callbacks.
-  auto &instance1 = conn_pool_mgr_->getInstance("cluster1", callbacks_);
-  auto &instance2 = conn_pool_mgr_->getInstance("cluster2", callbacks_);
-  auto &instance3 = conn_pool_mgr_->getInstance("cluster1", callbacks_);
-
-  EXPECT_NE(&instance1, &instance2);
-  EXPECT_EQ(&instance1, &instance3);
+  conn_pool_ = {};
 }
 
 } // namespace ConnPool

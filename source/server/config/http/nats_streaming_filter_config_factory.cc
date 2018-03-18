@@ -11,7 +11,7 @@
 #include "common/http/filter/nats_streaming_filter.h"
 #include "common/http/filter/nats_streaming_filter_config.h"
 #include "common/nats/codec_impl.h"
-#include "common/nats/streaming/client_impl.h"
+#include "common/nats/streaming/client_pool.h"
 #include "common/protobuf/utility.h"
 #include "common/tcp/conn_pool_impl.h"
 
@@ -80,14 +80,10 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
       Tcp::ConnPool::ClientFactoryImpl<Nats::Message, Nats::EncoderImpl,
                                        Nats::DecoderImpl>::instance_;
 
-  Tcp::ConnPool::InstancePtr<Nats::Message> conn_pool(
-      new Tcp::ConnPool::InstanceImpl<Nats::Message, Nats::DecoderImpl>(
-          config->cluster(), context.clusterManager(), client_factory,
-          context.threadLocal()));
-
   Nats::Streaming::ClientPtr nats_streaming_client =
-      std::make_shared<Nats::Streaming::ClientImpl>(std::move(conn_pool),
-                                                    context.random());
+      std::make_shared<Nats::Streaming::ClientPool>(
+          config->cluster(), context.clusterManager(), client_factory,
+          context.threadLocal(), context.random());
 
   return [&context, config, subjectRetriever, nats_streaming_client](
              Envoy::Http::FilterChainFactoryCallbacks &callbacks) -> void {

@@ -112,9 +112,12 @@ void ClientImpl::onOperation(Nats::MessagePtr &&value) {
     onMsg(std::move(tokens));
   } else if (StringUtil::caseCompare(op, "PING")) {
     onPing();
+  } else if (StringUtil::caseCompare(op, "+OK")) {
+    ENVOY_LOG(error, "on operation: op is [{}], not throwing", op);
   } else {
     // TODO(talnordan): Error handling.
     // TODO(talnordan): Increment error stats.
+    ENVOY_LOG(error, "on operation: op is [{}], throwing", op);
     throw ProtocolError("invalid message");
   }
 }
@@ -162,6 +165,7 @@ void ClientImpl::onMsg(std::vector<absl::string_view> &&tokens) {
     break;
   default:
     // TODO(talnordan): Error handling.
+    ENVOY_LOG(error, "on MSG: num_tokens is {}", num_tokens);
     throw ProtocolError("invalid MSG");
   }
 }
