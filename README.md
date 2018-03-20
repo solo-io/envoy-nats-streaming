@@ -7,25 +7,35 @@ A new filter `io.solo.nats_streaming` which redirects requests to NATS Streaming
 
 To build the Envoy static binary:
 
-`bazel build //:envoy`
+```
+$ bazel build //:envoy
+```
 
 ## Testing
 
 To run the all tests:
 
-`bazel test //test/...`
+```
+$ bazel test //test/...
+```
 
 To run the all tests in debug mode:
 
-`bazel test //test/... -c dbg`
+```
+$ bazel test //test/... -c dbg
+```
 
 To run integration tests using a clang build:
 
-`CXX=clang++-5.0 CC=clang-5.0  bazel test -c dbg --config=clang-tsan //test/integration:nats_streaming_filter_integration_test --runs_per_test=10`
+```
+$ CXX=clang++-5.0 CC=clang-5.0 bazel test -c dbg --config=clang-tsan //test/integration:nats_streaming_filter_integration_test
+```
 
 ## E2E
 The e2e tests depend on the `nats-streaming-server`, `stan-sub`, `stan-pub` that need to be in your path.
 
 To run the e2e test:
 
-`bazel test //e2e/...`
+```
+$ bazel test //e2e/...
+```
