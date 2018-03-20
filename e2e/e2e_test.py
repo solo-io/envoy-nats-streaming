@@ -3,6 +3,7 @@ import logging
 import os
 import requests
 import subprocess
+import tempfile
 import time
 import unittest
 
@@ -17,6 +18,10 @@ class Test(unittest.TestCase):
 
   @staticmethod
   def __start_nats_streaming_server():
+    subprocess.Popen("nats-streaming-server")
+
+  @staticmethod
+  def __start_verbose_nats_streaming_server():
     subprocess.Popen(["nats-streaming-server", "-SDV", "-DV"])
 
   @staticmethod
@@ -25,9 +30,14 @@ class Test(unittest.TestCase):
     time.sleep(5)
 
   @staticmethod
-  def __sub_with_durable_name():
-    subprocess.call(
-      ["timeout", "1", "stan-sub", "-id", "17", "-unsubscribe=false", "-durable=solo", "subject1"])
+  def __sub():
+    # A temporary file is used to avoid pipe buffering issues.
+    f = tempfile.NamedTemporaryFile("rw+")
+
+    p = subprocess.Popen(
+      ["stan-sub", "-id", "17", "subject1"],
+      stderr=f)
+    return (p, f)
 
   def __make_request(self, payload):
     response = requests.post('http://localhost:10000/post', payload)
@@ -39,31 +49,24 @@ class Test(unittest.TestCase):
     for response in responses:
       self.assertEqual(200, response.status_code)
 
-  def __wait_for_response(self, data):
-    p = subprocess.Popen(
-      ["timeout", "1", "stan-sub", "-id", "17", "-durable=solo", "subject1"],
-      stderr=subprocess.PIPE)
-    p.wait()
-    stderr = p.communicate()[1]
+  def __wait_for_response(self, p, f, data):
+    time.sleep(0.1)
+    p.terminate()
+    f.seek(0, 0)
+    stderr = f.read()
     expected = 'subject:"subject1" data:"%s"' % data
     self.assertTrue(expected in stderr)
 
-  def test_make_request(self):
-    self.__create_config()
-    self.__start_nats_streaming_server()
-    self.__start_envoy()
-    self.__sub_with_durable_name()
-    self.__make_request("solopayload")
-    self.__wait_for_response("solopayload")
-
   def test_make_many_requests(self):
     self.__create_config()
-    self.__start_nats_streaming_server()
+    self.__start_verbose_nats_streaming_server()
     self.__start_envoy()
-    self.__sub_with_durable_name()
-    payloads = [("solopayload %d" % i) for i in xrange(256)]
-    self.__make_many_requests(payloads)
-    self.__wait_for_response("solopayload 255")
+    p, f = self.__sub()
+    for i in xrange(4):
+      payloads = [("solopayload %d %d" % (i, j)) for j in xrange(1024)]
+      self.__make_many_requests(payloads)
+      time.sleep(0.1)
+    self.__wait_for_response(p, f, "solopayload 3 1023")
 
 if __name__ == "__main__":
   logging.basicConfig(level=logging.DEBUG)
