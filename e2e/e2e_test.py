@@ -15,14 +15,17 @@ class Test(unittest.TestCase):
     else:
       self.fail('"create_config.sh" was not found')
 
-  def __start_nats_streaming_server(self):
+  @staticmethod
+  def __start_nats_streaming_server():
     subprocess.Popen(["nats-streaming-server", "-SDV", "-DV"])
 
-  def __start_envoy(self):
+  @staticmethod
+  def __start_envoy():
     subprocess.Popen(["envoy", "-c", "./envoy.yaml", "--log-level", "debug"])
     time.sleep(5)
 
-  def __sub_with_durable_name(self):
+  @staticmethod
+  def __sub_with_durable_name():
     subprocess.call(
       ["timeout", "1", "stan-sub", "-id", "17", "-unsubscribe=false", "-durable=solo", "subject1"])
 
