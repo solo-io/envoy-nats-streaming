@@ -19,6 +19,8 @@ ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_,
       heartbeat_inbox_(
           SubjectUtility::randomChild(INBOX_PREFIX, token_generator_)),
       root_inbox_(SubjectUtility::randomChild(INBOX_PREFIX, token_generator_)),
+      root_pub_ack_inbox_(
+          SubjectUtility::randomChild(PUB_ACK_PREFIX, token_generator_)),
       connect_response_inbox_(
           SubjectUtility::randomChild(root_inbox_, token_generator_)),
       client_id_(token_generator_.random()), sid_(1) {}
@@ -148,8 +150,10 @@ void ClientImpl::onInfo(Nats::MessagePtr &&value) {
   UNREFERENCED_PARAMETER(value);
 
   // TODO(talnordan): The following behavior is part of the PoC implementation.
+  // TODO(talnordan): `UNSUB` before connection shutdown.
   subHeartbeatInbox();
   subReplyInbox();
+  subPubAckInbox();
   pubConnectRequest();
 }
 
@@ -177,12 +181,17 @@ void ClientImpl::subInbox(const std::string &subject) {
   ++sid_;
 }
 
+void ClientImpl::subChildWildcardInbox(const std::string &parent_subject) {
+  std::string child_wildcard{SubjectUtility::childWildcard(parent_subject)};
+  subInbox(child_wildcard);
+}
+
 void ClientImpl::subHeartbeatInbox() { subInbox(heartbeat_inbox_); }
 
-void ClientImpl::subReplyInbox() {
-  std::string root_inbox_child_wildcard{
-      SubjectUtility::childWildcard(root_inbox_)};
-  subInbox(root_inbox_child_wildcard);
+void ClientImpl::subReplyInbox() { subChildWildcardInbox(root_inbox_); }
+
+void ClientImpl::subPubAckInbox() {
+  subChildWildcardInbox(root_pub_ack_inbox_);
 }
 
 void ClientImpl::pubConnectRequest() {
@@ -199,12 +208,12 @@ void ClientImpl::pubConnectRequest() {
 void ClientImpl::pubPubMsg(const std::string &subject,
                            const std::string &payload,
                            PublishCallbacks &callbacks) {
+  // TODO(talnordan): For a possible performance improvement, consider replacing
+  // the random child token with a counter.
   std::string pub_ack_inbox{
-      SubjectUtility::randomChild(PUB_ACK_PREFIX, token_generator_)};
+      SubjectUtility::randomChild(root_pub_ack_inbox_, token_generator_)};
 
-  // TODO(talnordan): `UNSUB` once the response has arrived.
   callbacks_per_pub_ack_inbox_[pub_ack_inbox] = &callbacks;
-  subInbox(pub_ack_inbox);
 
   const std::string pub_subject{
       SubjectUtility::join(pub_prefix_.value(), subject)};

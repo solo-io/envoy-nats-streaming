@@ -76,9 +76,13 @@ private:
 
   inline void subInbox(const std::string &subject);
 
+  inline void subChildWildcardInbox(const std::string &parent_subject);
+
   inline void subHeartbeatInbox();
 
   inline void subReplyInbox();
+
+  inline void subPubAckInbox();
 
   inline void pubConnectRequest();
 
@@ -127,6 +131,7 @@ private:
   State state_{};
   const std::string heartbeat_inbox_;
   const std::string root_inbox_;
+  const std::string root_pub_ack_inbox_;
   const std::string connect_response_inbox_;
   const std::string client_id_;
   std::map<std::string, PublishCallbacks *> callbacks_per_pub_ack_inbox_;
