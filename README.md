@@ -32,7 +32,15 @@ $ CXX=clang++-5.0 CC=clang-5.0 bazel test -c dbg --config=clang-tsan //test/inte
 ```
 
 ## E2E
-The e2e tests depend on the `nats-streaming-server`, `stan-sub`, `stan-pub` that need to be in your path.
+
+The e2e tests depend on `nats-streaming-server` and `stan-sub`,  which need to be in your path.
+They also require the [GRequests](https://github.com/kennethreitz/grequests) Python package.
+
+To install GRequests:
+
+```
+$ pip install grequests
+```
 
 To run the e2e test:
 

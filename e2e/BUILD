@@ -12,9 +12,9 @@ envoy_package()
 
 load("@envoy_api//bazel:api_build_system.bzl", "api_proto_library")
 
-sh_test(
+py_test(
     name = "e2e_test",
-    srcs = ["e2e_test.sh"],
+    srcs = ["e2e_test.py"],
     data = [
         "//:envoy",
         "//e2e:create_config.sh",
