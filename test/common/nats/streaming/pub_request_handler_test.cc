@@ -1,6 +1,6 @@
 #include "common/common/assert.h"
 #include "common/nats/streaming/message_utility.h"
-#include "common/nats/streaming/pub_ack_handler.h"
+#include "common/nats/streaming/pub_request_handler.h"
 
 #include "test/mocks/nats/streaming/mocks.h"
 

@@ -4,7 +4,7 @@
 #include "common/common/macros.h"
 #include "common/common/utility.h"
 #include "common/nats/message_builder.h"
-#include "common/nats/streaming/pub_ack_handler.h"
+#include "common/nats/streaming/pub_request_handler.h"
 
 namespace Envoy {
 namespace Nats {
