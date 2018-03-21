@@ -6,10 +6,10 @@ namespace Envoy {
 namespace Nats {
 namespace Streaming {
 
-void PubAckHandler::onMessage(const Optional<std::string> &reply_to,
-                              const std::string &payload,
-                              InboxCallbacks &inbox_callbacks,
-                              PublishCallbacks &publish_callbacks) {
+void PubRequestHandler::onMessage(const Optional<std::string> &reply_to,
+                                  const std::string &payload,
+                                  InboxCallbacks &inbox_callbacks,
+                                  PublishCallbacks &publish_callbacks) {
   if (reply_to.valid()) {
     inbox_callbacks.onFailure("incoming PubAck with non-empty reply subject");
     return;
@@ -29,7 +29,7 @@ void PubAckHandler::onMessage(const Optional<std::string> &reply_to,
   }
 }
 
-void PubAckHandler::onMessage(
+void PubRequestHandler::onMessage(
     const std::string &inbox, const Optional<std::string> &reply_to,
     const std::string &payload, InboxCallbacks &inbox_callbacks,
     std::map<std::string, PublishCallbacks *> &publish_callbacks_per_inbox) {

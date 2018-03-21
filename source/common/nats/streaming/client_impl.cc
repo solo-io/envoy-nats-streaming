@@ -133,8 +133,8 @@ void ClientImpl::onPayload(Nats::MessagePtr &&value) {
   } else if (subject == connect_response_inbox_) {
     ConnectResponseHandler::onMessage(reply_to, payload, *this);
   } else {
-    PubAckHandler::onMessage(subject, reply_to, payload, *this,
-                             callbacks_per_pub_ack_inbox_);
+    PubRequestHandler::onMessage(subject, reply_to, payload, *this,
+                                 callbacks_per_pub_ack_inbox_);
   }
 
   // Mark that the payload has been received.

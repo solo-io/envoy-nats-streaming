@@ -11,7 +11,7 @@ namespace Envoy {
 namespace Nats {
 namespace Streaming {
 
-class PubAckHandler {
+class PubRequestHandler {
 public:
   static void onMessage(const Optional<std::string> &reply_to,
                         const std::string &payload,

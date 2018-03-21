@@ -10,9 +10,9 @@ namespace Envoy {
 namespace Nats {
 namespace Streaming {
 
-class NatsStreamingPubAckHandlerTest : public testing::Test {
+class NatsStreamingPubRequestHandlerTest : public testing::Test {
 public:
-  NatsStreamingPubAckHandlerTest() {}
+  NatsStreamingPubRequestHandlerTest() {}
 
 protected:
   class MockInboxCallbacks : public InboxCallbacks {
@@ -24,50 +24,50 @@ protected:
   MockPublishCallbacks publish_callbacks_;
 };
 
-TEST_F(NatsStreamingPubAckHandlerTest, NonEmptyReplyTo) {
+TEST_F(NatsStreamingPubRequestHandlerTest, NonEmptyReplyTo) {
   const Optional<std::string> reply_to{"reply-to"};
   const std::string payload{};
 
   EXPECT_CALL(inbox_callbacks_,
               onFailure("incoming PubAck with non-empty reply subject"))
       .Times(1);
-  PubAckHandler::onMessage(reply_to, payload, inbox_callbacks_,
-                           publish_callbacks_);
+  PubRequestHandler::onMessage(reply_to, payload, inbox_callbacks_,
+                               publish_callbacks_);
 }
 
-TEST_F(NatsStreamingPubAckHandlerTest, NoPayload) {
+TEST_F(NatsStreamingPubRequestHandlerTest, NoPayload) {
   const Optional<std::string> reply_to{};
   const std::string payload{};
 
   EXPECT_CALL(inbox_callbacks_, onFailure("incoming PubAck without payload"))
       .Times(1);
-  PubAckHandler::onMessage(reply_to, payload, inbox_callbacks_,
-                           publish_callbacks_);
+  PubRequestHandler::onMessage(reply_to, payload, inbox_callbacks_,
+                               publish_callbacks_);
 }
 
-TEST_F(NatsStreamingPubAckHandlerTest, Error) {
+TEST_F(NatsStreamingPubRequestHandlerTest, Error) {
   const Optional<std::string> reply_to{};
   const std::string guid{"guid1"};
   const std::string error{"error1"};
   const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
 
   EXPECT_CALL(publish_callbacks_, onFailure()).Times(1);
-  PubAckHandler::onMessage(reply_to, payload, inbox_callbacks_,
-                           publish_callbacks_);
+  PubRequestHandler::onMessage(reply_to, payload, inbox_callbacks_,
+                               publish_callbacks_);
 }
 
-TEST_F(NatsStreamingPubAckHandlerTest, NoError) {
+TEST_F(NatsStreamingPubRequestHandlerTest, NoError) {
   const Optional<std::string> reply_to{};
   const std::string guid{"guid1"};
   const std::string error{};
   const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
 
   EXPECT_CALL(publish_callbacks_, onResponse()).Times(1);
-  PubAckHandler::onMessage(reply_to, payload, inbox_callbacks_,
-                           publish_callbacks_);
+  PubRequestHandler::onMessage(reply_to, payload, inbox_callbacks_,
+                               publish_callbacks_);
 }
 
-TEST_F(NatsStreamingPubAckHandlerTest, MapNoPayload) {
+TEST_F(NatsStreamingPubRequestHandlerTest, MapNoPayload) {
   const std::string inbox{"inbox1"};
   const Optional<std::string> reply_to{};
   const std::string payload{};
@@ -76,14 +76,14 @@ TEST_F(NatsStreamingPubAckHandlerTest, MapNoPayload) {
 
   EXPECT_CALL(inbox_callbacks_, onFailure("incoming PubAck without payload"))
       .Times(1);
-  PubAckHandler::onMessage(inbox, reply_to, payload, inbox_callbacks_,
-                           publish_callbacks_per_inbox);
+  PubRequestHandler::onMessage(inbox, reply_to, payload, inbox_callbacks_,
+                               publish_callbacks_per_inbox);
 
   EXPECT_EQ(publish_callbacks_per_inbox.end(),
             publish_callbacks_per_inbox.find(inbox));
 }
 
-TEST_F(NatsStreamingPubAckHandlerTest, MapError) {
+TEST_F(NatsStreamingPubRequestHandlerTest, MapError) {
   const std::string inbox{"inbox1"};
   const Optional<std::string> reply_to{};
   const std::string guid{"guid1"};
@@ -93,14 +93,14 @@ TEST_F(NatsStreamingPubAckHandlerTest, MapError) {
       {inbox, &publish_callbacks_}};
 
   EXPECT_CALL(publish_callbacks_, onFailure()).Times(1);
-  PubAckHandler::onMessage(inbox, reply_to, payload, inbox_callbacks_,
-                           publish_callbacks_per_inbox);
+  PubRequestHandler::onMessage(inbox, reply_to, payload, inbox_callbacks_,
+                               publish_callbacks_per_inbox);
 
   EXPECT_EQ(publish_callbacks_per_inbox.end(),
             publish_callbacks_per_inbox.find(inbox));
 }
 
-TEST_F(NatsStreamingPubAckHandlerTest, MapNoError) {
+TEST_F(NatsStreamingPubRequestHandlerTest, MapNoError) {
   const std::string inbox{"inbox1"};
   const Optional<std::string> reply_to{};
   const std::string guid{"guid1"};
@@ -110,14 +110,14 @@ TEST_F(NatsStreamingPubAckHandlerTest, MapNoError) {
       {inbox, &publish_callbacks_}};
 
   EXPECT_CALL(publish_callbacks_, onResponse()).Times(1);
-  PubAckHandler::onMessage(inbox, reply_to, payload, inbox_callbacks_,
-                           publish_callbacks_per_inbox);
+  PubRequestHandler::onMessage(inbox, reply_to, payload, inbox_callbacks_,
+                               publish_callbacks_per_inbox);
 
   EXPECT_EQ(publish_callbacks_per_inbox.end(),
             publish_callbacks_per_inbox.find(inbox));
 }
 
-TEST_F(NatsStreamingPubAckHandlerTest, MapMissingInbox) {
+TEST_F(NatsStreamingPubRequestHandlerTest, MapMissingInbox) {
   const std::string inbox{"inbox1"};
   const Optional<std::string> reply_to{};
   const std::string guid{"guid1"};
@@ -126,8 +126,8 @@ TEST_F(NatsStreamingPubAckHandlerTest, MapMissingInbox) {
   std::map<std::string, PublishCallbacks *> publish_callbacks_per_inbox{
       {inbox, &publish_callbacks_}};
 
-  PubAckHandler::onMessage("inbox2", reply_to, payload, inbox_callbacks_,
-                           publish_callbacks_per_inbox);
+  PubRequestHandler::onMessage("inbox2", reply_to, payload, inbox_callbacks_,
+                               publish_callbacks_per_inbox);
 
   EXPECT_NE(publish_callbacks_per_inbox.end(),
             publish_callbacks_per_inbox.find(inbox));
