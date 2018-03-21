@@ -6,7 +6,7 @@ namespace Envoy {
 namespace Nats {
 namespace Streaming {
 
-void PubAckHandler::onMessage(Optional<std::string> &reply_to,
+void PubAckHandler::onMessage(const Optional<std::string> &reply_to,
                               const std::string &payload,
                               InboxCallbacks &inbox_callbacks,
                               PublishCallbacks &publish_callbacks) {
@@ -27,6 +27,27 @@ void PubAckHandler::onMessage(Optional<std::string> &reply_to,
   } else {
     publish_callbacks.onFailure();
   }
+}
+
+void PubAckHandler::onMessage(
+    const std::string &inbox, const Optional<std::string> &reply_to,
+    const std::string &payload, InboxCallbacks &inbox_callbacks,
+    std::map<std::string, PublishCallbacks *> &publish_callbacks_per_inbox) {
+  // Find the inbox in the map.
+  auto it = publish_callbacks_per_inbox.find(inbox);
+
+  // Gracefully ignore a missing inbox.
+  if (it == publish_callbacks_per_inbox.end()) {
+    // TODO(talnordan): consider logging the message and/or updating stats.
+    return;
+  }
+
+  // Handle the message using the publish callbacks associated with the inbox.
+  PublishCallbacks &publish_callbacks = *it->second;
+  onMessage(reply_to, payload, inbox_callbacks, publish_callbacks);
+
+  // Remove the inbox from the map.
+  publish_callbacks_per_inbox.erase(it);
 }
 
 } // namespace Streaming

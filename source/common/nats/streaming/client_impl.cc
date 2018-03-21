@@ -133,12 +133,8 @@ void ClientImpl::onPayload(Nats::MessagePtr &&value) {
   } else if (subject == connect_response_inbox_) {
     ConnectResponseHandler::onMessage(reply_to, payload, *this);
   } else {
-    // TODO(talnordan): Check if `callbacks_per_pub_ack_inbox_[subject]` doesn't
-    // exist. In such case, gracfully ignore the incoming message, log it and/or
-    // update stats.
-    PubAckHandler::onMessage(reply_to, payload, *this,
-                             *callbacks_per_pub_ack_inbox_[subject]);
-    callbacks_per_pub_ack_inbox_.erase(subject);
+    PubAckHandler::onMessage(subject, reply_to, payload, *this,
+                             callbacks_per_pub_ack_inbox_);
   }
 
   // Mark that the payload has been received.

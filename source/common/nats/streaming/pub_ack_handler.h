@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <string>
 
 #include "envoy/common/optional.h"
@@ -12,10 +13,15 @@ namespace Streaming {
 
 class PubAckHandler {
 public:
-  static void onMessage(Optional<std::string> &reply_to,
+  static void onMessage(const Optional<std::string> &reply_to,
                         const std::string &payload,
                         InboxCallbacks &inbox_callbacks,
                         PublishCallbacks &publish_callbacks);
+
+  static void onMessage(
+      const std::string &inbox, const Optional<std::string> &reply_to,
+      const std::string &payload, InboxCallbacks &inbox_callbacks,
+      std::map<std::string, PublishCallbacks *> &publish_callbacks_per_inbox);
 };
 
 } // namespace Streaming

@@ -25,7 +25,7 @@ protected:
 };
 
 TEST_F(NatsStreamingPubAckHandlerTest, NonEmptyReplyTo) {
-  Optional<std::string> reply_to{"reply-to"};
+  const Optional<std::string> reply_to{"reply-to"};
   const std::string payload{};
 
   EXPECT_CALL(inbox_callbacks_,
@@ -36,7 +36,7 @@ TEST_F(NatsStreamingPubAckHandlerTest, NonEmptyReplyTo) {
 }
 
 TEST_F(NatsStreamingPubAckHandlerTest, NoPayload) {
-  Optional<std::string> reply_to{};
+  const Optional<std::string> reply_to{};
   const std::string payload{};
 
   EXPECT_CALL(inbox_callbacks_, onFailure("incoming PubAck without payload"))
@@ -46,7 +46,7 @@ TEST_F(NatsStreamingPubAckHandlerTest, NoPayload) {
 }
 
 TEST_F(NatsStreamingPubAckHandlerTest, Error) {
-  Optional<std::string> reply_to{};
+  const Optional<std::string> reply_to{};
   const std::string guid{"guid1"};
   const std::string error{"error1"};
   const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
@@ -57,7 +57,7 @@ TEST_F(NatsStreamingPubAckHandlerTest, Error) {
 }
 
 TEST_F(NatsStreamingPubAckHandlerTest, NoError) {
-  Optional<std::string> reply_to{};
+  const Optional<std::string> reply_to{};
   const std::string guid{"guid1"};
   const std::string error{};
   const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
@@ -65,6 +65,72 @@ TEST_F(NatsStreamingPubAckHandlerTest, NoError) {
   EXPECT_CALL(publish_callbacks_, onResponse()).Times(1);
   PubAckHandler::onMessage(reply_to, payload, inbox_callbacks_,
                            publish_callbacks_);
+}
+
+TEST_F(NatsStreamingPubAckHandlerTest, MapNoPayload) {
+  const std::string inbox{"inbox1"};
+  const Optional<std::string> reply_to{};
+  const std::string payload{};
+  std::map<std::string, PublishCallbacks *> publish_callbacks_per_inbox{
+      {inbox, &publish_callbacks_}};
+
+  EXPECT_CALL(inbox_callbacks_, onFailure("incoming PubAck without payload"))
+      .Times(1);
+  PubAckHandler::onMessage(inbox, reply_to, payload, inbox_callbacks_,
+                           publish_callbacks_per_inbox);
+
+  EXPECT_EQ(publish_callbacks_per_inbox.end(),
+            publish_callbacks_per_inbox.find(inbox));
+}
+
+TEST_F(NatsStreamingPubAckHandlerTest, MapError) {
+  const std::string inbox{"inbox1"};
+  const Optional<std::string> reply_to{};
+  const std::string guid{"guid1"};
+  const std::string error{"error1"};
+  const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
+  std::map<std::string, PublishCallbacks *> publish_callbacks_per_inbox{
+      {inbox, &publish_callbacks_}};
+
+  EXPECT_CALL(publish_callbacks_, onFailure()).Times(1);
+  PubAckHandler::onMessage(inbox, reply_to, payload, inbox_callbacks_,
+                           publish_callbacks_per_inbox);
+
+  EXPECT_EQ(publish_callbacks_per_inbox.end(),
+            publish_callbacks_per_inbox.find(inbox));
+}
+
+TEST_F(NatsStreamingPubAckHandlerTest, MapNoError) {
+  const std::string inbox{"inbox1"};
+  const Optional<std::string> reply_to{};
+  const std::string guid{"guid1"};
+  const std::string error{};
+  const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
+  std::map<std::string, PublishCallbacks *> publish_callbacks_per_inbox{
+      {inbox, &publish_callbacks_}};
+
+  EXPECT_CALL(publish_callbacks_, onResponse()).Times(1);
+  PubAckHandler::onMessage(inbox, reply_to, payload, inbox_callbacks_,
+                           publish_callbacks_per_inbox);
+
+  EXPECT_EQ(publish_callbacks_per_inbox.end(),
+            publish_callbacks_per_inbox.find(inbox));
+}
+
+TEST_F(NatsStreamingPubAckHandlerTest, MapMissingInbox) {
+  const std::string inbox{"inbox1"};
+  const Optional<std::string> reply_to{};
+  const std::string guid{"guid1"};
+  const std::string error{};
+  const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
+  std::map<std::string, PublishCallbacks *> publish_callbacks_per_inbox{
+      {inbox, &publish_callbacks_}};
+
+  PubAckHandler::onMessage("inbox2", reply_to, payload, inbox_callbacks_,
+                           publish_callbacks_per_inbox);
+
+  EXPECT_NE(publish_callbacks_per_inbox.end(),
+            publish_callbacks_per_inbox.find(inbox));
 }
 
 } // namespace Streaming
