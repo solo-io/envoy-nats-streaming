@@ -43,6 +43,7 @@ public:
   // Nats::Streaming::PublishCallbacks
   virtual void onResponse() override;
   virtual void onFailure() override;
+  virtual void onTimeout() override;
 
 private:
   void retrieveSubject(const MetadataAccessor &meta_accessor);

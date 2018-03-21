@@ -16,7 +16,8 @@ class ClientPool : public Client {
 public:
   ClientPool(const std::string &cluster_name, Upstream::ClusterManager &cm,
              Tcp::ConnPool::ClientFactory<Message> &client_factory,
-             ThreadLocal::SlotAllocator &tls, Runtime::RandomGenerator &random);
+             ThreadLocal::SlotAllocator &tls, Runtime::RandomGenerator &random,
+             const std::chrono::milliseconds &op_timeout);
 
   // Nats::Streaming::Client
   PublishRequestPtr makeRequest(const std::string &subject,
@@ -28,7 +29,9 @@ public:
 private:
   struct ThreadLocalPool : public ThreadLocal::ThreadLocalObject {
     ThreadLocalPool(Tcp::ConnPool::InstancePtr<Message> &&conn_pool,
-                    Runtime::RandomGenerator &random);
+                    Runtime::RandomGenerator &random,
+                    Event::Dispatcher &dispatcher,
+                    const std::chrono::milliseconds &op_timeout);
     Client &getClient();
 
   private:
@@ -39,6 +42,7 @@ private:
   Tcp::ConnPool::ClientFactory<Message> &client_factory_;
   ThreadLocal::SlotPtr slot_;
   Runtime::RandomGenerator &random_;
+  const std::chrono::milliseconds op_timeout_;
 };
 
 } // namespace Streaming

@@ -1,10 +1,11 @@
 #include "common/nats/streaming/client_impl.h"
 
+#include "envoy/event/dispatcher.h"
+
 #include "common/common/assert.h"
 #include "common/common/macros.h"
 #include "common/common/utility.h"
 #include "common/nats/message_builder.h"
-#include "common/nats/streaming/pub_request_handler.h"
 
 namespace Envoy {
 namespace Nats {
@@ -14,8 +15,11 @@ const std::string ClientImpl::INBOX_PREFIX{"_INBOX"};
 const std::string ClientImpl::PUB_ACK_PREFIX{"_STAN.acks"};
 
 ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_,
-                       Runtime::RandomGenerator &random)
+                       Runtime::RandomGenerator &random,
+                       Event::Dispatcher &dispatcher,
+                       const std::chrono::milliseconds &op_timeout)
     : conn_pool_(std::move(conn_pool_)), token_generator_(random),
+      dispatcher_(dispatcher), op_timeout_(op_timeout),
       heartbeat_inbox_(
           SubjectUtility::randomChild(INBOX_PREFIX, token_generator_)),
       root_inbox_(SubjectUtility::randomChild(INBOX_PREFIX, token_generator_)),
@@ -34,7 +38,7 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
 
   switch (state_) {
   case State::NotConnected:
-    outbound_requests_.push_back({subject, payload_string, &callbacks});
+    pending_requests_.push_back({subject, payload_string, &callbacks});
     cluster_id_.value(cluster_id);
     discover_prefix_.value(discover_prefix);
     conn_pool_->setPoolCallbacks(*this);
@@ -42,7 +46,7 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
     state_ = State::Connecting;
     break;
   case State::Connecting:
-    outbound_requests_.push_back({subject, payload_string, &callbacks});
+    pending_requests_.push_back({subject, payload_string, &callbacks});
     break;
   case State::Connected:
     pubPubMsg(subject, payload_string, callbacks);
@@ -73,8 +77,7 @@ void ClientImpl::onClose() {
 
 void ClientImpl::onFailure(const std::string &error) {
   // TODO(talnordan): Error handling:
-  // 1. Fail all things pending: `outbound_requests_`,
-  // `callbacks_per_pub_ack_inbox_`.
+  // 1. Fail all things pending: `pending_requests_`, `pub_request_per_inbox_`.
   // 2. Do a best effort to gracefully unsubscribe and disconnect from NATS
   // streaming and NATS.
   // 3. Mark the `State` as `State::NotConnected`.
@@ -86,11 +89,11 @@ void ClientImpl::onConnected(const std::string &pub_prefix) {
 
   pub_prefix_.value(pub_prefix);
 
-  for (auto &&outbound_request : outbound_requests_) {
-    pubPubMsg(outbound_request.subject, outbound_request.payload,
-              *outbound_request.callbacks);
+  for (auto &&pending_requests : pending_requests_) {
+    pubPubMsg(pending_requests.subject, pending_requests.payload,
+              *pending_requests.callbacks);
   }
-  outbound_requests_ = {};
+  pending_requests_ = {};
 }
 
 void ClientImpl::send(const Message &message) { sendNatsMessage(message); }
@@ -134,7 +137,7 @@ void ClientImpl::onPayload(Nats::MessagePtr &&value) {
     ConnectResponseHandler::onMessage(reply_to, payload, *this);
   } else {
     PubRequestHandler::onMessage(subject, reply_to, payload, *this,
-                                 callbacks_per_pub_ack_inbox_);
+                                 pub_request_per_inbox_);
   }
 
   // Mark that the payload has been received.
@@ -171,6 +174,10 @@ void ClientImpl::onMsg(std::vector<absl::string_view> &&tokens) {
 }
 
 void ClientImpl::onPing() { pong(); }
+
+void ClientImpl::onTimeout(const std::string &pub_ack_inbox) {
+  PubRequestHandler::onTimeout(pub_ack_inbox, pub_request_per_inbox_);
+}
 
 void ClientImpl::subInbox(const std::string &subject) {
   sendNatsMessage(MessageBuilder::createSubMessage(subject, sid_));
@@ -209,7 +216,20 @@ void ClientImpl::pubPubMsg(const std::string &subject,
   std::string pub_ack_inbox{
       SubjectUtility::randomChild(root_pub_ack_inbox_, token_generator_)};
 
-  callbacks_per_pub_ack_inbox_[pub_ack_inbox] = &callbacks;
+  // TODO(talnordan): Consider moving the following logic to
+  // `PubRequestHandler`.
+
+  // TODO(talnordan): Consider making `PubRequest` use the RAII pattern, to make
+  // sure that the timer is disabled whenever a request is removed from the map,
+  // or if an exception is thrown. We might want the `PubRequest` isntance to
+  // keep being created on the stack even after such modififcation.
+  // TODO(talnordan): Can we create a timer on the stack rather than on the
+  // heap?
+  Event::TimerPtr timeout_timer = dispatcher_.createTimer(
+      [this, pub_ack_inbox]() -> void { onTimeout(pub_ack_inbox); });
+  timeout_timer->enableTimer(op_timeout_);
+  pub_request_per_inbox_[pub_ack_inbox] = {&callbacks,
+                                           std::move(timeout_timer)};
 
   const std::string pub_subject{
       SubjectUtility::join(pub_prefix_.value(), subject)};

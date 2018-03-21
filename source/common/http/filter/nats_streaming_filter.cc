@@ -97,6 +97,14 @@ void NatsStreamingFilter::onFailure() {
                                 "nats streaming filter abort");
 }
 
+void NatsStreamingFilter::onTimeout() {
+  decoder_callbacks_->requestInfo().setResponseFlag(
+      RequestInfo::ResponseFlag::FaultInjected);
+  Http::Utility::sendLocalReply(*decoder_callbacks_, stream_destroyed_,
+                                Http::Code::RequestTimeout,
+                                "nats streaming filter timeout");
+}
+
 void NatsStreamingFilter::retrieveSubject(
     const MetadataAccessor &meta_accessor) {
   optional_subject_ = subject_retriever_->getSubject(meta_accessor);

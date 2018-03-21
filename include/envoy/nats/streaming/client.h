@@ -41,6 +41,11 @@ public:
    * Called when a network/protocol error occurs and there is no response.
    */
   virtual void onFailure() PURE;
+
+  /**
+   * Called when a timeout occurs and there is no response.
+   */
+  virtual void onTimeout() PURE;
 };
 
 /**

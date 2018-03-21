@@ -15,6 +15,7 @@ public:
 
   MOCK_METHOD0(onResponse, void());
   MOCK_METHOD0(onFailure, void());
+  MOCK_METHOD0(onTimeout, void());
 };
 
 class MockClient : public Client {

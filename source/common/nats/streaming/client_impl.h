@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "envoy/common/optional.h"
+#include "envoy/event/timer.h"
 #include "envoy/nats/codec.h"
 #include "envoy/nats/streaming/client.h"
 #include "envoy/runtime/runtime.h"
@@ -13,6 +14,7 @@
 #include "common/nats/streaming/connect_response_handler.h"
 #include "common/nats/streaming/heartbeat_handler.h"
 #include "common/nats/streaming/message_utility.h"
+#include "common/nats/streaming/pub_request_handler.h"
 #include "common/nats/subject_utility.h"
 #include "common/nats/token_generator_impl.h"
 
@@ -33,7 +35,8 @@ class ClientImpl : public Client,
                    public Envoy::Logger::Loggable<Envoy::Logger::Id::filter> {
 public:
   ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool,
-             Runtime::RandomGenerator &random);
+             Runtime::RandomGenerator &random, Event::Dispatcher &dispatcher,
+             const std::chrono::milliseconds &op_timeout);
 
   // Nats::Streaming::Client
   PublishRequestPtr makeRequest(const std::string &subject,
@@ -58,7 +61,7 @@ public:
 private:
   enum class State { NotConnected, Connecting, Connected };
 
-  struct OutboundRequest {
+  struct PendingRequest {
     std::string subject;
     std::string payload;
     PublishCallbacks *callbacks;
@@ -73,6 +76,8 @@ private:
   inline void onMsg(std::vector<absl::string_view> &&tokens);
 
   inline void onPing();
+
+  inline void onTimeout(const std::string &pub_ack_inbox);
 
   inline void subInbox(const std::string &subject);
 
@@ -128,19 +133,21 @@ private:
 
   Tcp::ConnPool::InstancePtr<Message> conn_pool_;
   TokenGeneratorImpl token_generator_;
+  Event::Dispatcher &dispatcher_;
+  const std::chrono::milliseconds op_timeout_;
   State state_{};
   const std::string heartbeat_inbox_;
   const std::string root_inbox_;
   const std::string root_pub_ack_inbox_;
   const std::string connect_response_inbox_;
   const std::string client_id_;
-  std::map<std::string, PublishCallbacks *> callbacks_per_pub_ack_inbox_;
+  std::map<std::string, PubRequest> pub_request_per_inbox_;
   uint64_t sid_;
   Optional<std::string> cluster_id_{};
   Optional<std::string> discover_prefix_{};
   Optional<std::pair<std::string, Optional<std::string>>>
       subect_and_reply_to_waiting_for_payload_{};
-  std::vector<OutboundRequest> outbound_requests_{};
+  std::vector<PendingRequest> pending_requests_{};
   Optional<std::string> pub_prefix_{};
 
   static const std::string INBOX_PREFIX;

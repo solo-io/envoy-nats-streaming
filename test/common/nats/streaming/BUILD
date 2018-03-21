@@ -18,6 +18,7 @@ envoy_cc_test(
         "//test/mocks/nats/streaming:nats_streaming_mocks",
         "//test/mocks/tcp:tcp_mocks",
         "@envoy//source/common/common:assert_lib",
+        "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/mocks/runtime:runtime_mocks",
         "@envoy//test/test_common:utility_lib",
     ],
@@ -66,6 +67,7 @@ envoy_cc_test(
         "//source/common/nats/streaming:pub_request_handler_lib",
         "//test/mocks/nats/streaming:nats_streaming_mocks",
         "@envoy//source/common/common:assert_lib",
+        "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/test_common:utility_lib",
     ],
 )
