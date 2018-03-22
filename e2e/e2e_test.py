@@ -68,12 +68,11 @@ class ManyRequestsTestCase(unittest.TestCase):
     else:
       self.nats_streaming_server = subprocess.Popen(["nats-streaming-server", "-ns", "nats://localhost:4222"])
 
-  def __start_envoy(self, prefix = [], suffix = []):
-    if prefix == None:
+  def __start_envoy(self, prefix = None, suffix = None):
+    if prefix is None:
       prefix = []
-    if suffix == None:
-      if DEBUG:
-        suffix = ["--log-level", "debug"]
+    if suffix is None:
+      suffix = suffix = ["--log-level", "debug"] if DEBUG else []
 
     envoy = os.environ.get("TEST_ENVOY_BIN","envoy")
 
