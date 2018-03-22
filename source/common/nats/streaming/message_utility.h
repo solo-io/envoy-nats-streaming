@@ -3,6 +3,8 @@
 #include <string>
 #include <utility>
 
+#include "envoy/common/optional.h"
+
 #include "protocol.pb.h"
 
 namespace Envoy {
@@ -27,7 +29,8 @@ public:
   static std::string createPubAckMessage(const std::string &guid,
                                          const std::string &error);
 
-  static pb::PubAck parsePubAckMessage(const std::string &pub_ack_message);
+  static Optional<pb::PubAck>
+  parsePubAckMessage(const std::string &pub_ack_message);
 
   static std::string getPubPrefix(const std::string &connect_response_message);
 

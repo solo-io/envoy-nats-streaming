@@ -47,11 +47,14 @@ std::string MessageUtility::createPubAckMessage(const std::string &guid,
   return serializeToString(pub_ack);
 }
 
-pb::PubAck
+Optional<pb::PubAck>
 MessageUtility::parsePubAckMessage(const std::string &pub_ack_message) {
   pb::PubAck pub_ack;
-  pub_ack.ParseFromString(pub_ack_message);
-  return pub_ack;
+  if (pub_ack.ParseFromString(pub_ack_message)) {
+    return pub_ack;
+  }
+
+  return {};
 }
 
 std::string

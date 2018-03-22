@@ -75,6 +75,7 @@ envoy_cc_library(
     repository = "@envoy",
     deps = [
         "//:protocol_proto_cc",
+        "@envoy//source/exe:envoy_common_lib",
     ],
 )
 

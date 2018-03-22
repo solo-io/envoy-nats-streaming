@@ -21,9 +21,8 @@ void PubRequestHandler::onMessage(const Optional<std::string> &reply_to,
     return;
   }
 
-  auto &&pub_ack = MessageUtility::parsePubAckMessage(payload);
-
-  if (pub_ack.error().empty()) {
+  auto &&maybe_pub_ack = MessageUtility::parsePubAckMessage(payload);
+  if (maybe_pub_ack.valid() && maybe_pub_ack.value().error().empty()) {
     publish_callbacks.onResponse();
   } else {
     publish_callbacks.onFailure();

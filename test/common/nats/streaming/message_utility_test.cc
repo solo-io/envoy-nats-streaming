@@ -83,10 +83,11 @@ TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessage) {
   const std::string error{""};
   const auto message = MessageUtility::createPubAckMessage(uuid, error);
 
-  const auto result = MessageUtility::parsePubAckMessage(message);
+  auto &&maybe_result = MessageUtility::parsePubAckMessage(message);
 
-  EXPECT_EQ(uuid, result.guid());
-  EXPECT_TRUE(result.error().empty());
+  EXPECT_TRUE(maybe_result.valid());
+  EXPECT_EQ(uuid, maybe_result.value().guid());
+  EXPECT_TRUE(maybe_result.value().error().empty());
 }
 
 TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessageWithError) {
@@ -94,10 +95,17 @@ TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessageWithError) {
   const std::string error{"Error!"};
   const auto message = MessageUtility::createPubAckMessage(uuid, error);
 
-  const auto result = MessageUtility::parsePubAckMessage(message);
+  auto &&maybe_result = MessageUtility::parsePubAckMessage(message);
 
-  EXPECT_EQ(uuid, result.guid());
-  EXPECT_EQ(error, result.error());
+  EXPECT_TRUE(maybe_result.valid());
+  EXPECT_EQ(uuid, maybe_result.value().guid());
+  EXPECT_EQ(error, maybe_result.value().error());
+}
+
+TEST_F(NatsStreamingMessageUtilityTest, ParseInvalidPubAckMessage) {
+  const std::string invalid_message{"This is not a PubAck message."};
+  auto &&maybe_result{MessageUtility::parsePubAckMessage(invalid_message)};
+  EXPECT_FALSE(maybe_result.valid());
 }
 
 } // namespace Streaming
