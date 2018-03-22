@@ -47,3 +47,20 @@ To run the e2e test:
 ```
 $ bazel test //e2e/...
 ```
+
+## Profiling
+To run a profiler, first install the `perf` tool. In ubuntu run these command (a reboot may be needed): 
+```
+$ sudo apt install linux-tools-generic linux-tools-common
+````
+
+Then:
+```
+$ cd e2e
+$ ulimit -n 2048
+$ DEBUG=0 TEST_ENVOY_BIN=../bazel-bin/envoy TEST_PROF_REPORT=report.data  python e2e_test.py 2> output.txt
+```
+To read the report, run:
+```
+$ perf report
+```
