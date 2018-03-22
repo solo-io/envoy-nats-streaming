@@ -13,7 +13,11 @@ class SubjectUtility {
 public:
   static inline std::string join(const std::string &prefix,
                                  const std::string &subject) {
-    return fmt::format("{}.{}", prefix, subject);
+    // Using `operator+=()` seems to be the most performant approach.
+    std::string result{prefix};
+    result += '.';
+    result += subject;
+    return result;
   }
 
   static inline std::string randomChild(const std::string &parent,
