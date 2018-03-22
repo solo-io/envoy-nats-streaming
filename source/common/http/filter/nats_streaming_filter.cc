@@ -85,24 +85,17 @@ bool NatsStreamingFilter::retrieveFunction(
 }
 
 void NatsStreamingFilter::onResponse() {
-  Http::Utility::sendLocalReply(*decoder_callbacks_, stream_destroyed_,
-                                Http::Code::OK, "");
+  onCompletion<false>(Http::Code::OK, "");
 }
 
 void NatsStreamingFilter::onFailure() {
-  decoder_callbacks_->requestInfo().setResponseFlag(
-      RequestInfo::ResponseFlag::FaultInjected);
-  Http::Utility::sendLocalReply(*decoder_callbacks_, stream_destroyed_,
-                                Http::Code::InternalServerError,
-                                "nats streaming filter abort");
+  onCompletion<true>(Http::Code::InternalServerError,
+                     "nats streaming filter abort");
 }
 
 void NatsStreamingFilter::onTimeout() {
-  decoder_callbacks_->requestInfo().setResponseFlag(
-      RequestInfo::ResponseFlag::FaultInjected);
-  Http::Utility::sendLocalReply(*decoder_callbacks_, stream_destroyed_,
-                                Http::Code::RequestTimeout,
-                                "nats streaming filter timeout");
+  onCompletion<true>(Http::Code::RequestTimeout,
+                     "nats streaming filter timeout");
 }
 
 void NatsStreamingFilter::retrieveSubject(
