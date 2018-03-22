@@ -151,7 +151,7 @@ class ManyRequestsTestCase(unittest.TestCase):
     self.__sub()
     
     # Make many requests and assert that they succeed.
-    self.__make_request_batches("solopayload %d %d", 3, 1024, 0.1, None)
+    self.__make_request_batches("solopayload %d %d", 20, 1024, 0.1, None)
     # The performance tests are slower so we have lower expectations of whats received
     self.__wait_for_response("solopayload 0 500")
 
