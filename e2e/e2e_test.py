@@ -169,3 +169,4 @@ if __name__ == "__main__":
   if DEBUG:
     logging.basicConfig(level=logging.DEBUG)
   unittest.main()
+  
