@@ -164,8 +164,10 @@ class ManyRequestsTestCase(unittest.TestCase):
 
 # bazel remounts everything read-only which makes it hard to get the prof report.
 # if you desire a prof report, run this test manually, like so:
+# sudo apt install linux-tools-generic linux-tools-common
 # ulimit -n 2048
 # DEBUG=0 TEST_ENVOY_BIN=../bazel-bin/envoy TEST_PROF_REPORT=report.data  python e2e_test.py 2> output.txt
+# To read cpu report, use: 'perf report --sort=cpu'
 if __name__ == "__main__":
   global DEBUG
   DEBUG =  True if os.environ.get("DEBUG","") != "0" else False
