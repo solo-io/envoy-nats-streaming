@@ -25,12 +25,9 @@ class ManyRequestsTestCase(unittest.TestCase):
     self.stderr = tempfile.NamedTemporaryFile("rw+", delete=True)
 
   def tearDown(self):
-    if self.sub_process is not None:
-      self.sub_process.terminate()
-    if self.nats_server is not None:
-      self.nats_server.terminate()
-    if self.nats_streaming_server is not None:
-      self.nats_streaming_server.terminate()
+    for p in (self.sub_process, self.nats_server, self.nats_streaming_server):
+      if p is not None:
+        p.terminate()
     if self.envoy is not None:
       self.envoy.send_signal(signal.SIGINT)
       self.envoy.wait()
