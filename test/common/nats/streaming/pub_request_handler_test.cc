@@ -87,7 +87,8 @@ TEST_F(NatsStreamingPubRequestHandlerTest, MapNoPayload) {
   const std::string payload{};
   auto timeout_timer = Event::TimerPtr(new NiceMock<Event::MockTimer>);
   std::map<std::string, PubRequest> request_per_inbox;
-  request_per_inbox[inbox] = {&publish_callbacks_, std::move(timeout_timer)};
+  PubRequest pub_request{&publish_callbacks_, std::move(timeout_timer)};
+  request_per_inbox.emplace(inbox, std::move(pub_request));
 
   EXPECT_CALL(inbox_callbacks_, onFailure("incoming PubAck without payload"))
       .Times(1);
@@ -105,7 +106,8 @@ TEST_F(NatsStreamingPubRequestHandlerTest, MapError) {
   const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
   auto timeout_timer = Event::TimerPtr(new NiceMock<Event::MockTimer>);
   std::map<std::string, PubRequest> request_per_inbox;
-  request_per_inbox[inbox] = {&publish_callbacks_, std::move(timeout_timer)};
+  PubRequest pub_request{&publish_callbacks_, std::move(timeout_timer)};
+  request_per_inbox.emplace(inbox, std::move(pub_request));
 
   EXPECT_CALL(publish_callbacks_, onFailure()).Times(1);
   PubRequestHandler::onMessage(inbox, reply_to, payload, inbox_callbacks_,
@@ -122,7 +124,8 @@ TEST_F(NatsStreamingPubRequestHandlerTest, MapInvalidPayload) {
   const std::string payload{"This is not a PubAck message."};
   auto timeout_timer = Event::TimerPtr(new NiceMock<Event::MockTimer>);
   std::map<std::string, PubRequest> request_per_inbox;
-  request_per_inbox[inbox] = {&publish_callbacks_, std::move(timeout_timer)};
+  PubRequest pub_request{&publish_callbacks_, std::move(timeout_timer)};
+  request_per_inbox.emplace(inbox, std::move(pub_request));
 
   EXPECT_CALL(publish_callbacks_, onFailure()).Times(1);
   PubRequestHandler::onMessage(inbox, reply_to, payload, inbox_callbacks_,
@@ -139,7 +142,8 @@ TEST_F(NatsStreamingPubRequestHandlerTest, MapNoError) {
   const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
   auto timeout_timer = Event::TimerPtr(new NiceMock<Event::MockTimer>);
   std::map<std::string, PubRequest> request_per_inbox;
-  request_per_inbox[inbox] = {&publish_callbacks_, std::move(timeout_timer)};
+  PubRequest pub_request{&publish_callbacks_, std::move(timeout_timer)};
+  request_per_inbox.emplace(inbox, std::move(pub_request));
 
   EXPECT_CALL(publish_callbacks_, onResponse()).Times(1);
   PubRequestHandler::onMessage(inbox, reply_to, payload, inbox_callbacks_,
@@ -156,7 +160,8 @@ TEST_F(NatsStreamingPubRequestHandlerTest, MapMissingInbox) {
   const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
   auto timeout_timer = Event::TimerPtr(new NiceMock<Event::MockTimer>);
   std::map<std::string, PubRequest> request_per_inbox;
-  request_per_inbox[inbox] = {&publish_callbacks_, std::move(timeout_timer)};
+  PubRequest pub_request{&publish_callbacks_, std::move(timeout_timer)};
+  request_per_inbox.emplace(inbox, std::move(pub_request));
 
   PubRequestHandler::onMessage("inbox2", reply_to, payload, inbox_callbacks_,
                                request_per_inbox);

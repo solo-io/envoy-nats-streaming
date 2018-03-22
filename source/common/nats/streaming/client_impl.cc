@@ -228,8 +228,8 @@ void ClientImpl::pubPubMsg(const std::string &subject,
   Event::TimerPtr timeout_timer = dispatcher_.createTimer(
       [this, pub_ack_inbox]() -> void { onTimeout(pub_ack_inbox); });
   timeout_timer->enableTimer(op_timeout_);
-  pub_request_per_inbox_[pub_ack_inbox] = {&callbacks,
-                                           std::move(timeout_timer)};
+  PubRequest pub_request(&callbacks, std::move(timeout_timer));
+  pub_request_per_inbox_.emplace(pub_ack_inbox, std::move(pub_request));
 
   const std::string pub_subject{
       SubjectUtility::join(pub_prefix_.value(), subject)};

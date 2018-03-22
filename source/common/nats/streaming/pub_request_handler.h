@@ -13,9 +13,21 @@ namespace Nats {
 namespace Streaming {
 
 // TODO(talnordan): Consider moving to `include/envoy`.
-struct PubRequest {
-  PublishCallbacks *callbacks;
-  Event::TimerPtr timeout_timer;
+class PubRequest {
+public:
+  PubRequest(PublishCallbacks *callbacks, Event::TimerPtr timeout_timer)
+      : callbacks_(callbacks), timeout_timer_(std::move(timeout_timer)) {}
+
+  PublishCallbacks &callbacks() { return *callbacks_; }
+
+  void onDestroy() {
+    timeout_timer_->disableTimer();
+    timeout_timer_ = nullptr;
+  }
+
+private:
+  PublishCallbacks *callbacks_;
+  Event::TimerPtr timeout_timer_;
 };
 
 class PubRequestHandler {

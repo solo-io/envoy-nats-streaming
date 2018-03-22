@@ -44,7 +44,7 @@ void PubRequestHandler::onMessage(
 
   // Handle the message using the publish callbacks associated with the inbox.
   PubRequest &request = it->second;
-  PublishCallbacks &publish_callbacks = *request.callbacks;
+  PublishCallbacks &publish_callbacks = request.callbacks();
   onMessage(reply_to, payload, inbox_callbacks, publish_callbacks);
 
   // Remove the inbox from the map.
@@ -61,7 +61,7 @@ void PubRequestHandler::onTimeout(
 
   // Notify of a timeout using the publish callbacks associated with the inbox.
   PubRequest &request = it->second;
-  request.callbacks->onTimeout();
+  request.callbacks().onTimeout();
 
   // Remove the inbox from the map.
   eraseRequest(request_per_inbox, it);
@@ -71,8 +71,7 @@ void PubRequestHandler::eraseRequest(
     std::map<std::string, PubRequest> &request_per_inbox,
     std::map<std::string, PubRequest>::iterator position) {
   PubRequest &request = position->second;
-  request.timeout_timer->disableTimer();
-  request.timeout_timer = nullptr;
+  request.onDestroy();
   request_per_inbox.erase(position);
 }
 
