@@ -3,11 +3,11 @@ import httplib
 import logging
 import os
 import requests
+import signal
 import subprocess
 import tempfile
 import time
 import unittest
-import signal
 
 def envoy_preexec_fn():
   import ctypes
@@ -21,31 +21,31 @@ DEBUG=True
 class ManyRequestsTestCase(unittest.TestCase):
   def setUp(self):
     # A temporary file is used to avoid pipe buffering issues.
+    self.cleanup()
     self.stderr = tempfile.NamedTemporaryFile("rw+", delete=True)
-    self.sub_process = None
-    self.nats_server = None
-    self.nats_streaming_server = None
-    self.envoy = None
 
   def tearDown(self):
     if self.sub_process is not None:
       self.sub_process.terminate()
-      self.sub_process = None
     if self.nats_server is not None:
       self.nats_server.terminate()
-      self.nats_server = None
     if self.nats_streaming_server is not None:
       self.nats_streaming_server.terminate()
-      self.nats_streaming_server = None
     if self.envoy is not None:
       self.envoy.send_signal(signal.SIGINT)
       self.envoy.wait()
-      self.envoy = None
 
     # The file is deleted as soon as it is closed.
     if self.stderr is not None:
       self.stderr.close()
-      self.stderr = None
+    self.cleanup()
+
+  def cleanup(self):
+    self.sub_process = None
+    self.nats_server = None
+    self.nats_streaming_server = None
+    self.envoy = None
+    self.stderr = None
 
   def __create_config(self):
     for create_config_path in ("./create_config.sh", "./e2e/create_config.sh"):
@@ -72,7 +72,8 @@ class ManyRequestsTestCase(unittest.TestCase):
     if prefix == None:
       prefix = []
     if suffix == None:
-      suffix = ["--log-level", "debug"]
+      if DEBUG:
+        suffix = ["--log-level", "debug"]
 
     envoy = os.environ.get("TEST_ENVOY_BIN","envoy")
 
@@ -83,7 +84,7 @@ class ManyRequestsTestCase(unittest.TestCase):
     self.sub_process = subprocess.Popen(
       ["stan-sub", "-id", "17", "subject1"],
       stderr=self.stderr)
-    time.sleep(1)
+    time.sleep(.1)
 
   def __make_request(self, payload, expected_status):
     response = requests.post('http://localhost:10000/post', payload)
@@ -92,7 +93,7 @@ class ManyRequestsTestCase(unittest.TestCase):
   def __make_many_requests(self, payloads, expected_status):
     requests = (grequests.post('http://localhost:10000/post', data=p) for p in payloads)
     responses = grequests.map(requests)
-    if expected_status is not None:
+    if expected_status:
       for response in responses:
         self.assertEqual(expected_status, response.status_code)
 
@@ -138,7 +139,8 @@ class ManyRequestsTestCase(unittest.TestCase):
   def test_profile(self):
     report_loc = os.environ.get("TEST_PROF_REPORT","")
     if not report_loc:
-      self.skipTest("to enable, set TEST_PROF_REPORT to where you want the report to be saved. i.e. TEST_PROF_REPORT=report.data")
+      self.skipTest("to enable, set TEST_PROF_REPORT to where you want the report to be saved. " + \
+                    "i.e. TEST_PROF_REPORT=report.data")
     print("Starting perf tests; if you have issues you might need to enable perf for normal users:")
     print("'echo -1 | sudo tee  /proc/sys/kernel/perf_event_paranoid'")
     print("'echo  0 | sudo tee  /proc/sys/kernel/kptr_restrict'")
@@ -161,13 +163,6 @@ class ManyRequestsTestCase(unittest.TestCase):
     # print the report
     subprocess.check_call(["cp", "perf.data", report_loc])
 
-
-# bazel remounts everything read-only which makes it hard to get the prof report.
-# if you desire a prof report, run this test manually, like so:
-# sudo apt install linux-tools-generic linux-tools-common
-# ulimit -n 2048
-# DEBUG=0 TEST_ENVOY_BIN=../bazel-bin/envoy TEST_PROF_REPORT=report.data  python e2e_test.py 2> output.txt
-# To read cpu report, use: 'perf report --sort=cpu'
 if __name__ == "__main__":
   global DEBUG
   DEBUG =  True if os.environ.get("DEBUG","") != "0" else False
