@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "envoy/http/header_map.h"
+#include "envoy/nats/streaming/client.h"
 
 #include "common/common/empty_string.h"
 #include "common/common/macros.h"
@@ -27,6 +28,15 @@ NatsStreamingFilter::NatsStreamingFilter(
       nats_streaming_client_(nats_streaming_client) {}
 
 NatsStreamingFilter::~NatsStreamingFilter() {}
+
+void NatsStreamingFilter::onDestroy() {
+  stream_destroyed_ = true;
+
+  if (in_flight_request_ != nullptr) {
+    in_flight_request_->cancel();
+    in_flight_request_ = nullptr;
+  }
+}
 
 Envoy::Http::FilterHeadersStatus
 NatsStreamingFilter::decodeHeaders(Envoy::Http::HeaderMap &headers,
@@ -120,9 +130,8 @@ void NatsStreamingFilter::relayToNatsStreaming() {
   const std::string &cluster_id = *subject_entry.cluster_id;
   const std::string &discover_prefix = *subject_entry.discover_prefix;
 
-  // TODO(talnordan): Keep the return value of `makeRequest()`.
-  nats_streaming_client_->makeRequest(subject, cluster_id, discover_prefix,
-                                      body_, *this);
+  in_flight_request_ = nats_streaming_client_->makeRequest(
+      subject, cluster_id, discover_prefix, body_, *this);
 }
 
 } // namespace Http

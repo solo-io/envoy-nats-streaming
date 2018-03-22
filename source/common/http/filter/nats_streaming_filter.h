@@ -22,7 +22,8 @@ public:
                       Nats::Streaming::ClientPtr nats_streaming_client);
   ~NatsStreamingFilter();
 
-  void onDestroy() override { stream_destroyed_ = true; }
+  // Http::StreamFilterBase
+  void onDestroy() override;
 
   // Http::StreamDecoderFilter
   FilterHeadersStatus decodeHeaders(HeaderMap &, bool) override;
@@ -54,6 +55,8 @@ private:
 
   template <bool fault_injected>
   inline void onCompletion(Code response_code, const std::string &body_text) {
+    in_flight_request_ = nullptr;
+
     if (fault_injected) {
       decoder_callbacks_->requestInfo().setResponseFlag(
           RequestInfo::ResponseFlag::FaultInjected);
@@ -71,6 +74,7 @@ private:
   StreamDecoderFilterCallbacks *decoder_callbacks_{};
   Optional<uint32_t> decoder_buffer_limit_{};
   Buffer::OwnedImpl body_{};
+  Nats::Streaming::PublishRequestPtr in_flight_request_{};
 };
 
 } // namespace Http
