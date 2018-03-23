@@ -49,7 +49,7 @@ $ bazel test //e2e/...
 ```
 
 ## Profiling
-To run a profiler, first install the `perf` tool. In ubuntu run these command (a reboot may be needed): 
+To run a profiler, first install the `perf` tool. In ubuntu run these command (a reboot may be needed):
 ```
 $ sudo apt install linux-tools-generic linux-tools-common
 ````
