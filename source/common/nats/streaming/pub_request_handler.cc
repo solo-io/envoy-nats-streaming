@@ -57,11 +57,29 @@ void PubRequestHandler::onTimeout(
   // Find the inbox in the map.
   auto it = request_per_inbox.find(inbox);
 
-  RELEASE_ASSERT(it != request_per_inbox.end());
+  // Gracefully ignore a missing inbox.
+  if (it == request_per_inbox.end()) {
+    return;
+  }
 
   // Notify of a timeout using the publish callbacks associated with the inbox.
   PubRequest &request = it->second;
   request.callbacks().onTimeout();
+
+  // Remove the inbox from the map.
+  eraseRequest(request_per_inbox, it);
+}
+
+void PubRequestHandler::onCancel(
+    const std::string &inbox,
+    std::map<std::string, PubRequest> &request_per_inbox) {
+  // Find the inbox in the map.
+  auto it = request_per_inbox.find(inbox);
+
+  // Gracefully ignore a missing inbox.
+  if (it == request_per_inbox.end()) {
+    return;
+  }
 
   // Remove the inbox from the map.
   eraseRequest(request_per_inbox, it);

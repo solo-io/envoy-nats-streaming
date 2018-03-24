@@ -169,6 +169,62 @@ TEST_F(NatsStreamingPubRequestHandlerTest, MapMissingInbox) {
   EXPECT_NE(request_per_inbox.end(), request_per_inbox.find(inbox));
 }
 
+TEST_F(NatsStreamingPubRequestHandlerTest, OnTimeout) {
+  const std::string inbox{"inbox1"};
+  auto timeout_timer = Event::TimerPtr(new NiceMock<Event::MockTimer>);
+  std::map<std::string, PubRequest> request_per_inbox;
+  PubRequest pub_request{&publish_callbacks_, std::move(timeout_timer)};
+  request_per_inbox.emplace(inbox, std::move(pub_request));
+
+  EXPECT_CALL(publish_callbacks_, onTimeout()).Times(1);
+  PubRequestHandler::onTimeout(inbox, request_per_inbox);
+
+  EXPECT_EQ(request_per_inbox.end(), request_per_inbox.find(inbox));
+}
+
+TEST_F(NatsStreamingPubRequestHandlerTest, OnTimeoutMissingInbox) {
+  const std::string inbox{"inbox1"};
+  auto timeout_timer = Event::TimerPtr(new NiceMock<Event::MockTimer>);
+  std::map<std::string, PubRequest> request_per_inbox;
+  PubRequest pub_request{&publish_callbacks_, std::move(timeout_timer)};
+  request_per_inbox.emplace(inbox, std::move(pub_request));
+
+  EXPECT_CALL(publish_callbacks_, onTimeout()).Times(0);
+  PubRequestHandler::onTimeout("inbox2", request_per_inbox);
+
+  EXPECT_NE(request_per_inbox.end(), request_per_inbox.find(inbox));
+}
+
+TEST_F(NatsStreamingPubRequestHandlerTest, OnCancel) {
+  const std::string inbox{"inbox1"};
+  auto timeout_timer = Event::TimerPtr(new NiceMock<Event::MockTimer>);
+  std::map<std::string, PubRequest> request_per_inbox;
+  PubRequest pub_request{&publish_callbacks_, std::move(timeout_timer)};
+  request_per_inbox.emplace(inbox, std::move(pub_request));
+
+  EXPECT_CALL(publish_callbacks_, onResponse()).Times(0);
+  EXPECT_CALL(publish_callbacks_, onFailure()).Times(0);
+  EXPECT_CALL(publish_callbacks_, onTimeout()).Times(0);
+  PubRequestHandler::onCancel(inbox, request_per_inbox);
+
+  EXPECT_EQ(request_per_inbox.end(), request_per_inbox.find(inbox));
+}
+
+TEST_F(NatsStreamingPubRequestHandlerTest, OnCancelMissingInbox) {
+  const std::string inbox{"inbox1"};
+  auto timeout_timer = Event::TimerPtr(new NiceMock<Event::MockTimer>);
+  std::map<std::string, PubRequest> request_per_inbox;
+  PubRequest pub_request{&publish_callbacks_, std::move(timeout_timer)};
+  request_per_inbox.emplace(inbox, std::move(pub_request));
+
+  EXPECT_CALL(publish_callbacks_, onResponse()).Times(0);
+  EXPECT_CALL(publish_callbacks_, onFailure()).Times(0);
+  EXPECT_CALL(publish_callbacks_, onTimeout()).Times(0);
+  PubRequestHandler::onCancel("inbox2", request_per_inbox);
+
+  EXPECT_NE(request_per_inbox.end(), request_per_inbox.find(inbox));
+}
+
 } // namespace Streaming
 } // namespace Nats
 } // namespace Envoy

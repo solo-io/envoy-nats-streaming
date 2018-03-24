@@ -46,6 +46,9 @@ public:
   static void onTimeout(const std::string &inbox,
                         std::map<std::string, PubRequest> &request_per_inbox);
 
+  static void onCancel(const std::string &inbox,
+                       std::map<std::string, PubRequest> &request_per_inbox);
+
 private:
   static inline void
   eraseRequest(std::map<std::string, PubRequest> &request_per_inbox,

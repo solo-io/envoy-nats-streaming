@@ -1,7 +1,6 @@
 #pragma once
 
 #include <map>
-#include <vector>
 
 #include "envoy/common/optional.h"
 #include "envoy/event/timer.h"
@@ -58,6 +57,8 @@ public:
   // Nats::Streaming::HeartbeatHandler::Callbacks
   void send(const Message &message) override;
 
+  void cancel(const std::string &pub_ack_inbox);
+
 private:
   enum class State { NotConnected, Connecting, Connected };
 
@@ -65,6 +66,18 @@ private:
     std::string subject;
     std::string payload;
     PublishCallbacks *callbacks;
+  };
+
+  class PublishRequestCanceler : public PublishRequest {
+  public:
+    PublishRequestCanceler(ClientImpl &parent, std::string &&pub_ack_inbox);
+
+    // Nats::Streaming::PublishRequest
+    void cancel();
+
+  private:
+    ClientImpl &parent_;
+    const std::string pub_ack_inbox_;
   };
 
   inline void onOperation(Nats::MessagePtr &&value);
@@ -91,8 +104,14 @@ private:
 
   inline void pubConnectRequest();
 
+  inline void enqueuePendingRequest(const std::string &subject,
+                                    const std::string &payload,
+                                    PublishCallbacks &callbacks,
+                                    const std::string &pub_ack_inbox);
+
   inline void pubPubMsg(const std::string &subject, const std::string &payload,
-                        PublishCallbacks &callbacks);
+                        PublishCallbacks &callbacks,
+                        const std::string &pub_ack_inbox);
 
   inline void pong();
 
@@ -141,13 +160,13 @@ private:
   const std::string root_pub_ack_inbox_;
   const std::string connect_response_inbox_;
   const std::string client_id_;
+  std::map<std::string, PendingRequest> pending_request_per_inbox_;
   std::map<std::string, PubRequest> pub_request_per_inbox_;
   uint64_t sid_;
   Optional<std::string> cluster_id_{};
   Optional<std::string> discover_prefix_{};
   Optional<std::pair<std::string, Optional<std::string>>>
       subect_and_reply_to_waiting_for_payload_{};
-  std::vector<PendingRequest> pending_requests_{};
   Optional<std::string> pub_prefix_{};
 
   static const std::string INBOX_PREFIX;

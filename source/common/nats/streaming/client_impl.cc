@@ -36,9 +36,14 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
                                           PublishCallbacks &callbacks) {
   std::string payload_string{drainBufferToString(payload)};
 
+  // TODO(talnordan): For a possible performance improvement, consider replacing
+  // the random child token with a counter.
+  std::string pub_ack_inbox{
+      SubjectUtility::randomChild(root_pub_ack_inbox_, token_generator_)};
+
   switch (state_) {
   case State::NotConnected:
-    pending_requests_.push_back({subject, payload_string, &callbacks});
+    enqueuePendingRequest(subject, payload_string, callbacks, pub_ack_inbox);
     cluster_id_.value(cluster_id);
     discover_prefix_.value(discover_prefix);
     conn_pool_->setPoolCallbacks(*this);
@@ -46,15 +51,16 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
     state_ = State::Connecting;
     break;
   case State::Connecting:
-    pending_requests_.push_back({subject, payload_string, &callbacks});
+    enqueuePendingRequest(subject, payload_string, callbacks, pub_ack_inbox);
     break;
   case State::Connected:
-    pubPubMsg(subject, payload_string, callbacks);
+    pubPubMsg(subject, payload_string, callbacks, pub_ack_inbox);
     break;
   }
 
-  // TODO(talnordan)
-  return nullptr;
+  PublishRequestPtr request_ptr(
+      new PublishRequestCanceler(*this, std::move(pub_ack_inbox)));
+  return request_ptr;
 }
 
 void ClientImpl::onResponse(Nats::MessagePtr &&value) {
@@ -77,7 +83,8 @@ void ClientImpl::onClose() {
 
 void ClientImpl::onFailure(const std::string &error) {
   // TODO(talnordan): Error handling:
-  // 1. Fail all things pending: `pending_requests_`, `pub_request_per_inbox_`.
+  // 1. Fail all things pending: `pending_request_per_inbox_`,
+  // `pub_request_per_inbox_`.
   // 2. Do a best effort to gracefully unsubscribe and disconnect from NATS
   // streaming and NATS.
   // 3. Mark the `State` as `State::NotConnected`.
@@ -89,14 +96,34 @@ void ClientImpl::onConnected(const std::string &pub_prefix) {
 
   pub_prefix_.value(pub_prefix);
 
-  for (auto &&pending_requests : pending_requests_) {
-    pubPubMsg(pending_requests.subject, pending_requests.payload,
-              *pending_requests.callbacks);
+  for (auto it = pending_request_per_inbox_.begin();
+       it != pending_request_per_inbox_.end(); ++it) {
+    auto &&pub_ack_inbox = it->first;
+    auto &&pending_request = it->second;
+    pubPubMsg(pending_request.subject, pending_request.payload,
+              *pending_request.callbacks, pub_ack_inbox);
   }
-  pending_requests_ = {};
+  pending_request_per_inbox_.clear();
 }
 
 void ClientImpl::send(const Message &message) { sendNatsMessage(message); }
+
+void ClientImpl::cancel(const std::string &pub_ack_inbox) {
+  if (state_ == State::Connected) {
+    PubRequestHandler::onCancel(pub_ack_inbox, pub_request_per_inbox_);
+  } else {
+    // Remove the pending request with the specified inbox, if such exists.
+    pending_request_per_inbox_.erase(pub_ack_inbox);
+  }
+}
+
+ClientImpl::PublishRequestCanceler::PublishRequestCanceler(
+    ClientImpl &parent, std::string &&pub_ack_inbox)
+    : parent_(parent), pub_ack_inbox_(pub_ack_inbox) {}
+
+void ClientImpl::PublishRequestCanceler::cancel() {
+  parent_.cancel(pub_ack_inbox_);
+}
 
 void ClientImpl::onOperation(Nats::MessagePtr &&value) {
   // TODO(talnordan): For better performance, a future decoder implementation
@@ -208,14 +235,18 @@ void ClientImpl::pubConnectRequest() {
                           connect_request_message);
 }
 
+void ClientImpl::enqueuePendingRequest(const std::string &subject,
+                                       const std::string &payload,
+                                       PublishCallbacks &callbacks,
+                                       const std::string &pub_ack_inbox) {
+  PendingRequest pending_request{subject, payload, &callbacks};
+  pending_request_per_inbox_.emplace(pub_ack_inbox, std::move(pending_request));
+}
+
 void ClientImpl::pubPubMsg(const std::string &subject,
                            const std::string &payload,
-                           PublishCallbacks &callbacks) {
-  // TODO(talnordan): For a possible performance improvement, consider replacing
-  // the random child token with a counter.
-  std::string pub_ack_inbox{
-      SubjectUtility::randomChild(root_pub_ack_inbox_, token_generator_)};
-
+                           PublishCallbacks &callbacks,
+                           const std::string &pub_ack_inbox) {
   // TODO(talnordan): Consider moving the following logic to
   // `PubRequestHandler`.
 
