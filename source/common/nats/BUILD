@@ -49,6 +49,7 @@ envoy_cc_library(
     repository = "@envoy",
     deps = [
         "//include/envoy/nats:token_generator_interface",
+        "//source/common/nats/nuid:nuid_lib",
         "@envoy//source/exe:envoy_common_lib",
     ],
 )

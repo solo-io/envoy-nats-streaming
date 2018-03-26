@@ -5,6 +5,8 @@
 #include "envoy/nats/token_generator.h"
 #include "envoy/runtime/runtime.h"
 
+#include "common/nats/nuid/nuid.h"
+
 namespace Envoy {
 namespace Nats {
 
@@ -16,7 +18,7 @@ public:
   std::string random() override;
 
 private:
-  Runtime::RandomGenerator &random_generator_;
+  Nuid::Nuid nuid_;
 };
 
 } // namespace Nats
