@@ -53,18 +53,10 @@ private:
 
   void relayToNatsStreaming();
 
-  template <bool fault_injected>
-  inline void onCompletion(Code response_code, const std::string &body_text) {
-    in_flight_request_ = nullptr;
+  inline void onCompletion(Code response_code, const std::string &body_text);
 
-    if (fault_injected) {
-      decoder_callbacks_->requestInfo().setResponseFlag(
-          RequestInfo::ResponseFlag::FaultInjected);
-    }
-
-    Http::Utility::sendLocalReply(*decoder_callbacks_, stream_destroyed_,
-                                  response_code, body_text);
-  }
+  inline void onCompletion(Code response_code, const std::string &body_text,
+                           RequestInfo::ResponseFlag response_flag);
 
   const NatsStreamingFilterConfigSharedPtr config_;
   SubjectRetrieverSharedPtr subject_retriever_;

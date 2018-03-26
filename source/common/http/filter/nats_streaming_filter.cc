@@ -94,18 +94,16 @@ bool NatsStreamingFilter::retrieveFunction(
   return isActive();
 }
 
-void NatsStreamingFilter::onResponse() {
-  onCompletion<false>(Http::Code::OK, "");
-}
+void NatsStreamingFilter::onResponse() { onCompletion(Http::Code::OK, ""); }
 
 void NatsStreamingFilter::onFailure() {
-  onCompletion<true>(Http::Code::InternalServerError,
-                     "nats streaming filter abort");
+  onCompletion(Http::Code::InternalServerError, "nats streaming filter abort",
+               RequestInfo::ResponseFlag::NoHealthyUpstream);
 }
 
 void NatsStreamingFilter::onTimeout() {
-  onCompletion<true>(Http::Code::RequestTimeout,
-                     "nats streaming filter timeout");
+  onCompletion(Http::Code::RequestTimeout, "nats streaming filter timeout",
+               RequestInfo::ResponseFlag::UpstreamRequestTimeout);
 }
 
 void NatsStreamingFilter::retrieveSubject(
@@ -132,6 +130,21 @@ void NatsStreamingFilter::relayToNatsStreaming() {
 
   in_flight_request_ = nats_streaming_client_->makeRequest(
       subject, cluster_id, discover_prefix, body_, *this);
+}
+
+void NatsStreamingFilter::onCompletion(Code response_code,
+                                       const std::string &body_text) {
+  in_flight_request_ = nullptr;
+
+  Http::Utility::sendLocalReply(*decoder_callbacks_, stream_destroyed_,
+                                response_code, body_text);
+}
+
+void NatsStreamingFilter::onCompletion(
+    Code response_code, const std::string &body_text,
+    RequestInfo::ResponseFlag response_flag) {
+  decoder_callbacks_->requestInfo().setResponseFlag(response_flag);
+  onCompletion(response_code, body_text);
 }
 
 } // namespace Http
