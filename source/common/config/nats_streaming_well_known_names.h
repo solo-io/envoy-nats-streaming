@@ -13,27 +13,29 @@ namespace Config {
 /**
  * Well-known http filter names.
  */
-class SoloHttpFilterNameValues {
+class NatsStreamingHttpFilterNameValues {
 public:
   // NATS Streaming filter
   const std::string NATS_STREAMING = "io.solo.nats_streaming";
 };
 
-typedef ConstSingleton<SoloHttpFilterNameValues> SoloHttpFilterNames;
+typedef ConstSingleton<NatsStreamingHttpFilterNameValues>
+    NatsStreamingHttpFilterNames;
 
 /**
  * Well-known metadata filter namespaces.
  */
-class SoloMetadataFilterValues {
+class NatsStreamingMetadataFilterValues {
 public:
   // Filter namespace for NATS Streaming Filter.
   const std::string NATS_STREAMING = "io.solo.nats_streaming";
 };
 
-typedef ConstSingleton<SoloMetadataFilterValues> SoloMetadataFilters;
+typedef ConstSingleton<NatsStreamingMetadataFilterValues>
+    NatsStreamingMetadataFilters;
 
 /**
- * Keys for MetadataFilterConstants::NATS_STREAMING metadata.
+ * Keys for NatsStreamingMetadataFilterValues::NATS_STREAMING metadata.
  */
 class MetadataNatsStreamingKeyValues {
 public:

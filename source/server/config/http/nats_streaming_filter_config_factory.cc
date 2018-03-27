@@ -61,7 +61,7 @@ NatsStreamingFilterConfigFactory::createEmptyConfigProto() {
 }
 
 std::string NatsStreamingFilterConfigFactory::name() {
-  return Config::SoloHttpFilterNames::get().NATS_STREAMING;
+  return Config::NatsStreamingHttpFilterNames::get().NATS_STREAMING;
 }
 
 HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
@@ -88,8 +88,8 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
   return [&context, config, subjectRetriever, nats_streaming_client](
              Envoy::Http::FilterChainFactoryCallbacks &callbacks) -> void {
     auto filter = new MixedNatsStreamingFilter(
-        context, Config::SoloMetadataFilters::get().NATS_STREAMING, config,
-        subjectRetriever, nats_streaming_client);
+        context, Config::NatsStreamingMetadataFilters::get().NATS_STREAMING,
+        config, subjectRetriever, nats_streaming_client);
     callbacks.addStreamDecoderFilter(
         Http::StreamDecoderFilterSharedPtr{filter});
   };
