@@ -11,7 +11,7 @@ http_archive(
     url = "https://github.com/envoyproxy/envoy/archive/" + ENVOY_SHA + ".zip",
 )
 
-ENVOY_COMMON_SHA = "ee625c53848d990dd7e5b87c5fbcd2776054e9f8"  # Feb 26, 2018 ( split metadata accessor)
+ENVOY_COMMON_SHA = "771b89c20a7a6f8edf3ebe3df2358f0e07e7edcd"  # Mar 28, 2018 (Move `SoloMetadata` functionality to envoy-common)
 
 git_repository(
     name = "solo_envoy_common",

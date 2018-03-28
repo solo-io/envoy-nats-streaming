@@ -38,6 +38,7 @@ envoy_cc_library(
     deps = [
         "//source/common/config:nats_streaming_well_known_names_lib",
         "@envoy//source/exe:envoy_common_lib",
+        "@solo_envoy_common//source/common/config:solo_metadata_lib",
         "@solo_envoy_common//source/common/http:functional_stream_decoder_base_lib",
         "@solo_envoy_common//source/common/http:solo_filter_utility_lib",
     ],
