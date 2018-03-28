@@ -113,7 +113,7 @@ const std::string
   )EOF");
 
 /**
- * Static registration for this sample filter. @see RegisterFactory.
+ * Static registration for the Nats Streaming filter. @see RegisterFactory.
  */
 static Envoy::Registry::RegisterFactory<
     NatsStreamingFilterConfigFactory,
