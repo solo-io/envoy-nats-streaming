@@ -16,18 +16,19 @@ namespace Http {
  * TODO (talnordan):
  * template<typename... _Elements>
  * class MetadataRetriever {
- *   Optional<std::tuple<typename __decay_and_strip<_Elements>::__type...>>
- *   get(const RouteEntry &routeEntry, const ClusterInfo &info);
+ *   absl::optional<std::tuple<typename
+ * __decay_and_strip<_Elements>::__type...>> get(const RouteEntry &routeEntry,
+ * const ClusterInfo &info);
  * };
  */
 class MetadataSubjectRetriever : public SubjectRetriever {
 public:
   MetadataSubjectRetriever();
 
-  Optional<Subject> getSubject(const MetadataAccessor &metadataccessor);
+  absl::optional<Subject> getSubject(const MetadataAccessor &metadataccessor);
 
 private:
-  static Optional<const std::string *>
+  static absl::optional<const std::string *>
   nonEmptyStringValue(const ProtobufWkt::Struct &spec, const std::string &key);
 };
 

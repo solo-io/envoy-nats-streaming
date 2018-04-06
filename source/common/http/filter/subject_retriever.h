@@ -2,9 +2,10 @@
 
 #include <memory>
 
-#include "envoy/common/optional.h"
 #include "envoy/common/pure.h"
 #include "envoy/http/metadata_accessor.h"
+
+#include "absl/types/optional.h"
 
 namespace Envoy {
 namespace Http {
@@ -20,7 +21,7 @@ struct Subject {
 class SubjectRetriever {
 public:
   virtual ~SubjectRetriever() {}
-  virtual Optional<Subject>
+  virtual absl::optional<Subject>
   getSubject(const MetadataAccessor &metadataccessor) PURE;
 };
 

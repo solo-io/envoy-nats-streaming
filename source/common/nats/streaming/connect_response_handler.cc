@@ -8,10 +8,10 @@ namespace Envoy {
 namespace Nats {
 namespace Streaming {
 
-void ConnectResponseHandler::onMessage(Optional<std::string> &reply_to,
+void ConnectResponseHandler::onMessage(absl::optional<std::string> &reply_to,
                                        const std::string &payload,
                                        Callbacks &callbacks) {
-  if (reply_to.valid()) {
+  if (reply_to.has_value()) {
     callbacks.onFailure(
         "incoming ConnectResponse with non-empty reply subject");
     return;

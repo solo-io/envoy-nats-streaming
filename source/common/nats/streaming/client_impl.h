@@ -2,7 +2,6 @@
 
 #include <map>
 
-#include "envoy/common/optional.h"
 #include "envoy/event/timer.h"
 #include "envoy/nats/codec.h"
 #include "envoy/nats/streaming/client.h"
@@ -16,6 +15,8 @@
 #include "common/nats/streaming/pub_request_handler.h"
 #include "common/nats/subject_utility.h"
 #include "common/nats/token_generator_impl.h"
+
+#include "absl/types/optional.h"
 
 namespace Envoy {
 namespace Nats {
@@ -124,26 +125,26 @@ private:
                                       const std::string &message);
 
   inline void waitForPayload(std::string subject,
-                             Optional<std::string> reply_to) {
-    subect_and_reply_to_waiting_for_payload_.value(
+                             absl::optional<std::string> reply_to) {
+    subect_and_reply_to_waiting_for_payload_.emplace(
         make_pair(subject, reply_to));
   }
 
   inline bool isWaitingForPayload() const {
-    return subect_and_reply_to_waiting_for_payload_.valid();
+    return subect_and_reply_to_waiting_for_payload_.has_value();
   }
 
   inline std::string &getSubjectWaitingForPayload() {
     return subect_and_reply_to_waiting_for_payload_.value().first;
   }
 
-  inline Optional<std::string> &getReplyToWaitingForPayload() {
+  inline absl::optional<std::string> &getReplyToWaitingForPayload() {
     return subect_and_reply_to_waiting_for_payload_.value().second;
   }
 
   inline void doneWaitingForPayload() {
     subect_and_reply_to_waiting_for_payload_ =
-        Optional<std::pair<std::string, Optional<std::string>>>{};
+        absl::optional<std::pair<std::string, absl::optional<std::string>>>{};
   }
 
   inline std::string drainBufferToString(Buffer::Instance &buffer) const;
@@ -163,11 +164,11 @@ private:
   std::map<std::string, PendingRequest> pending_request_per_inbox_;
   std::map<std::string, PubRequest> pub_request_per_inbox_;
   uint64_t sid_;
-  Optional<std::string> cluster_id_{};
-  Optional<std::string> discover_prefix_{};
-  Optional<std::pair<std::string, Optional<std::string>>>
+  absl::optional<std::string> cluster_id_{};
+  absl::optional<std::string> discover_prefix_{};
+  absl::optional<std::pair<std::string, absl::optional<std::string>>>
       subect_and_reply_to_waiting_for_payload_{};
-  Optional<std::string> pub_prefix_{};
+  absl::optional<std::string> pub_prefix_{};
 
   static const std::string INBOX_PREFIX;
   static const std::string PUB_ACK_PREFIX;

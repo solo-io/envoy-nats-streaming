@@ -25,7 +25,7 @@ protected:
 };
 
 TEST_F(NatsStreamingHeartbeatHandlerTest, NoReplyTo) {
-  Optional<std::string> reply_to{};
+  absl::optional<std::string> reply_to{};
   const std::string payload{};
 
   EXPECT_CALL(callbacks_, onFailure("incoming heartbeat without reply subject"))
@@ -34,7 +34,7 @@ TEST_F(NatsStreamingHeartbeatHandlerTest, NoReplyTo) {
 }
 
 TEST_F(NatsStreamingHeartbeatHandlerTest, NonEmptyPayload) {
-  Optional<std::string> reply_to{"reply-to"};
+  absl::optional<std::string> reply_to{"reply-to"};
   const std::string payload{"payload"};
 
   EXPECT_CALL(callbacks_,
@@ -44,7 +44,7 @@ TEST_F(NatsStreamingHeartbeatHandlerTest, NonEmptyPayload) {
 }
 
 TEST_F(NatsStreamingHeartbeatHandlerTest, Reply) {
-  Optional<std::string> reply_to{"reply-to"};
+  absl::optional<std::string> reply_to{"reply-to"};
   const std::string payload{};
   Message expected_message = MessageBuilder::createPubMessage(reply_to.value());
   EXPECT_CALL(callbacks_, send(expected_message)).Times(1);

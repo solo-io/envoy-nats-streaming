@@ -24,14 +24,17 @@ namespace Http {
 // TODO: move to common
 class NothingMetadataAccessor : public MetadataAccessor {
 public:
-  virtual Optional<const std::string *> getFunctionName() const { return {}; }
-  virtual Optional<const ProtobufWkt::Struct *> getFunctionSpec() const {
+  virtual absl::optional<const std::string *> getFunctionName() const {
     return {};
   }
-  virtual Optional<const ProtobufWkt::Struct *> getClusterMetadata() const {
+  virtual absl::optional<const ProtobufWkt::Struct *> getFunctionSpec() const {
     return {};
   }
-  virtual Optional<const ProtobufWkt::Struct *> getRouteMetadata() const {
+  virtual absl::optional<const ProtobufWkt::Struct *>
+  getClusterMetadata() const {
+    return {};
+  }
+  virtual absl::optional<const ProtobufWkt::Struct *> getRouteMetadata() const {
     return {};
   }
 
@@ -115,7 +118,7 @@ TEST_F(NatsStreamingFilterTest, HeaderOnlyRequest) {
   const std::string cluster_id = "cluster_id";
   const std::string discover_prefix = "discover_prefix1";
   subject_retriever_->subject_ =
-      Optional<Subject>(Subject{&subject, &cluster_id, &discover_prefix});
+      absl::optional<Subject>(Subject{&subject, &cluster_id, &discover_prefix});
 
   ASSERT_EQ(true, retreivefunction());
 
@@ -140,7 +143,7 @@ TEST_F(NatsStreamingFilterTest, RequestWithData) {
   const std::string cluster_id = "cluster_id";
   const std::string discover_prefix = "discover_prefix1";
   subject_retriever_->subject_ =
-      Optional<Subject>(Subject{&subject, &cluster_id, &discover_prefix});
+      absl::optional<Subject>(Subject{&subject, &cluster_id, &discover_prefix});
 
   callbacks_.buffer_.reset(new Buffer::OwnedImpl);
 
@@ -181,7 +184,7 @@ TEST_F(NatsStreamingFilterTest, RequestWithTrailers) {
   const std::string cluster_id = "cluster_id";
   const std::string discover_prefix = "discover_prefix1";
   subject_retriever_->subject_ =
-      Optional<Subject>(Subject{&subject, &cluster_id, &discover_prefix});
+      absl::optional<Subject>(Subject{&subject, &cluster_id, &discover_prefix});
 
   callbacks_.buffer_.reset(new Buffer::OwnedImpl);
 

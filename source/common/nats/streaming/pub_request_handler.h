@@ -3,10 +3,11 @@
 #include <map>
 #include <string>
 
-#include "envoy/common/optional.h"
 #include "envoy/event/timer.h"
 #include "envoy/nats/streaming/client.h"
 #include "envoy/nats/streaming/inbox_handler.h"
+
+#include "absl/types/optional.h"
 
 namespace Envoy {
 namespace Nats {
@@ -32,13 +33,13 @@ private:
 
 class PubRequestHandler {
 public:
-  static void onMessage(const Optional<std::string> &reply_to,
+  static void onMessage(const absl::optional<std::string> &reply_to,
                         const std::string &payload,
                         InboxCallbacks &inbox_callbacks,
                         PublishCallbacks &publish_callbacks);
 
   static void onMessage(const std::string &inbox,
-                        const Optional<std::string> &reply_to,
+                        const absl::optional<std::string> &reply_to,
                         const std::string &payload,
                         InboxCallbacks &inbox_callbacks,
                         std::map<std::string, PubRequest> &request_per_inbox);

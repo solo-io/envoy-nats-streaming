@@ -8,10 +8,10 @@ namespace Envoy {
 namespace Nats {
 namespace Streaming {
 
-void HeartbeatHandler::onMessage(Optional<std::string> &reply_to,
+void HeartbeatHandler::onMessage(absl::optional<std::string> &reply_to,
                                  const std::string &payload,
                                  Callbacks &callbacks) {
-  if (!reply_to.valid()) {
+  if (!reply_to.has_value()) {
     callbacks.onFailure("incoming heartbeat without reply subject");
     return;
   }

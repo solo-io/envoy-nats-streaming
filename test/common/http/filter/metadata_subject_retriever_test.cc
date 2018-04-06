@@ -25,38 +25,39 @@ const std::string empty_json = R"EOF(
 // TODO(talnordan): Move this to `mocks/http/filter`.
 class TesterMetadataAccessor : public Http::MetadataAccessor {
 public:
-  virtual Optional<const std::string *> getFunctionName() const {
+  virtual absl::optional<const std::string *> getFunctionName() const {
     if (!function_name_.empty()) {
       return &function_name_;
     }
     return {};
   }
 
-  virtual Optional<const ProtobufWkt::Struct *> getFunctionSpec() const {
-    if (function_spec_.valid()) {
+  virtual absl::optional<const ProtobufWkt::Struct *> getFunctionSpec() const {
+    if (function_spec_.has_value()) {
       return &function_spec_.value();
     }
     return {};
   }
 
-  virtual Optional<const ProtobufWkt::Struct *> getClusterMetadata() const {
-    if (cluster_metadata_.valid()) {
+  virtual absl::optional<const ProtobufWkt::Struct *>
+  getClusterMetadata() const {
+    if (cluster_metadata_.has_value()) {
       return &cluster_metadata_.value();
     }
     return {};
   }
 
-  virtual Optional<const ProtobufWkt::Struct *> getRouteMetadata() const {
-    if (route_metadata_.valid()) {
+  virtual absl::optional<const ProtobufWkt::Struct *> getRouteMetadata() const {
+    if (route_metadata_.has_value()) {
       return &route_metadata_.value();
     }
     return {};
   }
 
   std::string function_name_;
-  Optional<ProtobufWkt::Struct> function_spec_;
-  Optional<ProtobufWkt::Struct> cluster_metadata_;
-  Optional<ProtobufWkt::Struct> route_metadata_;
+  absl::optional<ProtobufWkt::Struct> function_spec_;
+  absl::optional<ProtobufWkt::Struct> cluster_metadata_;
+  absl::optional<ProtobufWkt::Struct> route_metadata_;
 };
 
 Protobuf::Struct getMetadata(const std::string &json) {
@@ -105,7 +106,7 @@ TEST(MetadataSubjectRetrieverTest, EmptyJsonAndNoFunctions) {
   MetadataSubjectRetriever subjectRetriever;
   auto subject = subjectRetriever.getSubject(metadata_accessor);
 
-  EXPECT_FALSE(subject.valid());
+  EXPECT_FALSE(subject.has_value());
 }
 
 TEST(MetadataSubjectRetrieverTest, ConfiguredSubject) {
@@ -131,7 +132,7 @@ TEST(MetadataSubjectRetrieverTest, ConfiguredSubject) {
   MetadataSubjectRetriever subjectRetriever;
   auto maybe_actual_subject = subjectRetriever.getSubject(metadata_accessor);
 
-  ASSERT_TRUE(maybe_actual_subject.valid());
+  ASSERT_TRUE(maybe_actual_subject.has_value());
   auto actual_subject = maybe_actual_subject.value();
   EXPECT_EQ(*actual_subject.subject, configuredSubject);
   EXPECT_EQ(*actual_subject.cluster_id, "ci");

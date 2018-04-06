@@ -3,7 +3,7 @@ workspace(name="nats_streaming_filter")
 # Use skylark for native Git.
 load('@bazel_tools//tools/build_defs/repo:git.bzl', 'git_repository')
 
-ENVOY_SHA = "f79a62b7cc9ca55d20104379ee0576617630cdaa"  # Feb 15, 2018 ( test: fix nit after #2591 (#2601) )
+ENVOY_SHA = "4dd49d8809f7aaa580538b3c228dd99a2fae92a4"  # Mar 20, 2018 (v1.6.0)
 
 http_archive(
     name = "envoy",
@@ -11,7 +11,7 @@ http_archive(
     url = "https://github.com/envoyproxy/envoy/archive/" + ENVOY_SHA + ".zip",
 )
 
-ENVOY_COMMON_SHA = "771b89c20a7a6f8edf3ebe3df2358f0e07e7edcd"  # Mar 28, 2018 (Move `SoloMetadata` functionality to envoy-common)
+ENVOY_COMMON_SHA = "2bc9569aec056df65bb4f67f0c47be968cac6256"  # Apr 3, 2018 (Fix compilation of `SoloMetadata` (#8))
 
 git_repository(
     name = "solo_envoy_common",

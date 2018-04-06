@@ -7,11 +7,11 @@ namespace Envoy {
 namespace Nats {
 namespace Streaming {
 
-void PubRequestHandler::onMessage(const Optional<std::string> &reply_to,
+void PubRequestHandler::onMessage(const absl::optional<std::string> &reply_to,
                                   const std::string &payload,
                                   InboxCallbacks &inbox_callbacks,
                                   PublishCallbacks &publish_callbacks) {
-  if (reply_to.valid()) {
+  if (reply_to.has_value()) {
     inbox_callbacks.onFailure("incoming PubAck with non-empty reply subject");
     return;
   }
@@ -22,7 +22,7 @@ void PubRequestHandler::onMessage(const Optional<std::string> &reply_to,
   }
 
   auto &&maybe_pub_ack = MessageUtility::parsePubAckMessage(payload);
-  if (maybe_pub_ack.valid() && maybe_pub_ack.value().error().empty()) {
+  if (maybe_pub_ack.has_value() && maybe_pub_ack.value().error().empty()) {
     publish_callbacks.onResponse();
   } else {
     publish_callbacks.onFailure();
@@ -30,7 +30,7 @@ void PubRequestHandler::onMessage(const Optional<std::string> &reply_to,
 }
 
 void PubRequestHandler::onMessage(
-    const std::string &inbox, const Optional<std::string> &reply_to,
+    const std::string &inbox, const absl::optional<std::string> &reply_to,
     const std::string &payload, InboxCallbacks &inbox_callbacks,
     std::map<std::string, PubRequest> &request_per_inbox) {
   // Find the inbox in the map.

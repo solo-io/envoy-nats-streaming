@@ -85,7 +85,7 @@ TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessage) {
 
   auto &&maybe_result = MessageUtility::parsePubAckMessage(message);
 
-  EXPECT_TRUE(maybe_result.valid());
+  EXPECT_TRUE(maybe_result.has_value());
   EXPECT_EQ(uuid, maybe_result.value().guid());
   EXPECT_TRUE(maybe_result.value().error().empty());
 }
@@ -97,7 +97,7 @@ TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessageWithError) {
 
   auto &&maybe_result = MessageUtility::parsePubAckMessage(message);
 
-  EXPECT_TRUE(maybe_result.valid());
+  EXPECT_TRUE(maybe_result.has_value());
   EXPECT_EQ(uuid, maybe_result.value().guid());
   EXPECT_EQ(error, maybe_result.value().error());
 }
@@ -105,7 +105,7 @@ TEST_F(NatsStreamingMessageUtilityTest, ParsePubAckMessageWithError) {
 TEST_F(NatsStreamingMessageUtilityTest, ParseInvalidPubAckMessage) {
   const std::string invalid_message{"This is not a PubAck message."};
   auto &&maybe_result{MessageUtility::parsePubAckMessage(invalid_message)};
-  EXPECT_FALSE(maybe_result.valid());
+  EXPECT_FALSE(maybe_result.has_value());
 }
 
 } // namespace Streaming

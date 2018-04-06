@@ -315,7 +315,7 @@ private:
         : hash_key_(std::hash<std::string>()(hash_key)) {}
     // TODO(danielhochman): convert to HashUtil::xxHash64 when we have a
     // migration strategy. Upstream::LoadBalancerContext
-    Optional<uint64_t> computeHashKey() override { return hash_key_; }
+    absl::optional<uint64_t> computeHashKey() override { return hash_key_; }
     const Router::MetadataMatchCriteria *
     metadataMatchCriteria() const override {
       return nullptr;
@@ -324,7 +324,7 @@ private:
       return nullptr;
     }
 
-    const Optional<uint64_t> hash_key_;
+    const absl::optional<uint64_t> hash_key_;
   };
 
   Upstream::ClusterManager &cm_;

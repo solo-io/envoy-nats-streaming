@@ -22,7 +22,7 @@ protected:
 };
 
 TEST_F(NatsStreamingConnectResponseHandlerTest, NonEmptyReplyTo) {
-  Optional<std::string> reply_to{"reply-to"};
+  absl::optional<std::string> reply_to{"reply-to"};
   const std::string payload{};
 
   EXPECT_CALL(
@@ -33,7 +33,7 @@ TEST_F(NatsStreamingConnectResponseHandlerTest, NonEmptyReplyTo) {
 }
 
 TEST_F(NatsStreamingConnectResponseHandlerTest, NoPayload) {
-  Optional<std::string> reply_to{};
+  absl::optional<std::string> reply_to{};
   const std::string payload{};
 
   EXPECT_CALL(callbacks_, onFailure("incoming ConnectResponse without payload"))
@@ -42,7 +42,7 @@ TEST_F(NatsStreamingConnectResponseHandlerTest, NoPayload) {
 }
 
 TEST_F(NatsStreamingConnectResponseHandlerTest, OnConnected) {
-  Optional<std::string> reply_to{};
+  absl::optional<std::string> reply_to{};
   const std::string payload{
       MessageUtility::createConnectResponseMessage("pub_prefix_1", "", "", "")};
 

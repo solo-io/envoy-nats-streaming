@@ -44,8 +44,8 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
   switch (state_) {
   case State::NotConnected:
     enqueuePendingRequest(subject, payload_string, callbacks, pub_ack_inbox);
-    cluster_id_.value(cluster_id);
-    discover_prefix_.value(discover_prefix);
+    cluster_id_.emplace(cluster_id);
+    discover_prefix_.emplace(discover_prefix);
     conn_pool_->setPoolCallbacks(*this);
     sendNatsMessage(MessageBuilder::createConnectMessage());
     state_ = State::Connecting;
@@ -94,7 +94,7 @@ void ClientImpl::onFailure(const std::string &error) {
 void ClientImpl::onConnected(const std::string &pub_prefix) {
   state_ = State::Connected;
 
-  pub_prefix_.value(pub_prefix);
+  pub_prefix_.emplace(pub_prefix);
 
   for (auto it = pending_request_per_inbox_.begin();
        it != pending_request_per_inbox_.end(); ++it) {
@@ -156,7 +156,7 @@ void ClientImpl::onOperation(Nats::MessagePtr &&value) {
 
 void ClientImpl::onPayload(Nats::MessagePtr &&value) {
   std::string &subject = getSubjectWaitingForPayload();
-  Optional<std::string> &reply_to = getReplyToWaitingForPayload();
+  absl::optional<std::string> &reply_to = getReplyToWaitingForPayload();
   std::string &payload = value->asString();
   if (subject == heartbeat_inbox_) {
     HeartbeatHandler::onMessage(reply_to, payload, *this);
@@ -187,11 +187,11 @@ void ClientImpl::onMsg(std::vector<absl::string_view> &&tokens) {
   auto num_tokens = tokens.size();
   switch (num_tokens) {
   case 4:
-    waitForPayload(std::string(tokens[1]), Optional<std::string>{});
+    waitForPayload(std::string(tokens[1]), absl::optional<std::string>{});
     break;
   case 5:
     waitForPayload(std::string(tokens[1]),
-                   Optional<std::string>(std::string(tokens[3])));
+                   absl::optional<std::string>(std::string(tokens[3])));
     break;
   default:
     // TODO(talnordan): Error handling.

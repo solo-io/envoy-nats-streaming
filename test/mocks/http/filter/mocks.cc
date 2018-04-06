@@ -9,7 +9,7 @@ namespace Http {
 MockSubjectRetriever::MockSubjectRetriever() {
   ON_CALL(*this, getSubject(_))
       .WillByDefault(
-          Invoke([this](const MetadataAccessor &) -> Optional<Subject> {
+          Invoke([this](const MetadataAccessor &) -> absl::optional<Subject> {
             return subject_;
           }));
 }

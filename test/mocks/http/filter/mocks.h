@@ -14,10 +14,10 @@ public:
   MockSubjectRetriever();
   ~MockSubjectRetriever();
 
-  MOCK_METHOD1(getSubject,
-               Optional<Subject>(const MetadataAccessor &metadataccessor));
+  MOCK_METHOD1(getSubject, absl::optional<Subject>(
+                               const MetadataAccessor &metadataccessor));
 
-  Optional<Subject> subject_;
+  absl::optional<Subject> subject_;
 };
 
 } // namespace Http

@@ -2,9 +2,10 @@
 
 #include <string>
 
-#include "envoy/common/optional.h"
 #include "envoy/common/pure.h"
 #include "envoy/nats/streaming/inbox_handler.h"
+
+#include "absl/types/optional.h"
 
 namespace Envoy {
 namespace Nats {
@@ -18,7 +19,7 @@ public:
     virtual void onConnected(const std::string &pub_prefix) PURE;
   };
 
-  static void onMessage(Optional<std::string> &reply_to,
+  static void onMessage(absl::optional<std::string> &reply_to,
                         const std::string &payload, Callbacks &callbacks);
 };
 

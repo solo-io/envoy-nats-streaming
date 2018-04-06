@@ -28,7 +28,7 @@ protected:
 };
 
 TEST_F(NatsStreamingPubRequestHandlerTest, NonEmptyReplyTo) {
-  const Optional<std::string> reply_to{"reply-to"};
+  const absl::optional<std::string> reply_to{"reply-to"};
   const std::string payload{};
 
   EXPECT_CALL(inbox_callbacks_,
@@ -39,7 +39,7 @@ TEST_F(NatsStreamingPubRequestHandlerTest, NonEmptyReplyTo) {
 }
 
 TEST_F(NatsStreamingPubRequestHandlerTest, NoPayload) {
-  const Optional<std::string> reply_to{};
+  const absl::optional<std::string> reply_to{};
   const std::string payload{};
 
   EXPECT_CALL(inbox_callbacks_, onFailure("incoming PubAck without payload"))
@@ -49,7 +49,7 @@ TEST_F(NatsStreamingPubRequestHandlerTest, NoPayload) {
 }
 
 TEST_F(NatsStreamingPubRequestHandlerTest, Error) {
-  const Optional<std::string> reply_to{};
+  const absl::optional<std::string> reply_to{};
   const std::string guid{"guid1"};
   const std::string error{"error1"};
   const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
@@ -60,7 +60,7 @@ TEST_F(NatsStreamingPubRequestHandlerTest, Error) {
 }
 
 TEST_F(NatsStreamingPubRequestHandlerTest, NoError) {
-  const Optional<std::string> reply_to{};
+  const absl::optional<std::string> reply_to{};
   const std::string guid{"guid1"};
   const std::string error{};
   const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
@@ -71,7 +71,7 @@ TEST_F(NatsStreamingPubRequestHandlerTest, NoError) {
 }
 
 TEST_F(NatsStreamingPubRequestHandlerTest, InvalidPayload) {
-  const Optional<std::string> reply_to{};
+  const absl::optional<std::string> reply_to{};
   const std::string guid{"guid1"};
   const std::string error{};
   const std::string payload{"This is not a PubAck message."};
@@ -83,7 +83,7 @@ TEST_F(NatsStreamingPubRequestHandlerTest, InvalidPayload) {
 
 TEST_F(NatsStreamingPubRequestHandlerTest, MapNoPayload) {
   const std::string inbox{"inbox1"};
-  const Optional<std::string> reply_to{};
+  const absl::optional<std::string> reply_to{};
   const std::string payload{};
   auto timeout_timer = Event::TimerPtr(new NiceMock<Event::MockTimer>);
   std::map<std::string, PubRequest> request_per_inbox;
@@ -100,7 +100,7 @@ TEST_F(NatsStreamingPubRequestHandlerTest, MapNoPayload) {
 
 TEST_F(NatsStreamingPubRequestHandlerTest, MapError) {
   const std::string inbox{"inbox1"};
-  const Optional<std::string> reply_to{};
+  const absl::optional<std::string> reply_to{};
   const std::string guid{"guid1"};
   const std::string error{"error1"};
   const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
@@ -118,7 +118,7 @@ TEST_F(NatsStreamingPubRequestHandlerTest, MapError) {
 
 TEST_F(NatsStreamingPubRequestHandlerTest, MapInvalidPayload) {
   const std::string inbox{"inbox1"};
-  const Optional<std::string> reply_to{};
+  const absl::optional<std::string> reply_to{};
   const std::string guid{"guid1"};
   const std::string error{};
   const std::string payload{"This is not a PubAck message."};
@@ -136,7 +136,7 @@ TEST_F(NatsStreamingPubRequestHandlerTest, MapInvalidPayload) {
 
 TEST_F(NatsStreamingPubRequestHandlerTest, MapNoError) {
   const std::string inbox{"inbox1"};
-  const Optional<std::string> reply_to{};
+  const absl::optional<std::string> reply_to{};
   const std::string guid{"guid1"};
   const std::string error{};
   const std::string payload{MessageUtility::createPubAckMessage(guid, error)};
@@ -154,7 +154,7 @@ TEST_F(NatsStreamingPubRequestHandlerTest, MapNoError) {
 
 TEST_F(NatsStreamingPubRequestHandlerTest, MapMissingInbox) {
   const std::string inbox{"inbox1"};
-  const Optional<std::string> reply_to{};
+  const absl::optional<std::string> reply_to{};
   const std::string guid{"guid1"};
   const std::string error{};
   const std::string payload{MessageUtility::createPubAckMessage(guid, error)};

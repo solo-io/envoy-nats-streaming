@@ -2,10 +2,11 @@
 
 #include <string>
 
-#include "envoy/common/optional.h"
 #include "envoy/common/pure.h"
 #include "envoy/nats/codec.h"
 #include "envoy/nats/streaming/inbox_handler.h"
+
+#include "absl/types/optional.h"
 
 namespace Envoy {
 namespace Nats {
@@ -21,7 +22,7 @@ public:
 
   // TODO(talnordan): For this handler, the payload is always empty. In the
   // genral case, use a NATS streaming message type instead of a raw payload.
-  static void onMessage(Optional<std::string> &reply_to,
+  static void onMessage(absl::optional<std::string> &reply_to,
                         const std::string &payload, Callbacks &callbacks);
 };
 

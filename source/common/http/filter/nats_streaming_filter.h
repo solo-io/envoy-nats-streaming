@@ -49,7 +49,7 @@ public:
 private:
   void retrieveSubject(const MetadataAccessor &meta_accessor);
 
-  inline bool isActive() { return optional_subject_.valid(); }
+  inline bool isActive() { return optional_subject_.has_value(); }
 
   void relayToNatsStreaming();
 
@@ -62,9 +62,9 @@ private:
   SubjectRetrieverSharedPtr subject_retriever_;
   Nats::Streaming::ClientPtr nats_streaming_client_;
   bool stream_destroyed_{};
-  Optional<Subject> optional_subject_;
+  absl::optional<Subject> optional_subject_;
   StreamDecoderFilterCallbacks *decoder_callbacks_{};
-  Optional<uint32_t> decoder_buffer_limit_{};
+  absl::optional<uint32_t> decoder_buffer_limit_{};
   Buffer::OwnedImpl body_{};
   Nats::Streaming::PublishRequestPtr in_flight_request_{};
 };

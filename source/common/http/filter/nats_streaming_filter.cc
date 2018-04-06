@@ -58,7 +58,7 @@ NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
   RELEASE_ASSERT(isActive());
   body_.move(data);
 
-  if ((decoder_buffer_limit_.valid()) &&
+  if ((decoder_buffer_limit_.has_value()) &&
       ((body_.length() + data.length()) > decoder_buffer_limit_.value())) {
 
     Http::Utility::sendLocalReply(*decoder_callbacks_, stream_destroyed_,
@@ -112,7 +112,7 @@ void NatsStreamingFilter::retrieveSubject(
 }
 
 void NatsStreamingFilter::relayToNatsStreaming() {
-  RELEASE_ASSERT(optional_subject_.valid());
+  RELEASE_ASSERT(optional_subject_.has_value());
   RELEASE_ASSERT(!optional_subject_.value().subject->empty());
 
   const std::string *cluster_name =

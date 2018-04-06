@@ -12,29 +12,29 @@ using Config::SoloMetadata;
 
 MetadataSubjectRetriever::MetadataSubjectRetriever() {}
 
-Optional<Subject>
+absl::optional<Subject>
 MetadataSubjectRetriever::getSubject(const MetadataAccessor &metadataccessor) {
   auto maybe_subject = metadataccessor.getFunctionName();
-  if (!maybe_subject.valid()) {
+  if (!maybe_subject.has_value()) {
     return {};
   }
 
-  Optional<const ProtobufWkt::Struct *> maybe_cluster_meta =
+  absl::optional<const ProtobufWkt::Struct *> maybe_cluster_meta =
       metadataccessor.getClusterMetadata();
-  if (!maybe_cluster_meta.valid()) {
+  if (!maybe_cluster_meta.has_value()) {
     return {};
   }
   const ProtobufWkt::Struct *cluster_meta = maybe_cluster_meta.value();
 
   auto maybe_discover_prefix = SoloMetadata::nonEmptyStringValue(
       *cluster_meta, Config::MetadataNatsStreamingKeys::get().DISCOVER_PREFIX);
-  if (!maybe_discover_prefix.valid()) {
+  if (!maybe_discover_prefix.has_value()) {
     return {};
   }
 
   auto maybe_cluster_id = SoloMetadata::nonEmptyStringValue(
       *cluster_meta, Config::MetadataNatsStreamingKeys::get().CLUSTER_ID);
-  if (!maybe_cluster_id.valid()) {
+  if (!maybe_cluster_id.has_value()) {
     return {};
   }
 
