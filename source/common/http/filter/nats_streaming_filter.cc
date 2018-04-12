@@ -15,8 +15,6 @@
 #include "common/http/solo_filter_utility.h"
 #include "common/http/utility.h"
 
-#include "server/config/network/http_connection_manager.h"
-
 namespace Envoy {
 namespace Http {
 
