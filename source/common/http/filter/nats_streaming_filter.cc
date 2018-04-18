@@ -52,7 +52,6 @@ NatsStreamingFilter::decodeHeaders(Envoy::Http::HeaderMap &headers,
 Envoy::Http::FilterDataStatus
 NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
                                 bool end_stream) {
-  UNREFERENCED_PARAMETER(data);
   RELEASE_ASSERT(isActive());
   body_.move(data);
 
