@@ -147,10 +147,6 @@ private:
         absl::optional<std::pair<std::string, absl::optional<std::string>>>{};
   }
 
-  inline std::string drainBufferToString(Buffer::Instance &buffer) const;
-
-  inline std::string bufferToString(const Buffer::Instance &buffer) const;
-
   Tcp::ConnPool::InstancePtr<Message> conn_pool_;
   TokenGeneratorImpl token_generator_;
   Event::Dispatcher &dispatcher_;

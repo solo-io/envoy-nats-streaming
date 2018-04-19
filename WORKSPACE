@@ -11,7 +11,7 @@ http_archive(
     url = "https://github.com/envoyproxy/envoy/archive/" + ENVOY_SHA + ".zip",
 )
 
-ENVOY_COMMON_SHA = "2bc9569aec056df65bb4f67f0c47be968cac6256"  # Apr 3, 2018 (Fix compilation of `SoloMetadata` (#8))
+ENVOY_COMMON_SHA = "ef1a5da85d62ba90a28bb76a54912692b8850094"  # Apr 19, 2018 (Introduce `class BufferUtility`)
 
 git_repository(
     name = "solo_envoy_common",

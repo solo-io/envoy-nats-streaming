@@ -2,6 +2,7 @@
 
 #include "envoy/event/dispatcher.h"
 
+#include "common/buffer/buffer_utility.h"
 #include "common/common/assert.h"
 #include "common/common/macros.h"
 #include "common/common/utility.h"
@@ -10,6 +11,8 @@
 namespace Envoy {
 namespace Nats {
 namespace Streaming {
+
+using Buffer::BufferUtility;
 
 const std::string ClientImpl::INBOX_PREFIX{"_INBOX"};
 const std::string ClientImpl::PUB_ACK_PREFIX{"_STAN.acks"};
@@ -34,7 +37,9 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
                                           const std::string &discover_prefix,
                                           Buffer::Instance &payload,
                                           PublishCallbacks &callbacks) {
-  std::string payload_string{drainBufferToString(payload)};
+  // TODO(talnordan): Consider leveraging the fact that `max_payload` is given
+  // in the NATS `INFO` message and reuse the same pre-allocated `std:string`.
+  std::string payload_string{BufferUtility::drainBufferToString(payload)};
 
   // TODO(talnordan): For a possible performance improvement, consider replacing
   // the random child token with a counter.
@@ -289,30 +294,6 @@ inline void ClientImpl::pubNatsStreamingMessage(const std::string &subject,
   const Message pubMessage =
       MessageBuilder::createPubMessage(subject, reply_to, message);
   sendNatsMessage(pubMessage);
-}
-
-// TODO(talnordan): Consider introducing `BufferUtility` and extracting this
-// member function into it.
-std::string ClientImpl::drainBufferToString(Buffer::Instance &buffer) const {
-  std::string output = bufferToString(buffer);
-  buffer.drain(buffer.length());
-  return output;
-}
-
-// TODO(talnordan): This is duplicated from `TestUtility::bufferToString()`.
-// Consider moving the code to a shared utility class.
-// TODO(talnordan): Consider leveraging the fact that `max_payload` is given in
-// the NATS `INFO` message and reuse the same pre-allocated `std:string`.
-std::string ClientImpl::bufferToString(const Buffer::Instance &buffer) const {
-  std::string output;
-  uint64_t num_slices = buffer.getRawSlices(nullptr, 0);
-  Buffer::RawSlice slices[num_slices];
-  buffer.getRawSlices(slices, num_slices);
-  for (Buffer::RawSlice &slice : slices) {
-    output.append(static_cast<const char *>(slice.mem_), slice.len_);
-  }
-
-  return output;
 }
 
 } // namespace Streaming

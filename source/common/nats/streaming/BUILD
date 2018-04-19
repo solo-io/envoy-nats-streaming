@@ -25,6 +25,7 @@ envoy_cc_library(
         "//source/common/nats/streaming:message_utility_lib",
         "//source/common/nats/streaming:pub_request_handler_lib",
         "@envoy//source/exe:envoy_common_lib",
+        "@solo_envoy_common//source/common/buffer:buffer_utility_lib",
     ],
 )
 
