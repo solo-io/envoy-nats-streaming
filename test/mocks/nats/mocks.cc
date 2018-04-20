@@ -1,8 +1,5 @@
 #include "mocks.h"
 
-using testing::Invoke;
-using testing::_;
-
 namespace Envoy {
 namespace Nats {
 
