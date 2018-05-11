@@ -83,7 +83,7 @@ HttpFilterFactoryCb NatsStreamingFilterConfigFactory::createFilter(
   Nats::Streaming::ClientPtr nats_streaming_client =
       std::make_shared<Nats::Streaming::ClientPool>(
           config->cluster(), context.clusterManager(), client_factory,
-          context.threadLocal(), context.random(), config->op_timeout());
+          context.threadLocal(), context.random(), config->opTimeout());
 
   return [&context, config, subjectRetriever, nats_streaming_client](
              Envoy::Http::FilterChainFactoryCallbacks &callbacks) -> void {

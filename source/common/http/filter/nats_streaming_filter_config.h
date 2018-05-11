@@ -32,9 +32,9 @@ public:
     }
   }
 
-  const std::chrono::milliseconds &op_timeout() const { return op_timeout_; }
+  const std::chrono::milliseconds &opTimeout() const { return op_timeout_; }
   const std::string &cluster() const { return cluster_; }
-  uint32_t max_connections() const { return max_connections_; }
+  uint32_t maxConnections() const { return max_connections_; }
 
 private:
   std::chrono::milliseconds op_timeout_;
