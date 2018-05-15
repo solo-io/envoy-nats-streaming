@@ -23,6 +23,6 @@ envoy_cc_library(
         "//source/common/nats:codec_lib",
         "//source/common/nats/streaming:client_pool_lib",
         "//source/common/tcp:conn_pool_lib",
-        "@envoy//source/exe:envoy_common_lib",
+        "@envoy//source/extensions/filters/http/common:factory_base_lib",
     ],
 )

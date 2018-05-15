@@ -316,8 +316,7 @@ private:
     // TODO(danielhochman): convert to HashUtil::xxHash64 when we have a
     // migration strategy. Upstream::LoadBalancerContext
     absl::optional<uint64_t> computeHashKey() override { return hash_key_; }
-    const Router::MetadataMatchCriteria *
-    metadataMatchCriteria() const override {
+    const Router::MetadataMatchCriteria *metadataMatchCriteria() override {
       return nullptr;
     }
     const Network::Connection *downstreamConnection() const override {

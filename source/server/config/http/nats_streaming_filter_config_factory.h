@@ -2,35 +2,31 @@
 
 #include <string>
 
-#include "envoy/server/filter_config.h"
+#include "common/config/nats_streaming_well_known_names.h"
 
-#include "nats_streaming_filter.pb.h"
+#include "extensions/filters/http/common/factory_base.h"
+#include "nats_streaming_filter.pb.validate.h"
 
 namespace Envoy {
 namespace Server {
 namespace Configuration {
 
-class NatsStreamingFilterConfigFactory : public NamedHttpFilterConfigFactory {
+using Extensions::HttpFilters::Common::FactoryBase;
+
+/**
+ * Config registration for the NATS Streaming filter.
+ */
+class NatsStreamingFilterConfigFactory
+    : public FactoryBase<envoy::api::v2::filter::http::NatsStreaming> {
 public:
-  HttpFilterFactoryCb createFilterFactory(const Json::Object &config,
-                                          const std::string &stat_prefix,
-                                          FactoryContext &context) override;
-
-  HttpFilterFactoryCb
-  createFilterFactoryFromProto(const Protobuf::Message &config,
-                               const std::string &stat_prefix,
-                               FactoryContext &context) override;
-
-  ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-
-  std::string name() override;
+  NatsStreamingFilterConfigFactory()
+      : FactoryBase(
+            Config::NatsStreamingHttpFilterNames::get().NATS_STREAMING) {}
 
 private:
-  HttpFilterFactoryCb
-  createFilter(const envoy::api::v2::filter::http::NatsStreaming &proto_config,
-               FactoryContext &context);
-
-  static const std::string NATS_STREAMING_HTTP_FILTER_SCHEMA;
+  Http::FilterFactoryCb createFilterFactoryFromProtoTyped(
+      const envoy::api::v2::filter::http::NatsStreaming &proto_config,
+      const std::string &stats_prefix, FactoryContext &context) override;
 };
 
 } // namespace Configuration

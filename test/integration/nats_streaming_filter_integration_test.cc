@@ -108,20 +108,19 @@ TEST_P(NatsStreamingFilterIntegrationTest, Test1) {
   Envoy::Http::TestHeaderMapImpl headers{
       {":method", "POST"}, {":authority", "www.solo.io"}, {":path", "/"}};
 
-  Envoy::IntegrationStreamDecoderPtr response(
-      new Envoy::IntegrationStreamDecoder(*dispatcher_));
   Envoy::FakeStreamPtr request_stream;
 
-  Envoy::Http::StreamEncoder &stream =
-      codec_client_->startRequest(headers, *response);
+  auto encoder_decoder = codec_client_->startRequest(headers);
+  Http::StreamEncoder &encoder = encoder_decoder.first;
   Envoy::Buffer::OwnedImpl data;
   data.add(std::string("{\"a\":123}"));
-  codec_client_->sendData(stream, data, true);
+  codec_client_->sendData(encoder, data, true);
 
   Envoy::FakeHttpConnectionPtr fake_upstream_connection =
       fake_upstreams_[0]->waitForHttpConnection(*dispatcher_);
   request_stream = fake_upstream_connection->waitForNewStream(*dispatcher_);
   request_stream->waitForEndStream(*dispatcher_);
+  auto response = std::move(encoder_decoder.second);
   response->waitForEndStream();
 
   // TODO(talnordan)
