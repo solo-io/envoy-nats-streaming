@@ -13,7 +13,9 @@ envoy_cc_library(
     srcs = ["nuid.cc"],
     hdrs = ["nuid.h"],
     repository = "@envoy",
+    external_deps = ["abseil_optional"],
     deps = [
-        "@envoy//source/exe:envoy_common_lib",
+         "@envoy//include/envoy/runtime:runtime_interface",
+         "@envoy//source/common/common:assert_lib",
     ],
 )

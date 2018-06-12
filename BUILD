@@ -28,7 +28,6 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//source/server/config/http:nats_streaming_filter_config_lib",
-        "@envoy//source/exe:envoy_common_lib",
     ],
 )
 

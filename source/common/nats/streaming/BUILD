@@ -24,7 +24,6 @@ envoy_cc_library(
         "//source/common/nats/streaming:heartbeat_handler_lib",
         "//source/common/nats/streaming:message_utility_lib",
         "//source/common/nats/streaming:pub_request_handler_lib",
-        "@envoy//source/exe:envoy_common_lib",
         "@solo_envoy_common//source/common/buffer:buffer_utility_lib",
     ],
 )
@@ -41,7 +40,6 @@ envoy_cc_library(
         "//source/common/nats:codec_lib",
         "//source/common/nats/streaming:client_lib",
         "//source/common/tcp:conn_pool_lib",
-        "@envoy//source/exe:envoy_common_lib",
     ],
 )
 
@@ -53,7 +51,6 @@ envoy_cc_library(
     deps = [
         "//include/envoy/nats/streaming:inbox_handler_interface",
         "//source/common/nats/streaming:message_utility_lib",
-        "@envoy//source/exe:envoy_common_lib",
     ],
 )
 
@@ -62,10 +59,10 @@ envoy_cc_library(
     srcs = ["heartbeat_handler.cc"],
     hdrs = ["heartbeat_handler.h"],
     repository = "@envoy",
+    external_deps = ["abseil_optional"],
     deps = [
         "//include/envoy/nats/streaming:inbox_handler_interface",
         "//source/common/nats:message_builder_lib",
-        "@envoy//source/exe:envoy_common_lib",
     ],
 )
 
@@ -74,9 +71,9 @@ envoy_cc_library(
     srcs = ["message_utility.cc"],
     hdrs = ["message_utility.h"],
     repository = "@envoy",
+    external_deps = ["abseil_optional"],
     deps = [
         "//:protocol_proto_cc",
-        "@envoy//source/exe:envoy_common_lib",
     ],
 )
 
@@ -89,6 +86,7 @@ envoy_cc_library(
         "//include/envoy/nats/streaming:client_interface",
         "//include/envoy/nats/streaming:inbox_handler_interface",
         "//source/common/nats/streaming:message_utility_lib",
-        "@envoy//source/exe:envoy_common_lib",
+        "@envoy//include/envoy/event:timer_interface",
+        "@envoy//source/common/buffer:buffer_lib",
     ],
 )
