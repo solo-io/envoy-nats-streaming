@@ -322,8 +322,8 @@ private:
     const Network::Connection *downstreamConnection() const override {
       return nullptr;
     }
-   
-    virtual const Http::HeaderMap* downstreamHeaders() const override {
+
+    const Http::HeaderMap *downstreamHeaders() const override {
       return nullptr;
     }
 

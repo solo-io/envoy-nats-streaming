@@ -13,8 +13,7 @@ envoy_cc_test(
     deps = [
         "//source/common/nats/nuid:nuid_lib",
         "@envoy//source/common/common:assert_lib",
-        "@envoy//test/mocks/runtime:runtime_mocks",
         "@envoy//source/common/runtime:runtime_lib",
-
+        "@envoy//test/mocks/runtime:runtime_mocks",
     ],
 )

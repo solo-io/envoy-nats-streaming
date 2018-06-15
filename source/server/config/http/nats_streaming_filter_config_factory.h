@@ -5,6 +5,7 @@
 #include "common/config/nats_streaming_well_known_names.h"
 
 #include "extensions/filters/http/common/factory_base.h"
+
 #include "nats_streaming_filter.pb.validate.h"
 
 namespace Envoy {

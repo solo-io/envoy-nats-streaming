@@ -58,8 +58,8 @@ envoy_cc_library(
     name = "heartbeat_handler_lib",
     srcs = ["heartbeat_handler.cc"],
     hdrs = ["heartbeat_handler.h"],
-    repository = "@envoy",
     external_deps = ["abseil_optional"],
+    repository = "@envoy",
     deps = [
         "//include/envoy/nats/streaming:inbox_handler_interface",
         "//source/common/nats:message_builder_lib",
@@ -70,8 +70,8 @@ envoy_cc_library(
     name = "message_utility_lib",
     srcs = ["message_utility.cc"],
     hdrs = ["message_utility.h"],
-    repository = "@envoy",
     external_deps = ["abseil_optional"],
+    repository = "@envoy",
     deps = [
         "//:protocol_proto_cc",
     ],

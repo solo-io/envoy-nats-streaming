@@ -57,7 +57,9 @@ NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
   if ((decoder_buffer_limit_.has_value()) &&
       ((body_.length() + data.length()) > decoder_buffer_limit_.value())) {
 
-    decoder_callbacks_->sendLocalReply(Http::Code::PayloadTooLarge, "nats streaming paylaod too large", nullptr);
+    decoder_callbacks_->sendLocalReply(Http::Code::PayloadTooLarge,
+                                       "nats streaming paylaod too large",
+                                       nullptr);
     return FilterDataStatus::StopIterationNoBuffer;
   }
 
