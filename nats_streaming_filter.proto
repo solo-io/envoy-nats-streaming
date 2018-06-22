@@ -6,11 +6,12 @@ import "google/protobuf/duration.proto";
 import "validate/validate.proto";
 
 // [#protodoc-title: NatsStreaming]
-// NATS Streaming :ref:`configuration overview <config_http_filters_nats_streaming>`.
+// NATS Streaming :ref:`configuration overview
+// <config_http_filters_nats_streaming>`.
 
 // [#proto-status: experimental]
 message NatsStreaming {
-    string cluster = 1 [(validate.rules).string.min_bytes = 1];
-    uint32 max_connections = 2;
-    google.protobuf.Duration op_timeout = 3;
+  string cluster = 1 [ (validate.rules).string.min_bytes = 1 ];
+  uint32 max_connections = 2;
+  google.protobuf.Duration op_timeout = 3;
 }

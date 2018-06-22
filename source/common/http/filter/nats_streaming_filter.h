@@ -61,7 +61,6 @@ private:
   const NatsStreamingFilterConfigSharedPtr config_;
   SubjectRetrieverSharedPtr subject_retriever_;
   Nats::Streaming::ClientPtr nats_streaming_client_;
-  bool stream_destroyed_{};
   absl::optional<Subject> optional_subject_;
   StreamDecoderFilterCallbacks *decoder_callbacks_{};
   absl::optional<uint32_t> decoder_buffer_limit_{};

@@ -28,7 +28,6 @@ NatsStreamingFilter::NatsStreamingFilter(
 NatsStreamingFilter::~NatsStreamingFilter() {}
 
 void NatsStreamingFilter::onDestroy() {
-  stream_destroyed_ = true;
 
   if (in_flight_request_ != nullptr) {
     in_flight_request_->cancel();
@@ -58,9 +57,9 @@ NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
   if ((decoder_buffer_limit_.has_value()) &&
       ((body_.length() + data.length()) > decoder_buffer_limit_.value())) {
 
-    Http::Utility::sendLocalReply(*decoder_callbacks_, stream_destroyed_,
-                                  Http::Code::PayloadTooLarge,
-                                  "nats streaming paylaod too large");
+    decoder_callbacks_->sendLocalReply(Http::Code::PayloadTooLarge,
+                                       "nats streaming paylaod too large",
+                                       nullptr);
     return FilterDataStatus::StopIterationNoBuffer;
   }
 
@@ -133,8 +132,7 @@ void NatsStreamingFilter::onCompletion(Code response_code,
                                        const std::string &body_text) {
   in_flight_request_ = nullptr;
 
-  Http::Utility::sendLocalReply(*decoder_callbacks_, stream_destroyed_,
-                                response_code, body_text);
+  decoder_callbacks_->sendLocalReply(response_code, body_text, nullptr);
 }
 
 void NatsStreamingFilter::onCompletion(

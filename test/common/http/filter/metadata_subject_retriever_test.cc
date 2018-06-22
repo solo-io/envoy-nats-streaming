@@ -60,8 +60,8 @@ public:
   absl::optional<ProtobufWkt::Struct> route_metadata_;
 };
 
-Protobuf::Struct getMetadata(const std::string &json) {
-  Protobuf::Struct metadata;
+ProtobufWkt::Struct getMetadata(const std::string &json) {
+  ProtobufWkt::Struct metadata;
   MessageUtil::loadFromJson(json, metadata);
 
   return metadata;
@@ -69,9 +69,9 @@ Protobuf::Struct getMetadata(const std::string &json) {
 
 TesterMetadataAccessor
 getMetadataAccessor(const std::string &function_name,
-                    const Protobuf::Struct &func_metadata,
-                    const Protobuf::Struct &cluster_metadata,
-                    const Protobuf::Struct &route_metadata) {
+                    const ProtobufWkt::Struct &func_metadata,
+                    const ProtobufWkt::Struct &cluster_metadata,
+                    const ProtobufWkt::Struct &route_metadata) {
   TesterMetadataAccessor testaccessor;
   testaccessor.function_name_ = function_name;
   testaccessor.function_spec_ = func_metadata;

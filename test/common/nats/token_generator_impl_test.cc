@@ -28,7 +28,7 @@ TEST_F(NatsTokenGeneratorImplTest, Random) {
     for (auto j = 0; j < 10; ++j) {
       auto token = token_generator.random();
       EXPECT_FALSE(token.empty());
-      constexpr auto isalnum = [](const char c) { return std::isalnum(c); };
+      const auto isalnum = [](const char c) { return std::isalnum(c); };
       EXPECT_TRUE(std::all_of(token.begin(), token.end(), isalnum));
     }
   }
