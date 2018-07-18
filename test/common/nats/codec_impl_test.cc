@@ -6,7 +6,6 @@
 
 #include "test/mocks/nats/mocks.h"
 #include "test/test_common/printers.h"
-#include "test/test_common/utility.h"
 
 #include "gtest/gtest.h"
 
@@ -33,7 +32,7 @@ TEST_F(NatsEncoderDecoderImplTest, Empty) {
   Message value;
   EXPECT_EQ("\"\"", value.toString());
   encoder_.encode(value, buffer_);
-  EXPECT_EQ("\r\n", TestUtility::bufferToString(buffer_));
+  EXPECT_EQ("\r\n", buffer_.toString());
   decoder_.decode(buffer_);
   EXPECT_EQ(value, *decoded_values_[0]);
   EXPECT_EQ(0UL, buffer_.length());
@@ -44,7 +43,7 @@ TEST_F(NatsEncoderDecoderImplTest, SimpleString) {
   value.asString() = "simple string";
   EXPECT_EQ("\"simple string\"", value.toString());
   encoder_.encode(value, buffer_);
-  EXPECT_EQ("simple string\r\n", TestUtility::bufferToString(buffer_));
+  EXPECT_EQ("simple string\r\n", buffer_.toString());
   decoder_.decode(buffer_);
   EXPECT_EQ(value, *decoded_values_[0]);
   EXPECT_EQ(0UL, buffer_.length());
@@ -59,8 +58,7 @@ TEST_F(NatsEncoderDecoderImplTest, MultipleSimpleStrings) {
   value2.asString() = "simple string 2";
   encoder_.encode(value2, buffer_);
 
-  EXPECT_EQ("simple string 1\r\nsimple string 2\r\n",
-            TestUtility::bufferToString(buffer_));
+  EXPECT_EQ("simple string 1\r\nsimple string 2\r\n", buffer_.toString());
 
   decoder_.decode(buffer_);
   EXPECT_EQ(value1, *decoded_values_[0]);
@@ -72,7 +70,7 @@ TEST_F(NatsEncoderDecoderImplTest, MultipleSimpleStringsMultipleDecode) {
   Message value1;
   value1.asString() = "simple string 1";
   encoder_.encode(value1, buffer_);
-  EXPECT_EQ("simple string 1\r\n", TestUtility::bufferToString(buffer_));
+  EXPECT_EQ("simple string 1\r\n", buffer_.toString());
   decoder_.decode(buffer_);
   EXPECT_EQ(value1, *decoded_values_[0]);
   EXPECT_EQ(0UL, buffer_.length());
@@ -80,7 +78,7 @@ TEST_F(NatsEncoderDecoderImplTest, MultipleSimpleStringsMultipleDecode) {
   Message value2;
   value2.asString() = "simple string 2";
   encoder_.encode(value2, buffer_);
-  EXPECT_EQ("simple string 2\r\n", TestUtility::bufferToString(buffer_));
+  EXPECT_EQ("simple string 2\r\n", buffer_.toString());
   decoder_.decode(buffer_);
   EXPECT_EQ(value2, *decoded_values_[1]);
   EXPECT_EQ(0UL, buffer_.length());

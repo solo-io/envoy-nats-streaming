@@ -17,7 +17,6 @@ envoy_cc_test(
         "//test/mocks/nats:nats_mocks",
         "@envoy//source/common/buffer:buffer_lib",
         "@envoy//source/common/common:assert_lib",
-        "@envoy//test/test_common:utility_lib",
     ],
 )
 

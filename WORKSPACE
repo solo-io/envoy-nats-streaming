@@ -3,7 +3,7 @@ workspace(name="nats_streaming_filter")
 # Use skylark for native Git.
 load('@bazel_tools//tools/build_defs/repo:git.bzl', 'git_repository')
 
-ENVOY_SHA = "01fef5ba2d09c3b501ee89b645998a47e70cd44d"  # May 11, 2018 (http filters: less filter factory boilerplate)
+ENVOY_SHA = "80be024c64d700fba25519dd458bff47373c5fbe"  # July 10, 2018 (authz_fix: keep the previous behaviour of adding encoding header (#3805))
 
 http_archive(
     name = "envoy",
@@ -11,7 +11,7 @@ http_archive(
     url = "https://github.com/envoyproxy/envoy/archive/" + ENVOY_SHA + ".zip",
 )
 
-ENVOY_COMMON_SHA = "ef1a5da85d62ba90a28bb76a54912692b8850094"  # Apr 19, 2018 (Introduce `class BufferUtility`)
+ENVOY_COMMON_SHA = "e9f7be573f87716a67e5d4561e60b65494e6532c"  # June 25, 2018 (Upgrade Envoy (#18))
 
 git_repository(
     name = "solo_envoy_common",
