@@ -3,7 +3,7 @@ workspace(name="nats_streaming_filter")
 # Use skylark for native Git.
 load('@bazel_tools//tools/build_defs/repo:git.bzl', 'git_repository')
 
-ENVOY_SHA = "80be024c64d700fba25519dd458bff47373c5fbe"  # July 10, 2018 (authz_fix: keep the previous behaviour of adding encoding header (#3805))
+ENVOY_SHA = "b32eabfc141760ec14622a4a2a2f0ab0a741cd6c"  # July b32eabfc141760ec14622a4a2a2f0ab0a741cd6c, 2018 (upstream: implement Cluster's load_assignment field (#3864))
 
 http_archive(
     name = "envoy",
@@ -11,7 +11,7 @@ http_archive(
     url = "https://github.com/envoyproxy/envoy/archive/" + ENVOY_SHA + ".zip",
 )
 
-ENVOY_COMMON_SHA = "e9f7be573f87716a67e5d4561e60b65494e6532c"  # June 25, 2018 (Upgrade Envoy (#18))
+ENVOY_COMMON_SHA = "79194c3b1ce1d5c7e5bb84ada2cc757efef36180"  # July 15, 2018 (Upgrade Envoy)
 
 git_repository(
     name = "solo_envoy_common",
