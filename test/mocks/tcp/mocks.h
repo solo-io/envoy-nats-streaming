@@ -3,7 +3,7 @@
 #include <string>
 
 #include "envoy/tcp/codec.h"
-#include "envoy/tcp/conn_pool.h"
+#include "envoy/tcp/conn_pool_nats.h"
 
 #include "common/tcp/codec_impl.h"
 
