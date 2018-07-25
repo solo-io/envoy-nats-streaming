@@ -4,7 +4,7 @@
 
 #include "envoy/event/dispatcher.h"
 #include "envoy/network/connection.h"
-#include "envoy/tcp/conn_pool.h"
+#include "envoy/tcp/conn_pool_nats.h"
 #include "envoy/thread_local/thread_local.h"
 #include "envoy/upstream/cluster_manager.h"
 #include "envoy/upstream/thread_local_cluster.h"

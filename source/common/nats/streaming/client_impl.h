@@ -6,7 +6,7 @@
 #include "envoy/nats/codec.h"
 #include "envoy/nats/streaming/client.h"
 #include "envoy/runtime/runtime.h"
-#include "envoy/tcp/conn_pool.h"
+#include "envoy/tcp/conn_pool_nats.h"
 
 #include "common/common/logger.h"
 #include "common/nats/streaming/connect_response_handler.h"

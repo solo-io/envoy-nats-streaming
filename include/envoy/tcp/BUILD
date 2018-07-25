@@ -17,7 +17,7 @@ envoy_cc_library(
 
 envoy_cc_library(
     name = "conn_pool_interface",
-    hdrs = ["conn_pool.h"],
+    hdrs = ["conn_pool_nats.h"],
     repository = "@envoy",
     deps = [
         ":codec_interface",
