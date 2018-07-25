@@ -39,7 +39,7 @@ Envoy::Http::FilterHeadersStatus
 NatsStreamingFilter::decodeHeaders(Envoy::Http::HeaderMap &headers,
                                    bool end_stream) {
   UNREFERENCED_PARAMETER(headers);
-  RELEASE_ASSERT(isActive());
+  RELEASE_ASSERT(isActive(), "");
 
   if (end_stream) {
     relayToNatsStreaming();
@@ -51,7 +51,7 @@ NatsStreamingFilter::decodeHeaders(Envoy::Http::HeaderMap &headers,
 Envoy::Http::FilterDataStatus
 NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
                                 bool end_stream) {
-  RELEASE_ASSERT(isActive());
+  RELEASE_ASSERT(isActive(), "");
   body_.move(data);
 
   if ((decoder_buffer_limit_.has_value()) &&
@@ -78,7 +78,7 @@ NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
 
 Envoy::Http::FilterTrailersStatus
 NatsStreamingFilter::decodeTrailers(Envoy::Http::HeaderMap &) {
-  RELEASE_ASSERT(isActive());
+  RELEASE_ASSERT(isActive(), "");
 
   relayToNatsStreaming();
   return Envoy::Http::FilterTrailersStatus::StopIteration;
@@ -108,8 +108,8 @@ void NatsStreamingFilter::retrieveSubject(
 }
 
 void NatsStreamingFilter::relayToNatsStreaming() {
-  RELEASE_ASSERT(optional_subject_.has_value());
-  RELEASE_ASSERT(!optional_subject_.value().subject->empty());
+  RELEASE_ASSERT(optional_subject_.has_value(), "");
+  RELEASE_ASSERT(!optional_subject_.value().subject->empty(), "");
 
   const std::string *cluster_name =
       SoloFilterUtility::resolveClusterName(decoder_callbacks_);
