@@ -229,7 +229,7 @@ public:
 
   // Tcp::ConnPool::Instance
   void setPoolCallbacks(PoolCallbacks<T> &callbacks) override {
-    RELEASE_ASSERT(callbacks_ == nullptr);
+    RELEASE_ASSERT(callbacks_ == nullptr, "");
     callbacks_ = &callbacks;
   }
   void makeRequest(const std::string &hash_key, const T &request) override {
@@ -290,7 +290,7 @@ private:
         }
 
         ThreadLocalActiveClientPtr client{new ThreadLocalActiveClient(*this)};
-        RELEASE_ASSERT(parent_.callbacks_ != nullptr);
+        RELEASE_ASSERT(parent_.callbacks_ != nullptr, "");
         client->client_ = parent_.client_factory_.create(
             host, dispatcher_, *parent_.callbacks_, parent_.config_);
         client->client_->addConnectionCallbacks(*client);
