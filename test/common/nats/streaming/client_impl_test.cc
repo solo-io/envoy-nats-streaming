@@ -17,7 +17,7 @@ namespace Streaming {
 
 class NatsStreamingClientImplTest : public testing::Test {
 public:
-  Nats::ConnPool::MockInstance *conn_pool_{new Nats::ConnPool::MockInstance()};
+  Nats::ConnPoolNats::MockInstance *conn_pool_{new Nats::ConnPoolNats::MockInstance()};
   NiceMock<Runtime::MockRandomGenerator> random_;
   Event::MockDispatcher dispatcher_;
   std::chrono::milliseconds op_timeout_{5000};
@@ -27,7 +27,7 @@ public:
 
 TEST_F(NatsStreamingClientImplTest, Empty) {
   // TODO(talnordan): This is a dummy test.
-  ClientImpl client{Tcp::ConnPool::InstancePtr<Message>{conn_pool_}, random_,
+  ClientImpl client{Tcp::ConnPoolNats::InstancePtr<Message>{conn_pool_}, random_,
                     dispatcher_, op_timeout_};
 }
 

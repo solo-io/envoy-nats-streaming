@@ -9,8 +9,9 @@
 
 #include "test/mocks/event/mocks.h"
 #include "test/mocks/network/mocks.h"
-#include "test/mocks/tcp/mocks.h"
+#include "test/mocks/tcp/mocks_nats.h"
 #include "test/mocks/thread_local/mocks.h"
+
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/printers.h"
 
@@ -28,7 +29,7 @@ using testing::_;
 
 namespace Envoy {
 namespace Tcp {
-namespace ConnPool {
+namespace ConnPoolNats {
 
 using T = std::string;
 using TPtr = MessagePtr<T>;
@@ -337,7 +338,7 @@ public:
     conn_pool_->setPoolCallbacks(callbacks_);
   }
 
-  // Tcp::ConnPool::ClientFactory
+  // Tcp::ConnPoolNats::ClientFactory
   // TODO(talnordan): Use `MockClientFactory` instead of having this class
   // implemnting `ClientFactory<T>.
   ClientPtr<T> create(Upstream::HostConstSharedPtr host, Event::Dispatcher &,
@@ -414,6 +415,6 @@ TEST_F(TcpConnPoolImplTest, RemoteClose) {
   conn_pool_ = {};
 }
 
-} // namespace ConnPool
+} // namespace ConnPoolNats
 } // namespace Tcp
 } // namespace Envoy

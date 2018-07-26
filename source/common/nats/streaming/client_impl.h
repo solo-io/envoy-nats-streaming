@@ -29,12 +29,12 @@ namespace Streaming {
 // responsible for changing its internal state upon incoming messages from a
 // particular inbox. Such design would be similar to an actor system.
 class ClientImpl : public Client,
-                   public Tcp::ConnPool::PoolCallbacks<Message>,
+                   public Tcp::ConnPoolNats::PoolCallbacks<Message>,
                    public ConnectResponseHandler::Callbacks,
                    public HeartbeatHandler::Callbacks,
                    public Envoy::Logger::Loggable<Envoy::Logger::Id::filter> {
 public:
-  ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool,
+  ClientImpl(Tcp::ConnPoolNats::InstancePtr<Message> &&conn_pool,
              Runtime::RandomGenerator &random, Event::Dispatcher &dispatcher,
              const std::chrono::milliseconds &op_timeout);
 
@@ -45,7 +45,7 @@ public:
                                 Buffer::Instance &payload,
                                 PublishCallbacks &callbacks) override;
 
-  // Tcp::ConnPool::PoolCallbacks
+  // Tcp::ConnPoolNats::PoolCallbacks
   void onResponse(Nats::MessagePtr &&value) override;
   void onClose() override;
 
@@ -147,7 +147,7 @@ private:
         absl::optional<std::pair<std::string, absl::optional<std::string>>>{};
   }
 
-  Tcp::ConnPool::InstancePtr<Message> conn_pool_;
+  Tcp::ConnPoolNats::InstancePtr<Message> conn_pool_;
   TokenGeneratorImpl token_generator_;
   Event::Dispatcher &dispatcher_;
   const std::chrono::milliseconds op_timeout_;

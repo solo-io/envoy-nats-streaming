@@ -10,7 +10,7 @@
 
 namespace Envoy {
 namespace Tcp {
-namespace ConnPool {
+namespace ConnPoolNats {
 
 /**
  * Outbound request callbacks.
@@ -122,6 +122,6 @@ public:
 
 template <typename T> using InstancePtr = std::unique_ptr<Instance<T>>;
 
-} // namespace ConnPool
+} // namespace ConnPoolNats
 } // namespace Tcp
 } // namespace Envoy

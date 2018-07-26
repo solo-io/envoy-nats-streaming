@@ -17,7 +17,7 @@ using Buffer::BufferUtility;
 const std::string ClientImpl::INBOX_PREFIX{"_INBOX"};
 const std::string ClientImpl::PUB_ACK_PREFIX{"_STAN.acks"};
 
-ClientImpl::ClientImpl(Tcp::ConnPool::InstancePtr<Message> &&conn_pool_,
+ClientImpl::ClientImpl(Tcp::ConnPoolNats::InstancePtr<Message> &&conn_pool_,
                        Runtime::RandomGenerator &random,
                        Event::Dispatcher &dispatcher,
                        const std::chrono::milliseconds &op_timeout)

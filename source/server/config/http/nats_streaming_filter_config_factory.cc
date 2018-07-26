@@ -29,8 +29,8 @@ NatsStreamingFilterConfigFactory::createFilterFactoryFromProtoTyped(
   Http::SubjectRetrieverSharedPtr subjectRetriever =
       std::make_shared<Http::MetadataSubjectRetriever>();
 
-  Tcp::ConnPool::ClientFactory<Nats::Message> &client_factory =
-      Tcp::ConnPool::ClientFactoryImpl<Nats::Message, Nats::EncoderImpl,
+  Tcp::ConnPoolNats::ClientFactory<Nats::Message> &client_factory =
+      Tcp::ConnPoolNats::ClientFactoryImpl<Nats::Message, Nats::EncoderImpl,
                                        Nats::DecoderImpl>::instance_;
 
   Nats::Streaming::ClientPtr nats_streaming_client =

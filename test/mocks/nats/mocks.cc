@@ -7,12 +7,12 @@ bool operator==(const Message &lhs, const Message &rhs) {
   return lhs.asString() == rhs.asString();
 }
 
-namespace ConnPool {
+namespace ConnPoolNats {
 
 MockInstance::MockInstance() {}
 MockInstance::~MockInstance() {}
 
-} // namespace ConnPool
+} // namespace ConnPoolNats
 
 } // namespace Nats
 } // namespace Envoy
