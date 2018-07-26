@@ -17,7 +17,7 @@
 
 namespace Envoy {
 namespace Tcp {
-namespace ConnPool {
+namespace ConnPoolNats {
 
 class ConfigImpl : public Config {
 public:

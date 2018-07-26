@@ -15,7 +15,7 @@ namespace Streaming {
 class ClientPool : public Client {
 public:
   ClientPool(const std::string &cluster_name, Upstream::ClusterManager &cm,
-             Tcp::ConnPool::ClientFactory<Message> &client_factory,
+             Tcp::ConnPoolNats::ClientFactory<Message> &client_factory,
              ThreadLocal::SlotAllocator &tls, Runtime::RandomGenerator &random,
              const std::chrono::milliseconds &op_timeout);
 
@@ -28,7 +28,7 @@ public:
 
 private:
   struct ThreadLocalPool : public ThreadLocal::ThreadLocalObject {
-    ThreadLocalPool(Tcp::ConnPool::InstancePtr<Message> &&conn_pool,
+    ThreadLocalPool(Tcp::ConnPoolNats::InstancePtr<Message> &&conn_pool,
                     Runtime::RandomGenerator &random,
                     Event::Dispatcher &dispatcher,
                     const std::chrono::milliseconds &op_timeout);
@@ -39,7 +39,7 @@ private:
   };
 
   Upstream::ClusterManager &cm_;
-  Tcp::ConnPool::ClientFactory<Message> &client_factory_;
+  Tcp::ConnPoolNats::ClientFactory<Message> &client_factory_;
   ThreadLocal::SlotPtr slot_;
   Runtime::RandomGenerator &random_;
   const std::chrono::milliseconds op_timeout_;

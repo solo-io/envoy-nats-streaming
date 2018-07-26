@@ -11,7 +11,7 @@ envoy_package()
 envoy_cc_mock(
     name = "tcp_mocks",
     srcs = ["mocks.cc"],
-    hdrs = ["mocks.h"],
+    hdrs = ["mocks_nats.h"],
     repository = "@envoy",
     deps = [
         "//include/envoy/tcp:conn_pool_interface",

@@ -35,7 +35,7 @@ public:
   MOCK_METHOD1(decode, void(Buffer::Instance &data));
 };
 
-namespace ConnPool {
+namespace ConnPoolNats {
 
 class MockClient : public Client<T> {
 public:
@@ -62,7 +62,7 @@ public:
   MockClientFactory();
   ~MockClientFactory();
 
-  // Tcp::ConnPool::ClientFactory
+  // Tcp::ConnPoolNats::ClientFactory
   ClientPtr<T> create(Upstream::HostConstSharedPtr host, Event::Dispatcher &,
                       PoolCallbacks<T> &, const Config &) override {
     return ClientPtr<T>{create_(host)};
@@ -91,7 +91,7 @@ public:
                void(const std::string &hash_key, const T &request));
 };
 
-} // namespace ConnPool
+} // namespace ConnPoolNats
 
 } // namespace Tcp
 } // namespace Envoy

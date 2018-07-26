@@ -1,4 +1,4 @@
-#include "mocks.h"
+#include "mocks_nats.h"
 
 #include "common/common/assert.h"
 #include "common/common/macros.h"
@@ -39,7 +39,7 @@ MockDecoder::MockDecoder(DecoderCallbacks<T> &callbacks) {
 
 MockDecoder::~MockDecoder() {}
 
-namespace ConnPool {
+namespace ConnPoolNats {
 
 MockClient::MockClient() {
   ON_CALL(*this, addConnectionCallbacks(_))
@@ -64,7 +64,7 @@ MockPoolCallbacks::~MockPoolCallbacks() {}
 MockInstance::MockInstance() {}
 MockInstance::~MockInstance() {}
 
-} // namespace ConnPool
+} // namespace ConnPoolNats
 
 } // namespace Tcp
 } // namespace Envoy
