@@ -3,7 +3,7 @@ workspace(name="nats_streaming_filter")
 # Use skylark for native Git.
 load('@bazel_tools//tools/build_defs/repo:git.bzl', 'git_repository')
 
-ENVOY_SHA = "b32eabfc141760ec14622a4a2a2f0ab0a741cd6c"  # July 25, 2018 (upstream: implement Cluster's load_assignment field (#3864))
+ENVOY_SHA = "45b90082918b4aed4e3c53a2a5cf79ba1b206505"  # 2018-08-10
 
 http_archive(
     name = "envoy",
