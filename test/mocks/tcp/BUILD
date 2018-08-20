@@ -14,7 +14,6 @@ envoy_cc_mock(
 
     # TODO(yuval-k): this has the nats suffix as it clashes with envoy's conn_pool. In the future
     # we want to remove this implementation as use the envoy's
-
     hdrs = ["mocks_nats.h"],
     repository = "@envoy",
     deps = [

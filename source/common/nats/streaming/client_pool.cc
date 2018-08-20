@@ -8,12 +8,11 @@ namespace Envoy {
 namespace Nats {
 namespace Streaming {
 
-ClientPool::ClientPool(const std::string &cluster_name,
-                       Upstream::ClusterManager &cm,
-                       Tcp::ConnPoolNats::ClientFactory<Message> &client_factory,
-                       ThreadLocal::SlotAllocator &tls,
-                       Runtime::RandomGenerator &random,
-                       const std::chrono::milliseconds &op_timeout)
+ClientPool::ClientPool(
+    const std::string &cluster_name, Upstream::ClusterManager &cm,
+    Tcp::ConnPoolNats::ClientFactory<Message> &client_factory,
+    ThreadLocal::SlotAllocator &tls, Runtime::RandomGenerator &random,
+    const std::chrono::milliseconds &op_timeout)
     : cm_(cm), client_factory_(client_factory), slot_(tls.allocateSlot()),
       random_(random), op_timeout_(op_timeout) {
   slot_->set([this, cluster_name](Event::Dispatcher &dispatcher)

@@ -3,17 +3,19 @@
 #include "envoy/http/metadata_accessor.h"
 
 #include "common/config/nats_streaming_well_known_names.h"
-#include "common/http/filter/metadata_subject_retriever.h"
 #include "common/protobuf/utility.h"
+
+#include "extensions/filters/http/nats/streaming/metadata_subject_retriever.h"
 
 #include "test/test_common/utility.h"
 
 #include "fmt/format.h"
 
 namespace Envoy {
-
-using Http::MetadataSubjectRetriever;
-using Http::Subject;
+namespace Extensions {
+namespace HttpFilters {
+namespace Nats {
+namespace Streaming {
 
 namespace {
 
@@ -139,4 +141,8 @@ TEST(MetadataSubjectRetrieverTest, ConfiguredSubject) {
   EXPECT_EQ(*actual_subject.discover_prefix, "dp");
 }
 
+} // namespace Streaming
+} // namespace Nats
+} // namespace HttpFilters
+} // namespace Extensions
 } // namespace Envoy

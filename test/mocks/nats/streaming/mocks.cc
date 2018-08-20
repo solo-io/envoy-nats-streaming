@@ -2,8 +2,8 @@
 
 #include "common/common/macros.h"
 
-using testing::Invoke;
 using testing::_;
+using testing::Invoke;
 
 namespace Envoy {
 namespace Nats {

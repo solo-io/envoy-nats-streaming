@@ -8,7 +8,10 @@
 #include "absl/types/optional.h"
 
 namespace Envoy {
-namespace Http {
+namespace Extensions {
+namespace HttpFilters {
+namespace Nats {
+namespace Streaming {
 
 // TODO(yuval-k): rename this to something more descriptive?
 struct Subject {
@@ -22,10 +25,13 @@ class SubjectRetriever {
 public:
   virtual ~SubjectRetriever() {}
   virtual absl::optional<Subject>
-  getSubject(const MetadataAccessor &metadataccessor) PURE;
+  getSubject(const Http::MetadataAccessor &metadataccessor) PURE;
 };
 
 typedef std::shared_ptr<SubjectRetriever> SubjectRetrieverSharedPtr;
 
-} // namespace Http
+} // namespace Streaming
+} // namespace Nats
+} // namespace HttpFilters
+} // namespace Extensions
 } // namespace Envoy

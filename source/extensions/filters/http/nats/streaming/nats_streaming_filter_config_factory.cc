@@ -1,40 +1,43 @@
-#include "server/config/http/nats_streaming_filter_config_factory.h"
+#include "extensions/filters/http/nats/streaming/nats_streaming_filter_config_factory.h"
 
 #include "envoy/registry/registry.h"
 
-#include "common/http/filter/metadata_subject_retriever.h"
-#include "common/http/filter/nats_streaming_filter.h"
-#include "common/http/filter/nats_streaming_filter_config.h"
 #include "common/nats/codec_impl.h"
 #include "common/nats/streaming/client_pool.h"
 #include "common/tcp/conn_pool_impl.h"
 
-namespace Envoy {
-namespace Server {
-namespace Configuration {
+#include "extensions/filters/http/nats/streaming/metadata_subject_retriever.h"
+#include "extensions/filters/http/nats/streaming/nats_streaming_filter.h"
+#include "extensions/filters/http/nats/streaming/nats_streaming_filter_config.h"
 
-typedef Http::FunctionalFilterMixin<Http::NatsStreamingFilter>
+namespace Envoy {
+namespace Extensions {
+namespace HttpFilters {
+namespace Nats {
+namespace Streaming {
+
+typedef Http::FunctionalFilterMixin<NatsStreamingFilter>
     MixedNatsStreamingFilter;
 
 Http::FilterFactoryCb
 NatsStreamingFilterConfigFactory::createFilterFactoryFromProtoTyped(
     const envoy::api::v2::filter::http::NatsStreaming &proto_config,
-    const std::string &, FactoryContext &context) {
+    const std::string &, Server::Configuration::FactoryContext &context) {
 
-  Http::NatsStreamingFilterConfigSharedPtr config =
-      std::make_shared<Http::NatsStreamingFilterConfig>(
-          Http::NatsStreamingFilterConfig(proto_config,
-                                          context.clusterManager()));
+  NatsStreamingFilterConfigSharedPtr config =
+      std::make_shared<NatsStreamingFilterConfig>(
+          NatsStreamingFilterConfig(proto_config, context.clusterManager()));
 
-  Http::SubjectRetrieverSharedPtr subjectRetriever =
-      std::make_shared<Http::MetadataSubjectRetriever>();
+  SubjectRetrieverSharedPtr subjectRetriever =
+      std::make_shared<MetadataSubjectRetriever>();
 
-  Tcp::ConnPoolNats::ClientFactory<Nats::Message> &client_factory =
-      Tcp::ConnPoolNats::ClientFactoryImpl<Nats::Message, Nats::EncoderImpl,
-                                       Nats::DecoderImpl>::instance_;
+  Tcp::ConnPoolNats::ClientFactory<Envoy::Nats::Message> &client_factory =
+      Tcp::ConnPoolNats::ClientFactoryImpl<Envoy::Nats::Message,
+                                           Envoy::Nats::EncoderImpl,
+                                           Envoy::Nats::DecoderImpl>::instance_;
 
-  Nats::Streaming::ClientPtr nats_streaming_client =
-      std::make_shared<Nats::Streaming::ClientPool>(
+  Envoy::Nats::Streaming::ClientPtr nats_streaming_client =
+      std::make_shared<Envoy::Nats::Streaming::ClientPool>(
           config->cluster(), context.clusterManager(), client_factory,
           context.threadLocal(), context.random(), config->opTimeout());
 
@@ -56,6 +59,8 @@ static Envoy::Registry::RegisterFactory<
     Envoy::Server::Configuration::NamedHttpFilterConfigFactory>
     register_;
 
-} // namespace Configuration
-} // namespace Server
+} // namespace Streaming
+} // namespace Nats
+} // namespace HttpFilters
+} // namespace Extensions
 } // namespace Envoy

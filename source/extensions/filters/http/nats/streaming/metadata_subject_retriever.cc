@@ -1,4 +1,4 @@
-#include "common/http/filter/metadata_subject_retriever.h"
+#include "extensions/filters/http/nats/streaming/metadata_subject_retriever.h"
 
 #include "common/common/macros.h"
 #include "common/config/metadata.h"
@@ -6,14 +6,17 @@
 #include "common/config/solo_metadata.h"
 
 namespace Envoy {
-namespace Http {
+namespace Extensions {
+namespace HttpFilters {
+namespace Nats {
+namespace Streaming {
 
 using Config::SoloMetadata;
 
 MetadataSubjectRetriever::MetadataSubjectRetriever() {}
 
-absl::optional<Subject>
-MetadataSubjectRetriever::getSubject(const MetadataAccessor &metadataccessor) {
+absl::optional<Subject> MetadataSubjectRetriever::getSubject(
+    const Http::MetadataAccessor &metadataccessor) {
   auto maybe_subject = metadataccessor.getFunctionName();
   if (!maybe_subject.has_value()) {
     return {};
@@ -44,5 +47,8 @@ MetadataSubjectRetriever::getSubject(const MetadataAccessor &metadataccessor) {
   return subject;
 }
 
-} // namespace Http
+} // namespace Streaming
+} // namespace Nats
+} // namespace HttpFilters
+} // namespace Extensions
 } // namespace Envoy

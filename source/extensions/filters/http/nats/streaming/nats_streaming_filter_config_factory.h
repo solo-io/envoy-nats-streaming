@@ -9,8 +9,10 @@
 #include "nats_streaming_filter.pb.validate.h"
 
 namespace Envoy {
-namespace Server {
-namespace Configuration {
+namespace Extensions {
+namespace HttpFilters {
+namespace Nats {
+namespace Streaming {
 
 using Extensions::HttpFilters::Common::FactoryBase;
 
@@ -27,9 +29,12 @@ public:
 private:
   Http::FilterFactoryCb createFilterFactoryFromProtoTyped(
       const envoy::api::v2::filter::http::NatsStreaming &proto_config,
-      const std::string &stats_prefix, FactoryContext &context) override;
+      const std::string &stats_prefix,
+      Server::Configuration::FactoryContext &context) override;
 };
 
-} // namespace Configuration
-} // namespace Server
+} // namespace Streaming
+} // namespace Nats
+} // namespace HttpFilters
+} // namespace Extensions
 } // namespace Envoy

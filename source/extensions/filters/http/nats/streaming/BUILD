@@ -53,10 +53,25 @@ envoy_cc_library(
     ],
     repository = "@envoy",
     deps = [
+        ":nats_streaming_filter_config",
+        ":subject_retriever_lib",
         "//include/envoy/nats/streaming:client_interface",
-        "//source/common/http/filter:nats_streaming_filter_config",
-        "//source/common/http/filter:subject_retriever_lib",
         "@solo_envoy_common//source/common/http:functional_stream_decoder_base_lib",
         "@solo_envoy_common//source/common/http:solo_filter_utility_lib",
+    ],
+)
+
+envoy_cc_library(
+    name = "nats_streaming_filter_config_lib",
+    srcs = ["nats_streaming_filter_config_factory.cc"],
+    hdrs = ["nats_streaming_filter_config_factory.h"],
+    repository = "@envoy",
+    deps = [
+        ":nats_streaming_filter_lib",
+        "//source/common/config:nats_streaming_well_known_names_lib",
+        "//source/common/nats:codec_lib",
+        "//source/common/nats/streaming:client_pool_lib",
+        "//source/common/tcp:conn_pool_lib",
+        "@envoy//source/extensions/filters/http/common:factory_base_lib",
     ],
 )

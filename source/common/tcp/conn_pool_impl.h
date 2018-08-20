@@ -341,6 +341,6 @@ private:
   PoolCallbacks<T> *callbacks_{};
 };
 
-} // namespace ConnPool
+} // namespace ConnPoolNats
 } // namespace Tcp
 } // namespace Envoy

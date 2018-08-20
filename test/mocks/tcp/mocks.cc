@@ -1,15 +1,14 @@
-#include "mocks_nats.h"
-
 #include "common/common/assert.h"
 #include "common/common/macros.h"
 
+#include "test/mocks/tcp/mocks_nats.h"
 #include "test/test_common/printers.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using testing::Invoke;
 using testing::_;
+using testing::Invoke;
 
 namespace Envoy {
 namespace Tcp {

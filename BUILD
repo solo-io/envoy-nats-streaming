@@ -27,7 +27,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//source/server/config/http:nats_streaming_filter_config_lib",
+        "//source/extensions/filters/http/nats/streaming:nats_streaming_filter_config_lib",
     ],
 )
 

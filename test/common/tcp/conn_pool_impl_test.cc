@@ -11,13 +11,13 @@
 #include "test/mocks/network/mocks.h"
 #include "test/mocks/tcp/mocks_nats.h"
 #include "test/mocks/thread_local/mocks.h"
-
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/printers.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+using testing::_;
 using testing::Eq;
 using testing::InSequence;
 using testing::Invoke;
@@ -25,7 +25,6 @@ using testing::Ref;
 using testing::Return;
 using testing::ReturnRef;
 using testing::SaveArg;
-using testing::_;
 
 namespace Envoy {
 namespace Tcp {

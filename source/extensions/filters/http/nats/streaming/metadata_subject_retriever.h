@@ -10,7 +10,10 @@
 #include "subject_retriever.h"
 
 namespace Envoy {
-namespace Http {
+namespace Extensions {
+namespace HttpFilters {
+namespace Nats {
+namespace Streaming {
 
 /**
  * TODO (talnordan):
@@ -25,12 +28,16 @@ class MetadataSubjectRetriever : public SubjectRetriever {
 public:
   MetadataSubjectRetriever();
 
-  absl::optional<Subject> getSubject(const MetadataAccessor &metadataccessor);
+  absl::optional<Subject>
+  getSubject(const Http::MetadataAccessor &metadataccessor);
 
 private:
   static absl::optional<const std::string *>
   nonEmptyStringValue(const ProtobufWkt::Struct &spec, const std::string &key);
 };
 
-} // namespace Http
+} // namespace Streaming
+} // namespace Nats
+} // namespace HttpFilters
+} // namespace Extensions
 } // namespace Envoy

@@ -10,7 +10,10 @@
 #include "nats_streaming_filter.pb.h"
 
 namespace Envoy {
-namespace Http {
+namespace Extensions {
+namespace HttpFilters {
+namespace Nats {
+namespace Streaming {
 
 class NatsStreamingFilterConfig {
 
@@ -45,5 +48,8 @@ private:
 typedef std::shared_ptr<NatsStreamingFilterConfig>
     NatsStreamingFilterConfigSharedPtr;
 
-} // namespace Http
+} // namespace Streaming
+} // namespace Nats
+} // namespace HttpFilters
+} // namespace Extensions
 } // namespace Envoy

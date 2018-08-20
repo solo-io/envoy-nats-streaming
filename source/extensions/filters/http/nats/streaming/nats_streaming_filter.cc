@@ -1,4 +1,4 @@
-#include "common/http/filter/nats_streaming_filter.h"
+#include "extensions/filters/http/nats/streaming/nats_streaming_filter.h"
 
 #include <algorithm>
 #include <list>
@@ -16,12 +16,15 @@
 #include "common/http/utility.h"
 
 namespace Envoy {
-namespace Http {
+namespace Extensions {
+namespace HttpFilters {
+namespace Nats {
+namespace Streaming {
 
 NatsStreamingFilter::NatsStreamingFilter(
     NatsStreamingFilterConfigSharedPtr config,
     SubjectRetrieverSharedPtr retreiver,
-    Nats::Streaming::ClientPtr nats_streaming_client)
+    Envoy::Nats::Streaming::ClientPtr nats_streaming_client)
     : config_(config), subject_retriever_(retreiver),
       nats_streaming_client_(nats_streaming_client) {}
 
@@ -35,7 +38,7 @@ void NatsStreamingFilter::onDestroy() {
   }
 }
 
-Envoy::Http::FilterHeadersStatus
+Http::FilterHeadersStatus
 NatsStreamingFilter::decodeHeaders(Envoy::Http::HeaderMap &headers,
                                    bool end_stream) {
   UNREFERENCED_PARAMETER(headers);
@@ -45,10 +48,10 @@ NatsStreamingFilter::decodeHeaders(Envoy::Http::HeaderMap &headers,
     relayToNatsStreaming();
   }
 
-  return Envoy::Http::FilterHeadersStatus::StopIteration;
+  return Http::FilterHeadersStatus::StopIteration;
 }
 
-Envoy::Http::FilterDataStatus
+Http::FilterDataStatus
 NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
                                 bool end_stream) {
   RELEASE_ASSERT(isActive(), "");
@@ -60,7 +63,7 @@ NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
     decoder_callbacks_->sendLocalReply(Http::Code::PayloadTooLarge,
                                        "nats streaming paylaod too large",
                                        nullptr);
-    return FilterDataStatus::StopIterationNoBuffer;
+    return Http::FilterDataStatus::StopIterationNoBuffer;
   }
 
   body_.move(data);
@@ -70,22 +73,22 @@ NatsStreamingFilter::decodeData(Envoy::Buffer::Instance &data,
 
     // TODO(talnordan): We need to make sure that life time of the buffer makes
     // sense.
-    return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
+    return Http::FilterDataStatus::StopIterationNoBuffer;
   }
 
-  return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
+  return Http::FilterDataStatus::StopIterationNoBuffer;
 }
 
-Envoy::Http::FilterTrailersStatus
+Http::FilterTrailersStatus
 NatsStreamingFilter::decodeTrailers(Envoy::Http::HeaderMap &) {
   RELEASE_ASSERT(isActive(), "");
 
   relayToNatsStreaming();
-  return Envoy::Http::FilterTrailersStatus::StopIteration;
+  return Http::FilterTrailersStatus::StopIteration;
 }
 
 bool NatsStreamingFilter::retrieveFunction(
-    const MetadataAccessor &meta_accessor) {
+    const Http::MetadataAccessor &meta_accessor) {
   retrieveSubject(meta_accessor);
   return isActive();
 }
@@ -103,7 +106,7 @@ void NatsStreamingFilter::onTimeout() {
 }
 
 void NatsStreamingFilter::retrieveSubject(
-    const MetadataAccessor &meta_accessor) {
+    const Http::MetadataAccessor &meta_accessor) {
   optional_subject_ = subject_retriever_->getSubject(meta_accessor);
 }
 
@@ -112,7 +115,7 @@ void NatsStreamingFilter::relayToNatsStreaming() {
   RELEASE_ASSERT(!optional_subject_.value().subject->empty(), "");
 
   const std::string *cluster_name =
-      SoloFilterUtility::resolveClusterName(decoder_callbacks_);
+      Http::SoloFilterUtility::resolveClusterName(decoder_callbacks_);
   if (!cluster_name) {
     // TODO(talnordan): Consider changing the return type to `bool` and
     // returning `false`.
@@ -128,7 +131,7 @@ void NatsStreamingFilter::relayToNatsStreaming() {
       subject, cluster_id, discover_prefix, body_, *this);
 }
 
-void NatsStreamingFilter::onCompletion(Code response_code,
+void NatsStreamingFilter::onCompletion(Http::Code response_code,
                                        const std::string &body_text) {
   in_flight_request_ = nullptr;
 
@@ -136,11 +139,14 @@ void NatsStreamingFilter::onCompletion(Code response_code,
 }
 
 void NatsStreamingFilter::onCompletion(
-    Code response_code, const std::string &body_text,
+    Http::Code response_code, const std::string &body_text,
     RequestInfo::ResponseFlag response_flag) {
   decoder_callbacks_->requestInfo().setResponseFlag(response_flag);
   onCompletion(response_code, body_text);
 }
 
-} // namespace Http
+} // namespace Streaming
+} // namespace Nats
+} // namespace HttpFilters
+} // namespace Extensions
 } // namespace Envoy
