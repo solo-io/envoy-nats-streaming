@@ -35,12 +35,8 @@ ClientImpl::ClientImpl(Tcp::ConnPoolNats::InstancePtr<Message> &&conn_pool_,
 PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
                                           const std::string &cluster_id,
                                           const std::string &discover_prefix,
-                                          Buffer::Instance &payload,
+                                          std::string &&payload,
                                           PublishCallbacks &callbacks) {
-  // TODO(talnordan): Consider leveraging the fact that `max_payload` is given
-  // in the NATS `INFO` message and reuse the same pre-allocated `std:string`.
-  std::string payload_string{BufferUtility::drainBufferToString(payload)};
-
   // TODO(talnordan): For a possible performance improvement, consider replacing
   // the random child token with a counter.
   std::string pub_ack_inbox{
@@ -48,7 +44,7 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
 
   switch (state_) {
   case State::NotConnected:
-    enqueuePendingRequest(subject, payload_string, callbacks, pub_ack_inbox);
+    enqueuePendingRequest(subject, payload, callbacks, pub_ack_inbox);
     cluster_id_.emplace(cluster_id);
     discover_prefix_.emplace(discover_prefix);
     conn_pool_->setPoolCallbacks(*this);
@@ -56,10 +52,10 @@ PublishRequestPtr ClientImpl::makeRequest(const std::string &subject,
     state_ = State::Connecting;
     break;
   case State::Connecting:
-    enqueuePendingRequest(subject, payload_string, callbacks, pub_ack_inbox);
+    enqueuePendingRequest(subject, payload, callbacks, pub_ack_inbox);
     break;
   case State::Connected:
-    pubPubMsg(subject, payload_string, callbacks, pub_ack_inbox);
+    pubPubMsg(subject, payload, callbacks, pub_ack_inbox);
     break;
   }
 

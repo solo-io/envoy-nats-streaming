@@ -55,7 +55,9 @@ envoy_cc_library(
     deps = [
         ":nats_streaming_filter_config",
         ":subject_retriever_lib",
+        "//:payload_proto_cc",
         "//include/envoy/nats/streaming:client_interface",
+        "@envoy//source/common/grpc:common_lib",
         "@solo_envoy_common//source/common/http:functional_stream_decoder_base_lib",
         "@solo_envoy_common//source/common/http:solo_filter_utility_lib",
     ],

@@ -65,9 +65,7 @@ public:
    * @param discover_prefix supplies the prefix subject used to connect to the
    * NATS Streaming server.
    * @param payload supplies the fully buffered payload as buffered by this
-   * filter or previous ones in the filter chain. The buffer passed should not
-   * be used anymore by the caller, as the implementation of this function might
-   * drain it.
+   * filter or previous ones in the filter chain.
    * @param callbacks supplies the request completion callbacks.
    * @return PublishRequestPtr a handle to the active request or nullptr if the
    * request could not be made for some reason.
@@ -75,7 +73,7 @@ public:
   virtual PublishRequestPtr makeRequest(const std::string &subject,
                                         const std::string &cluster_id,
                                         const std::string &discover_prefix,
-                                        Buffer::Instance &payload,
+                                        std::string &&payload,
                                         PublishCallbacks &callbacks) PURE;
 };
 

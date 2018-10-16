@@ -23,7 +23,7 @@ public:
   PublishRequestPtr makeRequest(const std::string &subject,
                                 const std::string &cluster_id,
                                 const std::string &discover_prefix,
-                                Buffer::Instance &payload,
+                                std::string &&payload,
                                 PublishCallbacks &callbacks) override;
 
 private:

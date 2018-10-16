@@ -8,6 +8,7 @@
 #include "extensions/filters/http/nats/streaming/subject_retriever.h"
 
 #include "nats_streaming_filter.pb.h"
+#include "payload.pb.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -70,6 +71,7 @@ private:
   absl::optional<Subject> optional_subject_;
   Http::StreamDecoderFilterCallbacks *decoder_callbacks_{};
   absl::optional<uint32_t> decoder_buffer_limit_{};
+  pb::Payload payload_;
   Buffer::OwnedImpl body_{};
   Envoy::Nats::Streaming::PublishRequestPtr in_flight_request_{};
 };

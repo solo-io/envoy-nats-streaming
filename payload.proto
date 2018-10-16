@@ -1,0 +1,7 @@
+syntax = "proto3";
+package pb;
+
+message Payload {
+  map<string, string> headers = 1;
+  bytes body = 2;
+}

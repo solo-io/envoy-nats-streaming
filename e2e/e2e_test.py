@@ -100,8 +100,10 @@ class ManyRequestsTestCase(unittest.TestCase):
     self.sub_process = None
     self.stderr.seek(0, 0)
     stderr = self.stderr.read()
-    expected = 'subject:"subject1" data:"%s"' % data
-    self.assertIn(expected, stderr)
+
+    # TODO(talnordan): Validate the entire Protobuf message, including headers.
+    self.assertIn('subject:"subject1"', stderr)
+    self.assertIn(data, stderr)
 
   def __make_request_batches(self,
                              format_string,

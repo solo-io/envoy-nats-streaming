@@ -23,12 +23,18 @@ public:
   MockClient();
   ~MockClient();
 
-  MOCK_METHOD5(makeRequest,
+  PublishRequestPtr makeRequest(const std::string &subject,
+                                const std::string &cluster_id,
+                                const std::string &discover_prefix,
+                                std::string &&payload,
+                                PublishCallbacks &callbacks) override;
+
+  MOCK_METHOD5(makeRequest_,
                PublishRequestPtr(const std::string &, const std::string &,
-                                 const std::string &, Buffer::Instance &,
+                                 const std::string &, const std::string &,
                                  PublishCallbacks &callbacks));
 
-  Buffer::OwnedImpl last_payload_;
+  std::string last_payload_;
 };
 
 } // namespace Streaming

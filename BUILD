@@ -18,6 +18,11 @@ api_proto_library(
 )
 
 api_proto_library(
+    name = "payload_proto",
+    srcs = ["payload.proto"],
+)
+
+api_proto_library(
     name = "protocol_proto",
     srcs = ["protocol.proto"],
 )

@@ -28,10 +28,10 @@ ClientPool::ClientPool(
 PublishRequestPtr ClientPool::makeRequest(const std::string &subject,
                                           const std::string &cluster_id,
                                           const std::string &discover_prefix,
-                                          Buffer::Instance &payload,
+                                          std::string &&payload,
                                           PublishCallbacks &callbacks) {
   return slot_->getTyped<ThreadLocalPool>().getClient().makeRequest(
-      subject, cluster_id, discover_prefix, payload, callbacks);
+      subject, cluster_id, discover_prefix, std::move(payload), callbacks);
 }
 
 ClientPool::ThreadLocalPool::ThreadLocalPool(

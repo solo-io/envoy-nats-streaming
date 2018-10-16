@@ -11,6 +11,7 @@
 #include "common/common/empty_string.h"
 #include "common/common/macros.h"
 #include "common/common/utility.h"
+#include "common/grpc/common.h"
 #include "common/http/filter_utility.h"
 #include "common/http/solo_filter_utility.h"
 #include "common/http/utility.h"
@@ -41,8 +42,25 @@ void NatsStreamingFilter::onDestroy() {
 Http::FilterHeadersStatus
 NatsStreamingFilter::decodeHeaders(Envoy::Http::HeaderMap &headers,
                                    bool end_stream) {
-  UNREFERENCED_PARAMETER(headers);
   RELEASE_ASSERT(isActive(), "");
+
+  // Fill in the headers.
+  // TODO(talnordan): Consider extracting a common utility function which
+  // converts a `HeaderMap` to a Protobuf `Map`, to reduce code duplication
+  // with `Filters::Common::ExtAuthz::CheckRequestUtils::setHttpRequest()`.
+  auto mutable_headers = payload_.mutable_headers();
+  headers.iterate(
+      [](const Envoy::Http::HeaderEntry &e, void *ctx) {
+        Envoy::Protobuf::Map<Envoy::ProtobufTypes::String,
+                             Envoy::ProtobufTypes::String> *mutable_headers =
+            static_cast<Envoy::Protobuf::Map<Envoy::ProtobufTypes::String,
+                                             Envoy::ProtobufTypes::String> *>(
+                ctx);
+        (*mutable_headers)[std::string(e.key().getStringView())] =
+            std::string(e.value().getStringView());
+        return Envoy::Http::HeaderMap::Iterate::Continue;
+      },
+      mutable_headers);
 
   if (end_stream) {
     relayToNatsStreaming();
@@ -127,8 +145,11 @@ void NatsStreamingFilter::relayToNatsStreaming() {
   const std::string &cluster_id = *subject_entry.cluster_id;
   const std::string &discover_prefix = *subject_entry.discover_prefix;
 
+  // TODO(talnordan): Consider minimizing content copying.
+  payload_.set_body(body_.toString());
+  std::string payload_string = payload_.SerializeAsString();
   in_flight_request_ = nats_streaming_client_->makeRequest(
-      subject, cluster_id, discover_prefix, body_, *this);
+      subject, cluster_id, discover_prefix, std::move(payload_string), *this);
 }
 
 void NatsStreamingFilter::onCompletion(Http::Code response_code,
